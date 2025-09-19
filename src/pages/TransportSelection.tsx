@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { Truck, MapPin, Clock, User, Phone, Calendar, ArrowLeft, Bus, DollarSign } from 'lucide-react';
+import { Truck, MapPin, Clock, User, Phone, Calendar, ArrowLeft, Bus, DollarSign, Users } from 'lucide-react';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { TransportEnrollment } from '@/api/studentTransport.api';
 import { TransportSidebar } from '@/components/TransportSidebar';
@@ -12,10 +12,11 @@ import { TransportAttendance } from '@/components/TransportAttendance';
 import { useLocation } from 'react-router-dom';
 
 const TransportSelection = () => {
-  const { selectedInstitute } = useAuth();
+  const { selectedInstitute, user } = useAuth();
   const { navigateToPage } = useAppNavigation();
   const location = useLocation();
   const [selectedTransport, setSelectedTransport] = useState<TransportEnrollment | null>(null);
+  const [selectedChild, setSelectedChild] = useState<any>(null);
   const [activeView, setActiveView] = useState('attendance');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -32,13 +33,23 @@ const TransportSelection = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    // Load selected transport from localStorage
-    const saved = localStorage.getItem('selectedTransport');
-    if (saved) {
+    // Load selected transport and child data from localStorage
+    const savedTransport = localStorage.getItem('selectedTransport');
+    const savedChild = localStorage.getItem('selectedChildForTransport');
+    
+    if (savedTransport) {
       try {
-        setSelectedTransport(JSON.parse(saved));
+        setSelectedTransport(JSON.parse(savedTransport));
       } catch (error) {
         console.error('Error loading selected transport:', error);
+      }
+    }
+    
+    if (savedChild) {
+      try {
+        setSelectedChild(JSON.parse(savedChild));
+      } catch (error) {
+        console.error('Error loading selected child:', error);
       }
     }
   }, []);
@@ -61,9 +72,9 @@ const TransportSelection = () => {
               <Bus className="h-16 w-16 mx-auto text-muted-foreground" />
               <h3 className="text-xl font-semibold">No Transport Selected</h3>
               <p className="text-muted-foreground">
-                Please go back to the transport page and select a transport service.
+                Please go back to the transport page and select a transport service{selectedChild ? ` for ${selectedChild.firstName}` : ''}.
               </p>
-              <Button onClick={() => navigateToPage('transport')}>
+              <Button onClick={() => navigateToPage(user?.role === 'Parent' ? 'parent-transport' : 'transport')}>
                 <Bus className="h-4 w-4 mr-2" />
                 Select Transport
               </Button>
@@ -197,7 +208,7 @@ const TransportSelection = () => {
         <TransportSidebar 
           activeView={activeView} 
           setActiveView={setActiveView}
-          onBackToTransport={() => navigateToPage('transport')}
+          onBackToTransport={() => navigateToPage(user?.role === 'Parent' ? 'parent-transport' : 'transport')}
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
         />
@@ -215,11 +226,21 @@ const TransportSelection = () => {
             <div className="flex items-center justify-between w-full px-4">
               <div className="flex items-center space-x-2">
                 <Bus className="h-5 w-5 text-primary" />
-                <h1 className="text-lg font-semibold">Transport Management</h1>
+                <h1 className="text-lg font-semibold">
+                  {user?.role === 'Parent' ? 'Parent Transport Management' : 'Transport Management'}
+                </h1>
               </div>
-              {selectedInstitute && (
-                <p className="text-sm text-muted-foreground">Institute: {selectedInstitute.name}</p>
-              )}
+              <div className="flex items-center space-x-4">
+                {selectedChild && user?.role === 'Parent' && (
+                  <div className="flex items-center space-x-2 bg-muted px-3 py-1 rounded-full">
+                    <Users className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">{selectedChild.firstName} {selectedChild.lastName}</span>
+                  </div>
+                )}
+                {selectedInstitute && (
+                  <p className="text-sm text-muted-foreground">Institute: {selectedInstitute.name}</p>
+                )}
+              </div>
             </div>
           </header>
           
