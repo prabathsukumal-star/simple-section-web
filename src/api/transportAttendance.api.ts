@@ -1,4 +1,5 @@
 import { cachedApiClient } from './cachedClient';
+import { getBaseUrl } from '@/contexts/utils/auth.api';
 
 export interface TransportAttendanceRecord {
   _id: string;
@@ -33,19 +34,15 @@ export interface TransportAttendanceResponse {
   };
 }
 
-const getAttendanceUrl = () => {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002';
-  return `${baseUrl}/api/bookhire-attendance`;
-};
-
 export const getStudentTransportAttendance = async (
   studentId: string,
   page: number = 1,
   limit: number = 10
 ): Promise<TransportAttendanceResponse> => {
   try {
-    const url = `${getAttendanceUrl()}/student/${studentId}?page=${page}&limit=${limit}`;
-    const response = await cachedApiClient.get(url);
+    const endpoint = `/api/bookhire-attendance/student/${studentId}`;
+    const params = { page: page.toString(), limit: limit.toString() };
+    const response = await cachedApiClient.get(endpoint, params);
     return response;
   } catch (error) {
     console.error('Error fetching student transport attendance:', error);
