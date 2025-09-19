@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Truck, MapPin, Clock, User, Phone, Calendar, DollarSign, Bus, AlertCircle, Users } from 'lucide-react';
 import { getStudentTransportEnrollments, TransportEnrollment } from '@/api/studentTransport.api';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
-
 const ParentTransport = () => {
   const {
     selectedChild,
@@ -24,20 +23,28 @@ const ParentTransport = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Mock children data - in real app this would come from user.children or API
-  const mockChildren = [
-    { id: '1', firstName: 'Sarah', lastName: 'Johnson', grade: '5th Grade' },
-    { id: '2', firstName: 'Mike', lastName: 'Johnson', grade: '3rd Grade' },
-    { id: '3', firstName: 'Emma', lastName: 'Johnson', grade: '7th Grade' }
-  ];
-
+  const mockChildren = [{
+    id: '1',
+    firstName: 'Sarah',
+    lastName: 'Johnson',
+    grade: '5th Grade'
+  }, {
+    id: '2',
+    firstName: 'Mike',
+    lastName: 'Johnson',
+    grade: '3rd Grade'
+  }, {
+    id: '3',
+    firstName: 'Emma',
+    lastName: 'Johnson',
+    grade: '7th Grade'
+  }];
   const selectedChildData = mockChildren.find(child => child.id === selectedChildId) || mockChildren[0];
-
   useEffect(() => {
     if (selectedChildId) {
       loadTransportEnrollments(selectedChildId);
     }
   }, [selectedChildId]);
-
   const loadTransportEnrollments = async (childId: string) => {
     setLoading(true);
     setError(null);
@@ -61,16 +68,18 @@ const ParentTransport = () => {
       setLoading(false);
     }
   };
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return 'default';
-      case 'PENDING': return 'secondary';
-      case 'INACTIVE': return 'outline';
-      default: return 'outline';
+      case 'ACTIVE':
+        return 'default';
+      case 'PENDING':
+        return 'secondary';
+      case 'INACTIVE':
+        return 'outline';
+      default:
+        return 'outline';
     }
   };
-
   const handleTransportSelect = (enrollment: TransportEnrollment) => {
     setSelectedTransport(enrollment);
     // Store both the transport and child info for the selection page
@@ -78,9 +87,7 @@ const ParentTransport = () => {
     localStorage.setItem('selectedChildForTransport', JSON.stringify(selectedChildData));
     navigateToPage('transport-selection');
   };
-
-  return (
-    <div className="container mx-auto p-6 space-y-6">
+  return <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
@@ -95,63 +102,19 @@ const ParentTransport = () => {
       </p>
 
       {/* Child Selection */}
-      <Card className="bg-muted/50">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Select Child</h3>
-                <p className="text-sm text-muted-foreground">Choose which child's transport to manage</p>
-              </div>
-            </div>
-            <div className="w-full md:w-auto md:min-w-[200px]">
-              <Select value={selectedChildId} onValueChange={setSelectedChildId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a child" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockChildren.map((child) => (
-                    <SelectItem key={child.id} value={child.id}>
-                      {child.firstName} {child.lastName} - {child.grade}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          {selectedChildData && (
-            <div className="mt-4 p-3 bg-background rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Managing transport for:</p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedChildData.firstName} {selectedChildData.lastName} - {selectedChildData.grade}
-                  </p>
-                </div>
-                <Badge variant="default">Selected</Badge>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      
 
       {/* Loading/Error States */}
-      {loading && (
-        <Card>
+      {loading && <Card>
           <CardContent className="p-6">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-muted-foreground">Loading transport services...</p>
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
-      {error && (
-        <Card>
+      {error && <Card>
           <CardContent className="p-6">
             <div className="text-center space-y-4">
               <AlertCircle className="h-12 w-12 mx-auto text-destructive" />
@@ -162,12 +125,10 @@ const ParentTransport = () => {
               </Button>
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* Transport Cards */}
-      {!loading && !error && enrollments.length === 0 && selectedChildId && (
-        <Card>
+      {!loading && !error && enrollments.length === 0 && selectedChildId && <Card>
           <CardContent className="p-6">
             <div className="text-center space-y-4">
               <Bus className="h-16 w-16 mx-auto text-muted-foreground" />
@@ -177,13 +138,10 @@ const ParentTransport = () => {
               </p>
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
-      {!loading && !error && enrollments.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {enrollments.map(enrollment => 
-            <Card key={enrollment._id} className="hover:shadow-lg transition-all duration-200 hover:border-primary/50">
+      {!loading && !error && enrollments.length > 0 && <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {enrollments.map(enrollment => <Card key={enrollment._id} className="hover:shadow-lg transition-all duration-200 hover:border-primary/50">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 flex-1">
@@ -249,27 +207,18 @@ const ParentTransport = () => {
                 </div>
 
                 {/* Special Instructions */}
-                {enrollment.specialInstructions && 
-                  <div className="text-xs bg-amber-50 border border-amber-200 p-2 rounded-lg">
+                {enrollment.specialInstructions && <div className="text-xs bg-amber-50 border border-amber-200 p-2 rounded-lg">
                     <strong className="text-amber-700">Special Instructions:</strong>
                     <p className="text-amber-600 mt-1">{enrollment.specialInstructions}</p>
-                  </div>
-                }
+                  </div>}
                 
                 {/* Select Button */}
-                <Button 
-                  className="w-full" 
-                  onClick={() => handleTransportSelect(enrollment)}
-                >
+                <Button className="w-full" onClick={() => handleTransportSelect(enrollment)}>
                   Manage Transport
                 </Button>
               </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-    </div>
-  );
+            </Card>)}
+        </div>}
+    </div>;
 };
-
 export default ParentTransport;
