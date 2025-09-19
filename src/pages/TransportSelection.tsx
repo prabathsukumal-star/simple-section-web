@@ -17,6 +17,7 @@ const TransportSelection = () => {
   const location = useLocation();
   const [selectedTransport, setSelectedTransport] = useState<TransportEnrollment | null>(null);
   const [activeView, setActiveView] = useState('attendance');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Set active view based on current route
   useEffect(() => {
@@ -197,11 +198,20 @@ const TransportSelection = () => {
           activeView={activeView} 
           setActiveView={setActiveView}
           onBackToTransport={() => navigateToPage('transport')}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
         
         <main className="flex-1">
           <header className="h-12 flex items-center border-b bg-background">
-            <SidebarTrigger className="ml-2" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsSidebarOpen(true)}
+              className="ml-2 md:hidden"
+            >
+              <Bus className="h-4 w-4" />
+            </Button>
             <div className="flex items-center justify-between w-full px-4">
               <div className="flex items-center space-x-2">
                 <Bus className="h-5 w-5 text-primary" />
