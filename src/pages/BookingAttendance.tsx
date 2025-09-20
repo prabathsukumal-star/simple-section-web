@@ -83,6 +83,7 @@ const BookingAttendance = () => {
   const [dateFilter, setDateFilter] = useState("today");
   const [attendanceData, setAttendanceData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [bookingDetails, setBookingDetails] = useState<any>(null);
   const [searchParams] = useSearchParams();
   const { api } = useApi();
   const { toast } = useToast();
@@ -101,20 +102,45 @@ const BookingAttendance = () => {
 
     try {
       setLoading(true);
-      const response = await api.getVehicleAttendance(bookingId, 1, 10) as any;
+      
+      // First get booking details to extract vehicle number
+      const bookingResponse = await api.getMyBookHires(1, 100) as any;
+      const booking = bookingResponse.bookhires?.find((b: any) => b._id === bookingId);
+      
+      if (!booking) {
+        toast({
+          title: "Error",
+          description: "Booking not found.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setBookingDetails(booking);
+      
+      // Then get attendance data using vehicle number
+      const response = await api.getVehicleAttendance(booking.vehicleNumber, 1, 10) as any;
       if (response.success) {
-        setAttendanceData(response.data);
+        setAttendanceData(response.data || []);
         toast({
           title: "Success",
           description: "Attendance data loaded successfully",
         });
+      } else {
+        setAttendanceData([]);
+        toast({
+          title: "Info",
+          description: "No attendance data found for this vehicle",
+        });
       }
     } catch (error) {
+      console.error('Error loading attendance:', error);
       toast({
         title: "Error",
         description: "Failed to load attendance data",
         variant: "destructive",
       });
+      setAttendanceData([]);
     } finally {
       setLoading(false);
     }
@@ -154,7 +180,7 @@ const BookingAttendance = () => {
   return (
     <BookingLayout
       title="Book Hire Attendance"
-      description="Track student attendance records"
+      description={bookingDetails ? `${bookingDetails.title} - Vehicle: ${bookingDetails.vehicleNumber}` : "Track student attendance records"}
       icon={<Calendar className="h-6 w-6 text-primary" />}
     >
         <div className="max-w-7xl mx-auto space-y-6">
