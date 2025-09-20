@@ -148,11 +148,12 @@ const BookingAttendance = () => {
 
   const filteredAttendance = attendanceData.filter(record => {
     const matchesSearch = 
-      record.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.vehicleNumber.includes(searchTerm);
+      record.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.studentId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.vehicleNumber?.includes(searchTerm) ||
+      searchTerm === "";
     
-    const matchesStatus = statusFilter === "all" || record.status.toLowerCase() === statusFilter.toLowerCase();
+    const matchesStatus = statusFilter === "all" || record.status?.toLowerCase() === statusFilter.toLowerCase();
     
     return matchesSearch && matchesStatus;
   });
@@ -303,12 +304,12 @@ const BookingAttendance = () => {
                     <TableRow>
                       <TableHead>Student ID</TableHead>
                       <TableHead>Name</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Address</TableHead>
+                      <TableHead>RFID</TableHead>
+                      <TableHead>Book Hire</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Time</TableHead>
-                      <TableHead>Route</TableHead>
+                      <TableHead>Vehicle</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -316,8 +317,8 @@ const BookingAttendance = () => {
                       <TableRow key={`${record._id}-${index}`}>
                         <TableCell className="font-medium">{record.studentId}</TableCell>
                         <TableCell>{record.studentName}</TableCell>
-                        <TableCell>-</TableCell>
-                        <TableCell className="max-w-xs truncate">-</TableCell>
+                        <TableCell>{record.rfid || '-'}</TableCell>
+                        <TableCell className="max-w-xs truncate">{record.bookhireId?.title || '-'}</TableCell>
                         <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <Badge variant={getStatusBadgeVariant(record.status)}>
@@ -325,7 +326,7 @@ const BookingAttendance = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>{record.time}</TableCell>
-                        <TableCell>{record.bookhireId?.title || 'N/A'}</TableCell>
+                        <TableCell>{record.vehicleNumber}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
