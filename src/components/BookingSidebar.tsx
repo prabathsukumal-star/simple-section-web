@@ -1,5 +1,5 @@
 import { Users, Calendar, Settings, User, QrCode, LogOut, Palette, ArrowLeft } from "lucide-react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import {
   Sidebar,
@@ -13,11 +13,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const mainItems = [
-  { title: "Book Hire Students", url: "/booking/students", icon: Users },
-  { title: "Book Hire Attendance", url: "/booking/attendance", icon: Calendar },
-  { title: "Mark Attendance", url: "/booking/mark-attendance", icon: QrCode },
-];
+// We'll make these items dynamic based on bookingId
 
 const settingsItems = [
   { title: "Profile", url: "/Profile", icon: User },
@@ -29,7 +25,16 @@ export function BookingSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  const bookingId = searchParams.get("bookingId");
   const currentPath = location.pathname;
+  
+  const mainItems = [
+    { title: "Book Hire Students", url: `/booking/students?bookingId=${bookingId}`, icon: Users },
+    { title: "Book Hire Attendance", url: `/booking/attendance?bookingId=${bookingId}`, icon: Calendar },
+    { title: "Mark Attendance", url: `/booking/mark-attendance?bookingId=${bookingId}`, icon: QrCode },
+  ];
 
   const isActive = (path: string) => currentPath === path;
 
