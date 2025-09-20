@@ -3,6 +3,7 @@ import { BookingLayout } from "@/components/BookingLayout";
 import { Button } from "@/components/ui/button";
 import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -82,13 +83,25 @@ const BookingAttendance = () => {
   const [dateFilter, setDateFilter] = useState("today");
   const [attendanceData, setAttendanceData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
   const { api } = useApi();
   const { toast } = useToast();
 
+  const bookingId = searchParams.get("bookingId");
+
   const loadAttendanceData = async () => {
+    if (!bookingId) {
+      toast({
+        title: "Error",
+        description: "No booking ID found. Please select a booking first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setLoading(true);
-      const response = await api.getVehicleAttendance("WP-CAR-1234", 1, 10) as any;
+      const response = await api.getVehicleAttendance(bookingId, 1, 10) as any;
       if (response.success) {
         setAttendanceData(response.data);
         toast({

@@ -1,4 +1,4 @@
-import { Users, Calendar, Settings, User, QrCode, LogOut, Palette } from "lucide-react";
+import { Users, Calendar, Settings, User, QrCode, LogOut, Palette, ArrowLeft } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import {
@@ -49,6 +49,13 @@ export function BookingSidebar() {
       <SidebarContent className="bg-sidebar border-r border-sidebar-border">
         <div className="p-4">
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="p-2 hover:bg-sidebar-accent rounded-lg transition-smooth"
+              title="Back to Dashboard"
+            >
+              <ArrowLeft className="h-5 w-5 text-sidebar-foreground" />
+            </button>
             <Users className="h-8 w-8 text-sidebar-primary" />
             {!collapsed && (
               <div>
