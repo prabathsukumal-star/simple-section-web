@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { studentsApi, StudentCreateData } from '@/api/students.api';
-import { Datepicker } from "flowbite-react";
+import { DatePicker } from 'rsuite';
 interface CreateInstituteStudentFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -25,7 +25,7 @@ const CreateInstituteStudentForm: React.FC<CreateInstituteStudentFormProps> = ({
     toast
   } = useToast();
   const [loading, setLoading] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [date, setDate] = useState<Date | null>(null);
   const [formData, setFormData] = useState({
     // User data
     firstName: '',
@@ -183,7 +183,12 @@ const CreateInstituteStudentForm: React.FC<CreateInstituteStudentFormProps> = ({
               <div>
                 <Label>Date of Birth *</Label>
                 <div className="mt-2">
-                  <Datepicker />
+                  <DatePicker 
+                    value={date}
+                    onChange={setDate}
+                    placeholder="Select date of birth"
+                    style={{ width: '100%', height: '48px' }}
+                  />
                 </div>
               </div>
 

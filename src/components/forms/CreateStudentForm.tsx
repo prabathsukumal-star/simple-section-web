@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
-import { Datepicker } from "flowbite-react";
+import { DatePicker } from 'rsuite';
 import { studentsApi } from '@/api/students.api';
 import { toast } from 'sonner';
 
@@ -21,7 +21,7 @@ const CreateStudentForm: React.FC<CreateStudentFormProps> = ({
   onCancel,
   loading = false
 }) => {
-  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [date, setDate] = useState<Date | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -202,7 +202,12 @@ const CreateStudentForm: React.FC<CreateStudentFormProps> = ({
                   <div>
                     <Label className="text-base font-semibold">Date of Birth *</Label>
                     <div className="mt-2">
-                      <Datepicker />
+                      <DatePicker 
+                        value={date}
+                        onChange={setDate}
+                        placeholder="Select date of birth"
+                        style={{ width: '100%', height: '48px' }}
+                      />
                     </div>
                   </div>
                   <div>

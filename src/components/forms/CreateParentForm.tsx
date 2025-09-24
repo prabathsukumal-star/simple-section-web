@@ -11,7 +11,7 @@ import { ParentCreateData } from '@/api/parents.api';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
-import { Datepicker } from "flowbite-react";
+import { DatePicker } from 'rsuite';
 
 interface CreateParentFormProps {
   onSubmit: (data: any) => void;
@@ -53,8 +53,8 @@ const CreateParentForm = ({ onSubmit, onCancel, initialData }: CreateParentFormP
     educationLevel: initialData?.educationLevel || ''
   });
 
-  const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(
-    initialData?.user?.dateOfBirth ? new Date(initialData.user.dateOfBirth) : undefined
+  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(
+    initialData?.user?.dateOfBirth ? new Date(initialData.user.dateOfBirth) : null
   );
 
   const [isLoading, setIsLoading] = useState(false);
@@ -294,12 +294,17 @@ const CreateParentForm = ({ onSubmit, onCancel, initialData }: CreateParentFormP
                 />
               </div>
 
-              <div>
-                <Label htmlFor="dateOfBirth" className="text-base font-medium">Date of Birth *</Label>
-                <div className="mt-2">
-                  <Datepicker />
+                <div>
+                  <Label htmlFor="dateOfBirth" className="text-base font-medium">Date of Birth *</Label>
+                  <div className="mt-2">
+                    <DatePicker 
+                      value={dateOfBirth}
+                      onChange={setDateOfBirth}
+                      placeholder="Select date of birth"
+                      style={{ width: '100%', height: '48px' }}
+                    />
+                  </div>
                 </div>
-              </div>
 
               <div>
                 <Label htmlFor="gender" className="text-base font-medium">Gender *</Label>

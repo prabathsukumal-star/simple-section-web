@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Datepicker } from "flowbite-react";
+import { DatePicker } from 'rsuite';
 
 const teacherSchema = z.object({
   employeeId: z.string().min(1, 'Employee ID is required'),
@@ -187,7 +187,12 @@ const CreateTeacherForm = ({ onSubmit, onCancel, initialData }: CreateTeacherFor
                     <FormItem>
                       <FormLabel className="text-sm font-medium">Join Date</FormLabel>
                       <FormControl>
-                        <Input type="date" className="mt-1" {...field} />
+                        <DatePicker 
+                          value={field.value ? new Date(field.value) : null}
+                          onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                          placeholder="Select join date"
+                          style={{ width: '100%', height: '40px' }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

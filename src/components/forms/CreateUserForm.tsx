@@ -6,13 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { usersApi, UserCreateData } from '@/api';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { DatePicker } from 'rsuite';
 
 interface CreateUserFormProps {
   onSubmit: (data: any) => void;
@@ -48,8 +44,8 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
   };
 
   // Add dateOfBirth state
-  const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(
-    initialData?.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined
+  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(
+    initialData?.dateOfBirth ? new Date(initialData.dateOfBirth) : null
   );
 
   const [formData, setFormData] = useState({
@@ -95,7 +91,7 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
         password: formData.password,
         phone: formData.phone,
         userType: formData.userType,
-        dateOfBirth: dateOfBirth ? format(dateOfBirth, 'yyyy-MM-dd') : '',
+        dateOfBirth: dateOfBirth ? dateOfBirth.toISOString().split('T')[0] : '',
         gender: formData.gender,
         nic: formData.nic,
         birthCertificateNo: formData.birthCertificateNo,
@@ -129,7 +125,7 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
 
   return (
     <Dialog open={true} onOpenChange={() => onCancel()}>
-      <DialogContent className="max-w-7xl max-h-[98vh] overflow-y-auto p-6 sm:p-8">
+      <DialogContent className="max-w-6xl max-h-[98vh] overflow-y-auto p-6 sm:p-8">
         <DialogHeader className="pb-6 border-b">
           <DialogTitle className="text-3xl sm:text-4xl font-bold text-center bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
             {initialData ? 'Edit User' : 'Create New User'}
@@ -138,7 +134,8 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Personal Information */}
             <Card className="shadow-lg">
               <CardHeader className="pb-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-t-lg">
@@ -233,32 +230,14 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <Label className="text-base font-semibold text-foreground">Date of Birth *</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal mt-2 h-12 text-base",
-                            !dateOfBirth && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {dateOfBirth ? format(dateOfBirth, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={dateOfBirth}
-                          onSelect={setDateOfBirth}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <div className="mt-2">
+                      <DatePicker 
+                        value={dateOfBirth}
+                        onChange={setDateOfBirth}
+                        placeholder="Select date of birth"
+                        style={{ width: '100%', height: '48px' }}
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -396,6 +375,7 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
                 </div>
               </CardContent>
             </Card>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row justify-end gap-4 pt-8 border-t">
