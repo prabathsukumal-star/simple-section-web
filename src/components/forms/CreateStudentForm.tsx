@@ -5,13 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Loader2, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import dayjs from 'dayjs';
 
 interface CreateStudentFormProps {
   onSubmit: (data: any) => void;
@@ -24,7 +22,7 @@ const CreateStudentForm: React.FC<CreateStudentFormProps> = ({
   onCancel,
   loading = false
 }) => {
-  const [date, setDate] = useState<dayjs.Dayjs | null>(null);
+  const [date, setDate] = useState<Date | undefined>(undefined);
 
   const [formData, setFormData] = useState({
     // User data
@@ -78,7 +76,7 @@ const CreateStudentForm: React.FC<CreateStudentFormProps> = ({
         password: formData.password,
         phone: formData.phone,
         userType: 'STUDENT',
-        dateOfBirth: date.format('YYYY-MM-DD'),
+        dateOfBirth: format(date, 'yyyy-MM-dd'),
         gender: formData.gender,
         nic: formData.nic || undefined,
         birthCertificateNo: formData.birthCertificateNo || undefined,
@@ -108,99 +106,124 @@ const CreateStudentForm: React.FC<CreateStudentFormProps> = ({
 
   return (
     <Dialog open={true} onOpenChange={onCancel}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create New Student</DialogTitle>
+      <DialogContent className="max-w-7xl max-h-[98vh] overflow-y-auto p-6 sm:p-8">
+        <DialogHeader className="pb-6 border-b">
+          <DialogTitle className="text-3xl sm:text-4xl font-bold text-center bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            Create New Student
+          </DialogTitle>
+          <p className="text-muted-foreground text-center mt-2">Complete student information and account details</p>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column - Personal Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Personal Information</h3>
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-lg border">
+                <h3 className="text-2xl font-semibold flex items-center gap-2">
+                  <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                    <span className="text-primary font-bold">1</span>
+                  </div>
+                  Personal Information
+                </h3>
+              </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <Label htmlFor="firstName">First Name *</Label>
+                  <Label htmlFor="firstName" className="text-base font-semibold">First Name *</Label>
                   <Input
                     id="firstName"
                     value={formData.firstName}
                     onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    className="mt-2 h-12 text-base"
+                    placeholder="Enter first name"
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Label htmlFor="lastName" className="text-base font-semibold">Last Name *</Label>
                   <Input
                     id="lastName"
                     value={formData.lastName}
                     onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    className="mt-2 h-12 text-base"
+                    placeholder="Enter last name"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="email" className="text-base font-semibold">Email Address *</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
+                  className="mt-2 h-12 text-base"
+                  placeholder="Enter email address"
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="password">Password *</Label>
+                <Label htmlFor="password" className="text-base font-semibold">Password *</Label>
                 <Input
                   id="password"
                   type="password"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
+                  className="mt-2 h-12 text-base"
+                  placeholder="Enter password"
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="phone">Phone Number *</Label>
+                <Label htmlFor="phone" className="text-base font-semibold">Phone Number *</Label>
                 <Input
                   id="phone"
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
+                  className="mt-2 h-12 text-base"
+                  placeholder="Enter phone number"
                   required
                 />
               </div>
 
               <div>
-                <Label className="text-base font-medium">Date of Birth *</Label>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    label="Select date of birth"
-                    value={date}
-                    onChange={(newValue) => setDate(newValue)}
-                    maxDate={dayjs()}
-                    minDate={dayjs('1900-01-01')}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        required: true,
-                        sx: {
-                          '& .MuiInputBase-root': {
-                            height: '48px',
-                            fontSize: '16px'
-                          }
-                        }
+                <Label className="text-base font-semibold">Date of Birth *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal mt-2 h-12 text-base",
+                        !date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
                       }
-                    }}
-                  />
-                </LocalizationProvider>
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div>
-                <Label htmlFor="gender">Gender *</Label>
+                <Label htmlFor="gender" className="text-base font-semibold">Gender *</Label>
                 <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-2 h-12 text-base">
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
                   <SelectContent>
@@ -211,210 +234,166 @@ const CreateStudentForm: React.FC<CreateStudentFormProps> = ({
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <Label htmlFor="nic">NIC</Label>
+                  <Label htmlFor="nic" className="text-base font-semibold">NIC</Label>
                   <Input
                     id="nic"
                     value={formData.nic}
                     onChange={(e) => handleInputChange('nic', e.target.value)}
                     placeholder="e.g., 200512345678"
+                    className="mt-2 h-12 text-base"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="birthCertificateNo">Birth Certificate No</Label>
+                  <Label htmlFor="birthCertificateNo" className="text-base font-semibold">Birth Certificate No</Label>
                   <Input
                     id="birthCertificateNo"
                     value={formData.birthCertificateNo}
                     onChange={(e) => handleInputChange('birthCertificateNo', e.target.value)}
                     placeholder="e.g., BC-112233445"
+                    className="mt-2 h-12 text-base"
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="imageUrl">Profile Image URL</Label>
+                <Label htmlFor="imageUrl" className="text-base font-semibold">Profile Image URL</Label>
                 <Input
                   id="imageUrl"
                   value={formData.imageUrl}
                   onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Right Column - Address & Student Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Address Information</h3>
-              
-              <div>
-                <Label htmlFor="addressLine1">Address Line 1</Label>
-                <Input
-                  id="addressLine1"
-                  value={formData.addressLine1}
-                  onChange={(e) => handleInputChange('addressLine1', e.target.value)}
+                  className="mt-2 h-12 text-base"
+                  placeholder="https://example.com/image.jpg"
                 />
               </div>
 
-              <div>
-                <Label htmlFor="addressLine2">Address Line 2</Label>
-                <Input
-                  id="addressLine2"
-                  value={formData.addressLine2}
-                  onChange={(e) => handleInputChange('addressLine2', e.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => handleInputChange('city', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="district">District</Label>
-                  <Input
-                    id="district"
-                    value={formData.district}
-                    onChange={(e) => handleInputChange('district', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="province">Province</Label>
-                  <Input
-                    id="province"
-                    value={formData.province}
-                    onChange={(e) => handleInputChange('province', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="postalCode">Postal Code</Label>
-                  <Input
-                    id="postalCode"
-                    value={formData.postalCode}
-                    onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                  />
+              <div className="bg-gradient-to-r from-accent/5 to-accent/10 p-4 rounded-lg border mt-8">
+                <h3 className="text-xl font-semibold flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 bg-accent/20 rounded-full flex items-center justify-center">
+                    <span className="text-accent-foreground font-bold">3</span>
+                  </div>
+                  Parent Information
+                </h3>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div>
+                    <Label htmlFor="fatherId" className="text-base font-semibold">Father ID</Label>
+                    <Input
+                      id="fatherId"
+                      value={formData.fatherId}
+                      onChange={(e) => handleInputChange('fatherId', e.target.value)}
+                      placeholder="Father's user ID"
+                      className="mt-2 h-12 text-base"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="motherId" className="text-base font-semibold">Mother ID</Label>
+                    <Input
+                      id="motherId"
+                      value={formData.motherId}
+                      onChange={(e) => handleInputChange('motherId', e.target.value)}
+                      placeholder="Mother's user ID"
+                      className="mt-2 h-12 text-base"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="guardianId" className="text-base font-semibold">Guardian ID</Label>
+                    <Input
+                      id="guardianId"
+                      value={formData.guardianId}
+                      onChange={(e) => handleInputChange('guardianId', e.target.value)}
+                      placeholder="Guardian's user ID"
+                      className="mt-2 h-12 text-base"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="country">Country</Label>
-                <Input
-                  id="country"
-                  value={formData.country}
-                  onChange={(e) => handleInputChange('country', e.target.value)}
-                />
-              </div>
+              <div className="bg-gradient-to-r from-destructive/5 to-destructive/10 p-4 rounded-lg border">
+                <h3 className="text-xl font-semibold flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 bg-destructive/20 rounded-full flex items-center justify-center">
+                    <span className="text-destructive-foreground font-bold">4</span>
+                  </div>
+                  Student Information
+                </h3>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="studentId" className="text-base font-semibold">Student ID *</Label>
+                    <Input
+                      id="studentId"
+                      value={formData.studentId}
+                      onChange={(e) => handleInputChange('studentId', e.target.value)}
+                      required
+                      placeholder="e.g., STU2025025"
+                      className="mt-2 h-12 text-base"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="bloodGroup" className="text-base font-semibold">Blood Group</Label>
+                    <Select value={formData.bloodGroup} onValueChange={(value) => handleInputChange('bloodGroup', value)}>
+                      <SelectTrigger className="mt-2 h-12 text-base">
+                        <SelectValue placeholder="Select blood group" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A+">A+</SelectItem>
+                        <SelectItem value="A-">A-</SelectItem>
+                        <SelectItem value="B+">B+</SelectItem>
+                        <SelectItem value="B-">B-</SelectItem>
+                        <SelectItem value="AB+">AB+</SelectItem>
+                        <SelectItem value="AB-">AB-</SelectItem>
+                        <SelectItem value="O+">O+</SelectItem>
+                        <SelectItem value="O-">O-</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-              <h3 className="text-lg font-semibold mt-4">Parent Information</h3>
-              
-              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="fatherId">Father ID</Label>
+                  <Label htmlFor="emergencyContact" className="text-base font-semibold">Emergency Contact *</Label>
                   <Input
-                    id="fatherId"
-                    value={formData.fatherId}
-                    onChange={(e) => handleInputChange('fatherId', e.target.value)}
-                    placeholder="Father's user ID"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="motherId">Mother ID</Label>
-                  <Input
-                    id="motherId"
-                    value={formData.motherId}
-                    onChange={(e) => handleInputChange('motherId', e.target.value)}
-                    placeholder="Mother's user ID"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="guardianId">Guardian ID</Label>
-                  <Input
-                    id="guardianId"
-                    value={formData.guardianId}
-                    onChange={(e) => handleInputChange('guardianId', e.target.value)}
-                    placeholder="Guardian's user ID"
-                  />
-                </div>
-              </div>
-
-              <h3 className="text-lg font-semibold mt-4">Student Information</h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="studentId">Student ID *</Label>
-                  <Input
-                    id="studentId"
-                    value={formData.studentId}
-                    onChange={(e) => handleInputChange('studentId', e.target.value)}
+                    id="emergencyContact"
+                    value={formData.emergencyContact}
+                    onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
                     required
-                    placeholder="e.g., STU2025025"
+                    className="mt-2 h-12 text-base"
+                    placeholder="Enter emergency contact number"
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="bloodGroup">Blood Group</Label>
-                  <Select value={formData.bloodGroup} onValueChange={(value) => handleInputChange('bloodGroup', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select blood group" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="A+">A+</SelectItem>
-                      <SelectItem value="A-">A-</SelectItem>
-                      <SelectItem value="B+">B+</SelectItem>
-                      <SelectItem value="B-">B-</SelectItem>
-                      <SelectItem value="AB+">AB+</SelectItem>
-                      <SelectItem value="AB-">AB-</SelectItem>
-                      <SelectItem value="O+">O+</SelectItem>
-                      <SelectItem value="O-">O-</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="medicalConditions" className="text-base font-semibold">Medical Conditions</Label>
+                  <Textarea
+                    id="medicalConditions"
+                    value={formData.medicalConditions}
+                    onChange={(e) => handleInputChange('medicalConditions', e.target.value)}
+                    placeholder="Enter any medical conditions..."
+                    rows={4}
+                    className="mt-2 text-base"
+                  />
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="emergencyContact">Emergency Contact *</Label>
-                <Input
-                  id="emergencyContact"
-                  value={formData.emergencyContact}
-                  onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="medicalConditions">Medical Conditions</Label>
-                <Textarea
-                  id="medicalConditions"
-                  value={formData.medicalConditions}
-                  onChange={(e) => handleInputChange('medicalConditions', e.target.value)}
-                  placeholder="Enter any medical conditions..."
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="allergies">Allergies</Label>
-                <Textarea
-                  id="allergies"
-                  value={formData.allergies}
-                  onChange={(e) => handleInputChange('allergies', e.target.value)}
-                  placeholder="Enter any allergies..."
-                  rows={3}
-                />
+                <div>
+                  <Label htmlFor="allergies" className="text-base font-semibold">Allergies</Label>
+                  <Textarea
+                    id="allergies"
+                    value={formData.allergies}
+                    onChange={(e) => handleInputChange('allergies', e.target.value)}
+                    placeholder="Enter any allergies..."
+                    rows={4}
+                    className="mt-2 text-base"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end gap-4 pt-6 border-t">
-            <Button type="button" variant="outline" onClick={onCancel}>
+          <div className="flex justify-end gap-6 pt-8 border-t">
+            <Button type="button" variant="outline" onClick={onCancel} className="h-12 px-8 text-base">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="h-12 px-8 text-base bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Student
             </Button>

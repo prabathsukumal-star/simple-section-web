@@ -6,12 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { usersApi, UserCreateData } from '@/api';
 import { toast } from 'sonner';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import dayjs from 'dayjs';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CreateUserFormProps {
   onSubmit: (data: any) => void;
@@ -47,8 +48,8 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
   };
 
   // Add dateOfBirth state
-  const [dateOfBirth, setDateOfBirth] = useState<dayjs.Dayjs | null>(
-    initialData?.dateOfBirth ? dayjs(initialData.dateOfBirth) : null
+  const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(
+    initialData?.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined
   );
 
   const [formData, setFormData] = useState({
@@ -94,7 +95,7 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
         password: formData.password,
         phone: formData.phone,
         userType: formData.userType,
-        dateOfBirth: dateOfBirth ? dateOfBirth.format('YYYY-MM-DD') : '',
+        dateOfBirth: dateOfBirth ? format(dateOfBirth, 'yyyy-MM-dd') : '',
         gender: formData.gender,
         nic: formData.nic,
         birthCertificateNo: formData.birthCertificateNo,
@@ -128,83 +129,96 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
 
   return (
     <Dialog open={true} onOpenChange={() => onCancel()}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-        <DialogHeader className="pb-4">
-          <DialogTitle className="text-lg sm:text-xl">{initialData ? 'Edit User' : 'Create New User'}</DialogTitle>
+      <DialogContent className="max-w-7xl max-h-[98vh] overflow-y-auto p-6 sm:p-8">
+        <DialogHeader className="pb-6 border-b">
+          <DialogTitle className="text-3xl sm:text-4xl font-bold text-center bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            {initialData ? 'Edit User' : 'Create New User'}
+          </DialogTitle>
+          <p className="text-muted-foreground text-center mt-2">Fill in the information below to create a new user account</p>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Personal Information */}
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg sm:text-xl">Personal Information</CardTitle>
+            <Card className="shadow-lg">
+              <CardHeader className="pb-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-t-lg">
+                <CardTitle className="text-2xl font-semibold flex items-center gap-2">
+                  <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                    <span className="text-primary font-bold">1</span>
+                  </div>
+                  Personal Information
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CardContent className="space-y-6 p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="firstName" className="text-sm font-medium">First Name *</Label>
+                    <Label htmlFor="firstName" className="text-base font-semibold text-foreground">First Name *</Label>
                     <Input
                       id="firstName"
                       value={formData.firstName}
                       onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      className="mt-1"
+                      className="mt-2 h-12 text-base"
+                      placeholder="Enter first name"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="lastName" className="text-sm font-medium">Last Name *</Label>
+                    <Label htmlFor="lastName" className="text-base font-semibold text-foreground">Last Name *</Label>
                     <Input
                       id="lastName"
                       value={formData.lastName}
                       onChange={(e) => handleInputChange('lastName', e.target.value)}
-                      className="mt-1"
+                      className="mt-2 h-12 text-base"
+                      placeholder="Enter last name"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="email" className="text-sm font-medium">Email *</Label>
+                  <Label htmlFor="email" className="text-base font-semibold text-foreground">Email Address *</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="mt-1"
+                    className="mt-2 h-12 text-base"
+                    placeholder="Enter email address"
                     required
                   />
                 </div>
 
                 {!initialData && (
                   <div>
-                    <Label htmlFor="password" className="text-sm font-medium">Password *</Label>
+                    <Label htmlFor="password" className="text-base font-semibold text-foreground">Password *</Label>
                     <Input
                       id="password"
                       type="password"
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
-                      className="mt-1"
+                      className="mt-2 h-12 text-base"
+                      placeholder="Enter password"
                       required
                     />
                   </div>
                 )}
 
                 <div>
-                  <Label htmlFor="phone" className="text-sm font-medium">Phone *</Label>
+                  <Label htmlFor="phone" className="text-base font-semibold text-foreground">Phone Number *</Label>
                   <Input
                     id="phone"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="mt-1"
+                    className="mt-2 h-12 text-base"
+                    placeholder="Enter phone number"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="userType" className="text-sm font-medium">User Type *</Label>
+                  <Label htmlFor="userType" className="text-base font-semibold text-foreground">User Type *</Label>
                   <Select value={formData.userType} onValueChange={(value) => handleInputChange('userType', value)}>
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger className="mt-2 h-12 text-base">
                       <SelectValue placeholder="Select user type" />
                     </SelectTrigger>
                      <SelectContent>
@@ -216,25 +230,41 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="dateOfBirth" className="text-sm font-medium">Date of Birth *</Label>
-                    <Input
-                      id="dateOfBirth"
-                      type="date"
-                      value={formData.dateOfBirth}
-                      onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                      className="mt-1"
-                      required
-                      placeholder="YYYY-MM-DD"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">Format: YYYY-MM-DD</p>
+                    <Label className="text-base font-semibold text-foreground">Date of Birth *</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal mt-2 h-12 text-base",
+                            !dateOfBirth && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dateOfBirth ? format(dateOfBirth, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={dateOfBirth}
+                          onSelect={setDateOfBirth}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   <div>
-                    <Label htmlFor="gender" className="text-sm font-medium">Gender *</Label>
+                    <Label htmlFor="gender" className="text-base font-semibold text-foreground">Gender *</Label>
                     <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
-                      <SelectTrigger className="mt-1">
+                      <SelectTrigger className="mt-2 h-12 text-base">
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
                       <SelectContent>
@@ -246,46 +276,53 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="nic" className="text-sm font-medium">NIC</Label>
+                    <Label htmlFor="nic" className="text-base font-semibold text-foreground">NIC</Label>
                     <Input
                       id="nic"
                       value={formData.nic}
                       onChange={(e) => handleInputChange('nic', e.target.value)}
-                      className="mt-1"
+                      className="mt-2 h-12 text-base"
+                      placeholder="Enter NIC number"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="birthCertificateNo" className="text-sm font-medium">Birth Certificate No</Label>
+                    <Label htmlFor="birthCertificateNo" className="text-base font-semibold text-foreground">Birth Certificate No</Label>
                     <Input
                       id="birthCertificateNo"
                       value={formData.birthCertificateNo}
                       onChange={(e) => handleInputChange('birthCertificateNo', e.target.value)}
-                      className="mt-1"
+                      className="mt-2 h-12 text-base"
+                      placeholder="Enter birth certificate number"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="imageUrl" className="text-sm font-medium">Image URL</Label>
+                  <Label htmlFor="imageUrl" className="text-base font-semibold text-foreground">Profile Image URL</Label>
                   <Input
                     id="imageUrl"
                     value={formData.imageUrl}
                     onChange={(e) => handleInputChange('imageUrl', e.target.value)}
                     placeholder="https://example.com/image.jpg"
-                    className="mt-1"
+                    className="mt-2 h-12 text-base"
                   />
                 </div>
               </CardContent>
             </Card>
 
             {/* Address Information */}
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg sm:text-xl">Address Information</CardTitle>
+            <Card className="shadow-lg">
+              <CardHeader className="pb-6 bg-gradient-to-r from-secondary/5 to-secondary/10 rounded-t-lg">
+                <CardTitle className="text-2xl font-semibold flex items-center gap-2">
+                  <div className="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center">
+                    <span className="text-secondary-foreground font-bold">2</span>
+                  </div>
+                  Address Information
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6 p-6">
                 <div>
                   <Label htmlFor="addressLine1" className="text-sm font-medium">Address Line 1</Label>
                   <Input
@@ -361,11 +398,11 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
             </Card>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4">
-            <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row justify-end gap-4 pt-8 border-t">
+            <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto h-12 px-8 text-base">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || isLoading} className="w-full sm:w-auto">
+            <Button type="submit" disabled={loading || isLoading} className="w-full sm:w-auto h-12 px-8 text-base bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary">
               {loading || isLoading ? 'Creating...' : (initialData ? 'Update User' : 'Create User')}
             </Button>
           </div>
