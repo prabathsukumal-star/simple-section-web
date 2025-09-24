@@ -10,10 +10,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { studentsApi, StudentCreateData } from '@/api/students.api';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import dayjs from 'dayjs';
+import { Datepicker } from "flowbite-react";
 interface CreateInstituteStudentFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -28,7 +25,7 @@ const CreateInstituteStudentForm: React.FC<CreateInstituteStudentFormProps> = ({
     toast
   } = useToast();
   const [loading, setLoading] = useState(false);
-  const [date, setDate] = useState<dayjs.Dayjs | null>(null);
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const [formData, setFormData] = useState({
     // User data
     firstName: '',
@@ -79,7 +76,7 @@ const CreateInstituteStudentForm: React.FC<CreateInstituteStudentFormProps> = ({
           password: formData.password,
           phone: formData.phone,
           userType: 'STUDENT',
-          dateOfBirth: date ? date.format('YYYY-MM-DD') : '',
+          dateOfBirth: date ? date.toISOString().split('T')[0] : '',
           gender: formData.gender,
           birthCertificateNo: formData.birthCertificateNo || undefined,
           addressLine1: formData.addressLine1 || undefined,
@@ -185,27 +182,9 @@ const CreateInstituteStudentForm: React.FC<CreateInstituteStudentFormProps> = ({
 
               <div>
                 <Label>Date of Birth *</Label>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    label="Select date of birth"
-                    value={date}
-                    onChange={(newValue) => setDate(newValue)}
-                    maxDate={dayjs()}
-                    minDate={dayjs('1900-01-01')}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        required: true,
-                        sx: {
-                          '& .MuiInputBase-root': {
-                            height: '48px',
-                            fontSize: '16px'
-                          }
-                        }
-                      }
-                    }}
-                  />
-                </LocalizationProvider>
+                <div className="mt-2">
+                  <Datepicker />
+                </div>
               </div>
 
               <div>

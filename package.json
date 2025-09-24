@@ -55,6 +55,7 @@
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.18",
     "embla-carousel-react": "^8.3.0",
+    "flowbite-react": "^0.12.9",
     "input-otp": "^1.2.4",
     "jsqr": "^1.4.0",
     "lucide-react": "^0.462.0",
