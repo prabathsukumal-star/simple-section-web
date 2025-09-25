@@ -11,6 +11,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { instituteClassesApi, InstituteClassCreateData } from '@/api/instituteClasses.api.ts';
 import { Loader2 } from 'lucide-react';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 const updateClassSchema = z.object({
   instituteId: z.string().min(1, 'Institute ID is required'),
@@ -288,11 +292,15 @@ const UpdateClassForm: React.FC<UpdateClassFormProps> = ({ classData, onSubmit, 
               <FormItem>
                 <FormLabel>Start Date</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="date" 
-                    {...field}
-                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                  />
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      label="Start Date"
+                      value={field.value ? dayjs(field.value) : null}
+                      onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
+                      views={['year', 'month', 'day']}
+                      sx={{ width: '100%' }}
+                    />
+                  </LocalizationProvider>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -306,11 +314,15 @@ const UpdateClassForm: React.FC<UpdateClassFormProps> = ({ classData, onSubmit, 
               <FormItem>
                 <FormLabel>End Date</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="date" 
-                    {...field}
-                    value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                  />
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      label="End Date"
+                      value={field.value ? dayjs(field.value) : null}
+                      onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
+                      views={['year', 'month', 'day']}
+                      sx={{ width: '100%' }}
+                    />
+                  </LocalizationProvider>
                 </FormControl>
                 <FormMessage />
               </FormItem>

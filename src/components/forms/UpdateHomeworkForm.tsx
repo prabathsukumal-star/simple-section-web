@@ -6,6 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getBaseUrl, getApiHeaders } from '@/contexts/utils/auth.api';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 interface UpdateHomeworkFormProps {
   homework: any;
@@ -105,21 +109,27 @@ const UpdateHomeworkForm = ({ homework, onClose, onSuccess }: UpdateHomeworkForm
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="startDate">Start Date</Label>
-          <Input
-            id="startDate"
-            type="date"
-            value={formData.startDate}
-            onChange={(e) => handleInputChange('startDate', e.target.value)}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Start Date"
+              value={formData.startDate ? dayjs(formData.startDate) : null}
+              onChange={(date) => handleInputChange('startDate', date ? date.format('YYYY-MM-DD') : '')}
+              views={['year', 'month', 'day']}
+              sx={{ width: '100%' }}
+            />
+          </LocalizationProvider>
         </div>
         <div>
           <Label htmlFor="endDate">End Date</Label>
-          <Input
-            id="endDate"
-            type="date"
-            value={formData.endDate}
-            onChange={(e) => handleInputChange('endDate', e.target.value)}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="End Date"
+              value={formData.endDate ? dayjs(formData.endDate) : null}
+              onChange={(date) => handleInputChange('endDate', date ? date.format('YYYY-MM-DD') : '')}
+              views={['year', 'month', 'day']}
+              sx={{ width: '100%' }}
+            />
+          </LocalizationProvider>
         </div>
       </div>
 

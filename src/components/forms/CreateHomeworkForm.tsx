@@ -7,6 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/api/client';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 interface CreateHomeworkFormProps {
   onClose: () => void;
@@ -151,23 +155,31 @@ const CreateHomeworkForm = ({ onClose, onSuccess }: CreateHomeworkFormProps) => 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="startDate" className="text-sm font-medium">Start Date</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => handleInputChange('startDate', e.target.value)}
-                    className="mt-1"
-                  />
+                  <div className="mt-1">
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        label="Start Date"
+                        value={formData.startDate ? dayjs(formData.startDate) : null}
+                        onChange={(date) => handleInputChange('startDate', date ? date.format('YYYY-MM-DD') : '')}
+                        views={['year', 'month', 'day']}
+                        sx={{ width: '100%' }}
+                      />
+                    </LocalizationProvider>
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="endDate" className="text-sm font-medium">End Date</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => handleInputChange('endDate', e.target.value)}
-                    className="mt-1"
-                  />
+                  <div className="mt-1">
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        label="End Date"
+                        value={formData.endDate ? dayjs(formData.endDate) : null}
+                        onChange={(date) => handleInputChange('endDate', date ? date.format('YYYY-MM-DD') : '')}
+                        views={['year', 'month', 'day']}
+                        sx={{ width: '100%' }}
+                      />
+                    </LocalizationProvider>
+                  </div>
                 </div>
               </div>
 

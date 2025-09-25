@@ -8,6 +8,10 @@ import { Card, CardContent } from '../ui/card';
 import { toast } from '../ui/use-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { getBaseUrl, getApiHeaders } from '../../contexts/utils/auth.api';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 interface UpdateExamFormProps {
   exam: any;
@@ -200,13 +204,15 @@ export const UpdateExamForm: React.FC<UpdateExamFormProps> = ({ exam, onClose, o
 
             <div className="space-y-2">
               <Label htmlFor="examDate">Exam Date *</Label>
-              <Input
-                id="examDate"
-                type="date"
-                value={formData.examDate}
-                onChange={(e) => handleInputChange('examDate', e.target.value)}
-                required
-              />
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Exam Date"
+                  value={formData.examDate ? dayjs(formData.examDate) : null}
+                  onChange={(date) => handleInputChange('examDate', date ? date.format('YYYY-MM-DD') : '')}
+                  views={['year', 'month', 'day']}
+                  sx={{ width: '100%' }}
+                />
+              </LocalizationProvider>
             </div>
 
             <div className="space-y-2">
