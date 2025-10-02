@@ -467,7 +467,16 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             label: 'Institute Users',
             icon: Users,
             permission: 'view-users',
-            alwaysShow: false
+            alwaysShow: false,
+            section: 'Main'
+          },
+          {
+            id: 'unverified-users-images',
+            label: 'Image Verification',
+            icon: Camera,
+            permission: 'view-users',
+            alwaysShow: false,
+            section: 'Main'
           },
           {
             id: 'parents',
