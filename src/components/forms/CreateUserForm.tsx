@@ -1,14 +1,12 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { usersApi, UserCreateData } from '@/api';
 import { toast } from 'sonner';
-import { DatePicker } from 'rsuite';
+import { CalendarIcon } from 'lucide-react';
 
 interface CreateUserFormProps {
   onSubmit: (data: any) => void;
@@ -43,16 +41,10 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
     }
   };
 
-  // Add dateOfBirth state
-  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(
-    initialData?.dateOfBirth ? new Date(initialData.dateOfBirth) : null
-  );
-
   const [formData, setFormData] = useState({
     firstName: initialData?.firstName || '',
     lastName: initialData?.lastName || '',
     email: initialData?.email || '',
-    password: initialData?.password || 'password123',
     phone: initialData?.phone || '',
     userType: initialData?.userType || 'STUDENT',
     dateOfBirth: formatDateForInput(initialData?.dateOfBirth),
@@ -67,6 +59,7 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
     postalCode: initialData?.postalCode || '',
     country: initialData?.country || 'Sri Lanka',
     imageUrl: initialData?.imageUrl || '',
+    idUrl: initialData?.idUrl || '',
     isActive: initialData?.isActive ?? true
   });
 
@@ -88,10 +81,10 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        password: formData.password,
+        password: 'defaultPassword123',
         phone: formData.phone,
         userType: formData.userType,
-        dateOfBirth: dateOfBirth ? dateOfBirth.toISOString().split('T')[0] : '',
+        dateOfBirth: formData.dateOfBirth,
         gender: formData.gender,
         nic: formData.nic,
         birthCertificateNo: formData.birthCertificateNo,
@@ -103,6 +96,7 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
         postalCode: formData.postalCode,
         country: formData.country,
         imageUrl: formData.imageUrl,
+        idUrl: formData.idUrl,
         isActive: formData.isActive
       };
       
@@ -135,19 +129,17 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Personal Information */}
-            <Card className="shadow-lg">
-              <CardHeader className="pb-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-t-lg">
-                <CardTitle className="text-2xl font-semibold flex items-center gap-2">
+            <div className="space-y-8">
+              {/* Personal Information Section */}
+              <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-6 rounded-lg border">
+                <h3 className="text-2xl font-semibold flex items-center gap-2 mb-6">
                   <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
                     <span className="text-primary font-bold">1</span>
                   </div>
                   Personal Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6 p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="firstName" className="text-base font-semibold text-foreground">First Name *</Label>
                     <Input
@@ -170,73 +162,58 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
                       required
                     />
                   </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="email" className="text-base font-semibold text-foreground">Email Address *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="mt-2 h-12 text-base"
-                    placeholder="Enter email address"
-                    required
-                  />
-                </div>
-
-                {!initialData && (
                   <div>
-                    <Label htmlFor="password" className="text-base font-semibold text-foreground">Password *</Label>
+                    <Label htmlFor="email" className="text-base font-semibold text-foreground">Email Address *</Label>
                     <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
                       className="mt-2 h-12 text-base"
-                      placeholder="Enter password"
+                      placeholder="Enter email address"
                       required
                     />
                   </div>
-                )}
 
-                <div>
-                  <Label htmlFor="phone" className="text-base font-semibold text-foreground">Phone Number *</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="mt-2 h-12 text-base"
-                    placeholder="Enter phone number"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="userType" className="text-base font-semibold text-foreground">User Type *</Label>
-                  <Select value={formData.userType} onValueChange={(value) => handleInputChange('userType', value)}>
-                    <SelectTrigger className="mt-2 h-12 text-base">
-                      <SelectValue placeholder="Select user type" />
-                    </SelectTrigger>
-                     <SelectContent>
-                       {/* Restricted options for InstituteAdmin */}
-                       <SelectItem value="INSTITUTE_ADMIN">Institute Admin</SelectItem>
-                       <SelectItem value="ATTENDANCE_MARKER">Attendance Marker</SelectItem>
-                       <SelectItem value="TEACHER">Teacher</SelectItem>
-                     </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <Label className="text-base font-semibold text-foreground">Date of Birth *</Label>
-                    <div className="mt-2">
-                      <DatePicker 
-                        value={dateOfBirth}
-                        onChange={setDateOfBirth}
-                        placeholder="Select date of birth"
-                        style={{ width: '100%', height: '48px' }}
+                    <Label htmlFor="phone" className="text-base font-semibold text-foreground">Phone Number *</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      className="mt-2 h-12 text-base"
+                      placeholder="Enter phone number"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="userType" className="text-base font-semibold text-foreground">User Type *</Label>
+                    <Select value={formData.userType} onValueChange={(value) => handleInputChange('userType', value)}>
+                      <SelectTrigger className="mt-2 h-12 text-base">
+                        <SelectValue placeholder="Select user type" />
+                      </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="INSTITUTE_ADMIN">Institute Admin</SelectItem>
+                         <SelectItem value="ATTENDANCE_MARKER">Attendance Marker</SelectItem>
+                         <SelectItem value="TEACHER">Teacher</SelectItem>
+                       </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="dateOfBirth" className="text-base font-semibold text-foreground">Date of Birth *</Label>
+                    <div className="relative mt-2">
+                      <Input
+                        id="dateOfBirth"
+                        type="date"
+                        value={formData.dateOfBirth}
+                        onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                        className="h-12 text-base"
+                        placeholder="mm/dd/yyyy"
+                        required
                       />
+                      <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     </div>
                   </div>
 
@@ -253,9 +230,7 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="nic" className="text-base font-semibold text-foreground">NIC</Label>
                     <Input
@@ -276,105 +251,105 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
                       placeholder="Enter birth certificate number"
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="idUrl" className="text-base font-semibold text-foreground">ID Document URL</Label>
+                    <Input
+                      id="idUrl"
+                      value={formData.idUrl}
+                      onChange={(e) => handleInputChange('idUrl', e.target.value)}
+                      placeholder="https://example.com/id-document.pdf"
+                      className="mt-2 h-12 text-base"
+                    />
+                  </div>
                 </div>
+              </div>
 
-                <div>
-                  <Label htmlFor="imageUrl" className="text-base font-semibold text-foreground">Profile Image URL</Label>
-                  <Input
-                    id="imageUrl"
-                    value={formData.imageUrl}
-                    onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                    className="mt-2 h-12 text-base"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Address Information */}
-            <Card className="shadow-lg">
-              <CardHeader className="pb-6 bg-gradient-to-r from-secondary/5 to-secondary/10 rounded-t-lg">
-                <CardTitle className="text-2xl font-semibold flex items-center gap-2">
+              {/* Address Information Section */}
+              <div className="bg-gradient-to-r from-secondary/5 to-secondary/10 p-6 rounded-lg border">
+                <h3 className="text-2xl font-semibold flex items-center gap-2 mb-6">
                   <div className="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center">
                     <span className="text-secondary-foreground font-bold">2</span>
                   </div>
                   Address Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6 p-6">
-                <div>
-                  <Label htmlFor="addressLine1" className="text-sm font-medium">Address Line 1</Label>
-                  <Input
-                    id="addressLine1"
-                    value={formData.addressLine1}
-                    onChange={(e) => handleInputChange('addressLine1', e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="addressLine2" className="text-sm font-medium">Address Line 2</Label>
-                  <Input
-                    id="addressLine2"
-                    value={formData.addressLine2}
-                    onChange={(e) => handleInputChange('addressLine2', e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="city" className="text-sm font-medium">City</Label>
+                    <Label htmlFor="addressLine1" className="text-base font-semibold">Address Line 1</Label>
+                    <Input
+                      id="addressLine1"
+                      value={formData.addressLine1}
+                      onChange={(e) => handleInputChange('addressLine1', e.target.value)}
+                      className="mt-2 h-12 text-base"
+                      placeholder="Street address"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="addressLine2" className="text-base font-semibold">Address Line 2</Label>
+                    <Input
+                      id="addressLine2"
+                      value={formData.addressLine2}
+                      onChange={(e) => handleInputChange('addressLine2', e.target.value)}
+                      className="mt-2 h-12 text-base"
+                      placeholder="Area, landmark"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="city" className="text-base font-semibold">City</Label>
                     <Input
                       id="city"
                       value={formData.city}
                       onChange={(e) => handleInputChange('city', e.target.value)}
-                      className="mt-1"
+                      className="mt-2 h-12 text-base"
+                      placeholder="Enter city"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="district" className="text-sm font-medium">District</Label>
+                    <Label htmlFor="district" className="text-base font-semibold">District</Label>
                     <Input
                       id="district"
                       value={formData.district}
                       onChange={(e) => handleInputChange('district', e.target.value)}
-                      className="mt-1"
+                      className="mt-2 h-12 text-base"
+                      placeholder="Enter district"
                     />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="province" className="text-sm font-medium">Province</Label>
+                    <Label htmlFor="province" className="text-base font-semibold">Province</Label>
                     <Input
                       id="province"
                       value={formData.province}
                       onChange={(e) => handleInputChange('province', e.target.value)}
-                      className="mt-1"
+                      className="mt-2 h-12 text-base"
+                      placeholder="Enter province"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="postalCode" className="text-sm font-medium">Postal Code</Label>
+                    <Label htmlFor="postalCode" className="text-base font-semibold">Postal Code</Label>
                     <Input
                       id="postalCode"
                       value={formData.postalCode}
                       onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                      className="mt-1"
+                      className="mt-2 h-12 text-base"
+                      placeholder="Enter postal code"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label htmlFor="country" className="text-base font-semibold">Country</Label>
+                    <Input
+                      id="country"
+                      value={formData.country}
+                      onChange={(e) => handleInputChange('country', e.target.value)}
+                      className="mt-2 h-12 text-base"
+                      placeholder="Sri Lanka"
                     />
                   </div>
                 </div>
-
-                <div>
-                  <Label htmlFor="country" className="text-sm font-medium">Country</Label>
-                  <Input
-                    id="country"
-                    value={formData.country}
-                    onChange={(e) => handleInputChange('country', e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-              </CardContent>
-            </Card>
+              </div>
             </div>
           </div>
 

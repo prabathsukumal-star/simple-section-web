@@ -93,6 +93,7 @@ const OrganizationLectures = ({ organizationId, courseId }: OrganizationLectures
     return (
       <CreateOrganizationLectureForm
         courseId={courseId || ''}
+        organizationId={organizationId}
         onSuccess={handleCreateSuccess}
         onCancel={handleCreateCancel}
       />

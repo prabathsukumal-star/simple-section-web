@@ -90,8 +90,7 @@ const UpdateOrganizationLectureForm = ({ lecture, onClose, onSuccess }: UpdateOr
       const response = await fetch(`${baseUrl2}/organization/api/v1/lectures/${lecture.lectureId}/with-documents`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('org_access_token')}`,
-          'ngrok-skip-browser-warning': 'true'
+          'Authorization': `Bearer ${localStorage.getItem('org_access_token')}`
         },
         body: fd,
       });

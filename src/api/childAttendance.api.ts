@@ -44,7 +44,7 @@ export interface ChildAttendanceParams {
 }
 
 export interface MarkAttendanceByCardRequest {
-  studentId: string;
+  studentCardId: string;
   instituteId: string;
   instituteName: string;
   classId?: string;
@@ -120,7 +120,7 @@ class ChildAttendanceApi {
 
     // Build dynamic request body based on what's selected
     const requestBody: any = {
-      studentId: request.studentId,
+      studentCardId: request.studentCardId,
       instituteId: request.instituteId,
       instituteName: request.instituteName,
       address: request.address,
@@ -141,7 +141,7 @@ class ChildAttendanceApi {
     }
 
     const baseUrl = attendanceBaseUrl.endsWith('/') ? attendanceBaseUrl.slice(0, -1) : attendanceBaseUrl;
-    const fullApiUrl = `${baseUrl}/api/attendance/mark`;
+    const fullApiUrl = `${baseUrl}/api/attendance/mark-by-card`;
     
     console.log('=== ATTENDANCE BY CARD API CALL ===');
     console.log('Attendance URL from config:', getAttendanceUrl());

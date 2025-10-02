@@ -188,8 +188,7 @@ const CreatePayment = () => {
       const response = await fetch(`${baseUrl}/payment`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-          'ngrok-skip-browser-warning': 'true'
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         },
         body: formDataToSend
       });

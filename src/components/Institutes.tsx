@@ -61,7 +61,7 @@ const Institutes = () => {
   const itemsPerPage = 10;
 
   const getBaseUrl = () => {
-    return localStorage.getItem('baseUrl') || 'https://a174-123-231-85-77.ngrok-free.app';
+    return localStorage.getItem('baseUrl') || '';
   };
 
   const fetchInstitutes = async (page: number = 1, search: string = '', isActive: string = 'true') => {
@@ -86,7 +86,6 @@ const Institutes = () => {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
         },
       });
 
@@ -139,7 +138,6 @@ const Institutes = () => {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
         },
       });
 
@@ -180,7 +178,6 @@ const Institutes = () => {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
         },
         body: JSON.stringify(instituteData),
       });
@@ -246,7 +243,6 @@ const Institutes = () => {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
         },
         body: JSON.stringify(updateData),
       });
@@ -285,7 +281,6 @@ const Institutes = () => {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
         },
       });
 

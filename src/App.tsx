@@ -6,6 +6,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import QRAttendance from '@/components/QRAttendance';
+import RFIDAttendance from '@/pages/RFIDAttendance';
 
 import NotFound from "./pages/NotFound";
 import Payments from "./pages/Payments";
@@ -77,8 +79,8 @@ const App = () => {
               <Route path="/daily-attendance" element={<Index />} />
               
               <Route path="/attendance-markers" element={<Index />} />
-              <Route path="/qr-attendance" element={<Index />} />
-              <Route path="/rfid-attendance" element={<Index />} />
+               <Route path="/qr-attendance" element={<QRAttendance />} />
+               <Route path="/rfid-attendance" element={<RFIDAttendance />} />
               
               {/* Academic Content Routes */}
               <Route path="/lectures" element={<Index />} />

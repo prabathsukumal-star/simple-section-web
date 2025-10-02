@@ -90,8 +90,7 @@ const Payments = () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-          'ngrok-skip-browser-warning': 'true'
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
       });
 
