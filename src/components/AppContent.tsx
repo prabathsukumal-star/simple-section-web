@@ -59,7 +59,6 @@ import UnverifiedStudents from '@/components/UnverifiedStudents';
 import EnrollClass from '@/components/EnrollClass';
 import EnrollSubject from '@/components/EnrollSubject';
 import InstituteUsers from '@/components/InstituteUsers';
-import UnverifiedUsersWithImages from '@/components/UnverifiedUsersWithImages';
 import SetupGuide from '@/components/SetupGuide';
 import StudentHomeworkSubmissions from '@/components/StudentHomeworkSubmissions';
 import FreeLectures from '@/components/FreeLectures';
@@ -775,8 +774,6 @@ const AppContent = ({ initialPage }: AppContentProps) => {
         return <Dashboard />;
       case 'institute-users':
         return <InstituteUsers />;
-      case 'unverified-users-images':
-        return <UnverifiedUsersWithImages />;
       case 'users':
         // Show InstituteUsers for InstituteAdmin
         if (user?.role === 'InstituteAdmin') {

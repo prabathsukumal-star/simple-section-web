@@ -54,7 +54,6 @@ const App = () => {
               <Route path="/institutes" element={<Index />} />
               <Route path="/institutes/users" element={<Index />} />
               <Route path="/institutes/classes" element={<Index />} />
-              <Route path="/unverified-users-images" element={<Index />} />
               
               {/* Organization Routes */}
               <Route path="/organizations" element={<Index />} />
