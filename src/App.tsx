@@ -28,6 +28,7 @@ import CardDemo from '@/pages/CardDemo';
 import ExamResults from '@/pages/ExamResults';
 import TransportSelection from '@/pages/TransportSelection';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import UnverifiedUsersWithImages from '@/components/UnverifiedUsersWithImages';
 
 const queryClient = new QueryClient();
 
@@ -54,7 +55,7 @@ const App = () => {
               <Route path="/institutes" element={<Index />} />
               <Route path="/institutes/users" element={<Index />} />
               <Route path="/institutes/classes" element={<Index />} />
-              <Route path="/unverified-users-images" element={<Index />} />
+              <Route path="/unverified-users-images" element={<UnverifiedUsersWithImages />} />
               
               {/* Organization Routes */}
               <Route path="/organizations" element={<Index />} />

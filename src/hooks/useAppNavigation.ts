@@ -12,6 +12,7 @@ export const useAppNavigation = () => {
       'institute-users': '/institutes/users', 
       'institute-classes': '/institutes/classes',
       'unverified-users-images': '/unverified-users-images',
+      'image-verification': '/unverified-users-images',
       'organizations': '/organizations',
       'profile': '/profile',
       'users': '/users',
