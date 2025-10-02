@@ -138,8 +138,7 @@ const StudentSubmissionsDialog = ({
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning': 'true'
+            'Content-Type': 'application/json'
           }
         }
       );

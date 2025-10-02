@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Camera, QrCode, UserCheck, CheckCircle, MapPin, X, BarChart3, Smartphone, AlertCircle } from 'lucide-react';
 import jsQR from 'jsqr';
 import { childAttendanceApi, MarkAttendanceByCardRequest, MarkAttendanceRequest } from '@/api/childAttendance.api';
+import AppLayout from '@/components/layout/AppLayout';
 
 interface AttendanceAlert {
   id: string;
@@ -25,6 +27,7 @@ interface AttendanceAlert {
 const QRAttendance = () => {
   const { selectedInstitute, selectedClass, selectedSubject, currentInstituteId, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [studentId, setStudentId] = useState('');
   const [markedCount, setMarkedCount] = useState(0);
@@ -146,6 +149,13 @@ const QRAttendance = () => {
   const startCameraForMethod = async (method: 'qr' | 'barcode' | 'rfid/nfc') => {
     setSelectedMethod(method);
     setShowMethodDialog(false);
+    
+    // Navigate to RFID page if RFID/NFC is selected
+    if (method === 'rfid/nfc') {
+      navigate('/rfid-attendance');
+      return;
+    }
+    
     setIsScanning(true);
     
     // Wait for video element to be rendered
@@ -359,7 +369,7 @@ const QRAttendance = () => {
 
     try {
       const request: MarkAttendanceByCardRequest = {
-        studentId: studentCardId.trim(),
+        studentCardId: studentCardId.trim(),
         instituteId: currentInstituteId,
         instituteName: selectedInstitute.name,
         address: location.address,
@@ -600,7 +610,8 @@ const QRAttendance = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <AppLayout>
+      <div className="min-h-screen bg-background">
       {/* Attendance Alerts */}
       <div className="fixed top-4 left-4 z-50 space-y-2 max-w-sm">
         {attendanceAlerts.map((alert) => (
@@ -952,7 +963,8 @@ const QRAttendance = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 

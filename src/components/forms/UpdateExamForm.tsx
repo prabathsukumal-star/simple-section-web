@@ -8,6 +8,11 @@ import { Card, CardContent } from '../ui/card';
 import { toast } from '../ui/use-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { getBaseUrl, getApiHeaders } from '../../contexts/utils/auth.api';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface UpdateExamFormProps {
   exam: any;
@@ -200,13 +205,29 @@ export const UpdateExamForm: React.FC<UpdateExamFormProps> = ({ exam, onClose, o
 
             <div className="space-y-2">
               <Label htmlFor="examDate">Exam Date *</Label>
-              <Input
-                id="examDate"
-                type="date"
-                value={formData.examDate}
-                onChange={(e) => handleInputChange('examDate', e.target.value)}
-                required
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.examDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.examDate ? format(new Date(formData.examDate), "PPP") : <span>Exam Date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.examDate ? new Date(formData.examDate) : undefined}
+                    onSelect={(date) => handleInputChange('examDate', date ? format(date, 'yyyy-MM-dd') : '')}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">

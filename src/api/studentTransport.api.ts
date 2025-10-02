@@ -11,6 +11,7 @@ export interface TransportEnrollment {
     year: number;
     route: string;
     capacity: number;
+    imageUrl?: string;
   };
   ownerId: {
     _id: string;
@@ -21,7 +22,7 @@ export interface TransportEnrollment {
   enrollmentDate: string;
   startDate: string;
   endDate?: string;
-  status: 'PENDING' | 'ACTIVE' | 'INACTIVE';
+  status: 'PENDING' | 'ACTIVE' | 'APPROVED' | 'INACTIVE';
   parentContact: string;
   emergencyContact: string;
   pickupLocation: string;
@@ -33,6 +34,7 @@ export interface TransportEnrollment {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  __v: number;
 }
 
 export interface StudentTransportResponse {

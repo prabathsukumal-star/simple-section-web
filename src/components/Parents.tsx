@@ -216,12 +216,7 @@ const Parents = () => {
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="text-2xl">Create New Parent</DialogTitle>
-                  <DialogDescription className="text-lg">
-                    Add a new parent to the institute
-                  </DialogDescription>
-                </DialogHeader>
+                
                 <CreateParentForm onSubmit={handleCreateParentSubmit} onCancel={() => setShowCreateDialog(false)} />
               </DialogContent>
             </Dialog>}

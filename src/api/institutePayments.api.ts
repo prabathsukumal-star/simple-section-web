@@ -294,8 +294,7 @@ class InstitutePaymentsApi {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'ngrok-skip-browser-warning': 'true'
+        'Authorization': `Bearer ${authToken}`
         // Do NOT set Content-Type for FormData
       },
       body: formData

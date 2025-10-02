@@ -26,6 +26,8 @@ interface User {
   dateOfBirth?: string;
   gender?: string;
   imageUrl?: string;
+  telegramId?: string;
+  rfid?: string;
   isActive: boolean;
   subscriptionPlan: string;
   paymentExpiresAt?: string;

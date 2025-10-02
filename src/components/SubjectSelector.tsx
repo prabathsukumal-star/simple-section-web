@@ -83,8 +83,7 @@ const SubjectSelector = () => {
   const getApiHeaders = () => {
     const token = getAuthToken();
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true'
+      'Content-Type': 'application/json'
     };
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;

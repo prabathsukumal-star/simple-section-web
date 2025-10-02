@@ -5,10 +5,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
-import { DatePicker } from 'rsuite';
+import { Loader2, Eye } from 'lucide-react';
 import { studentsApi } from '@/api/students.api';
+import { usersApi, BasicUser } from '@/api/users.api';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import UserInfoDialog from './UserInfoDialog';
 
 interface CreateStudentFormProps {
   onSubmit: (data: any) => void;
@@ -21,8 +27,12 @@ const CreateStudentForm: React.FC<CreateStudentFormProps> = ({
   onCancel,
   loading = false
 }) => {
-  const [date, setDate] = useState<Date | null>(null);
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
+  const [userInfoDialog, setUserInfoDialog] = useState<{ open: boolean; user: BasicUser | null }>({
+    open: false,
+    user: null
+  });
 
   const [formData, setFormData] = useState({
     // User data
@@ -59,6 +69,21 @@ const CreateStudentForm: React.FC<CreateStudentFormProps> = ({
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleViewUser = async (userId: string) => {
+    if (!userId) {
+      toast.error('Please enter a user ID first');
+      return;
+    }
+
+    try {
+      const userInfo = await usersApi.getBasicInfo(userId);
+      setUserInfoDialog({ open: true, user: userInfo });
+    } catch (error: any) {
+      console.error('Error fetching user info:', error);
+      toast.error(error?.message || 'Failed to fetch user information');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -202,12 +227,32 @@ const CreateStudentForm: React.FC<CreateStudentFormProps> = ({
                   <div>
                     <Label className="text-base font-semibold">Date of Birth *</Label>
                     <div className="mt-2">
-                      <DatePicker 
-                        value={date}
-                        onChange={setDate}
-                        placeholder="Select date of birth"
-                        style={{ width: '100%', height: '48px' }}
-                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full h-12 justify-start text-left font-normal",
+                              !date && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {date ? format(date, "PPP") : <span>Select date of birth</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={date}
+                            onSelect={setDate}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
                   <div>
@@ -394,45 +439,81 @@ const CreateStudentForm: React.FC<CreateStudentFormProps> = ({
                 </div>
               </div>
 
-              {/* Parent Information Section */}
+              {/* Family Information Section */}
               <div className="bg-gradient-to-r from-muted/5 to-muted/10 p-6 rounded-lg border">
                 <h3 className="text-2xl font-semibold flex items-center gap-2 mb-6">
                   <div className="w-8 h-8 bg-muted/20 rounded-full flex items-center justify-center">
                     <span className="text-muted-foreground font-bold">4</span>
                   </div>
-                  Parent Information (Optional)
+                  Family Information
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <Label htmlFor="fatherId" className="text-base font-semibold">Father ID</Label>
-                    <Input
-                      id="fatherId"
-                      value={formData.fatherId}
-                      onChange={(e) => handleInputChange('fatherId', e.target.value)}
-                      placeholder="Father's user ID"
-                      className="mt-2 h-12 text-base"
-                    />
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        id="fatherId"
+                        value={formData.fatherId}
+                        onChange={(e) => handleInputChange('fatherId', e.target.value)}
+                        placeholder="Father's user ID"
+                        className="h-12 text-base"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-12 w-12 shrink-0"
+                        onClick={() => handleViewUser(formData.fatherId)}
+                        disabled={!formData.fatherId}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="motherId" className="text-base font-semibold">Mother ID</Label>
-                    <Input
-                      id="motherId"
-                      value={formData.motherId}
-                      onChange={(e) => handleInputChange('motherId', e.target.value)}
-                      placeholder="Mother's user ID"
-                      className="mt-2 h-12 text-base"
-                    />
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        id="motherId"
+                        value={formData.motherId}
+                        onChange={(e) => handleInputChange('motherId', e.target.value)}
+                        placeholder="Mother's user ID"
+                        className="h-12 text-base"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-12 w-12 shrink-0"
+                        onClick={() => handleViewUser(formData.motherId)}
+                        disabled={!formData.motherId}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="guardianId" className="text-base font-semibold">Guardian ID</Label>
-                    <Input
-                      id="guardianId"
-                      value={formData.guardianId}
-                      onChange={(e) => handleInputChange('guardianId', e.target.value)}
-                      placeholder="Guardian's user ID"
-                      className="mt-2 h-12 text-base"
-                    />
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        id="guardianId"
+                        value={formData.guardianId}
+                        onChange={(e) => handleInputChange('guardianId', e.target.value)}
+                        placeholder="Guardian's user ID"
+                        className="h-12 text-base"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-12 w-12 shrink-0"
+                        onClick={() => handleViewUser(formData.guardianId)}
+                        disabled={!formData.guardianId}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -449,6 +530,12 @@ const CreateStudentForm: React.FC<CreateStudentFormProps> = ({
             </Button>
           </div>
         </form>
+
+        <UserInfoDialog 
+          open={userInfoDialog.open}
+          onClose={() => setUserInfoDialog({ open: false, user: null })}
+          user={userInfoDialog.user}
+        />
       </DialogContent>
     </Dialog>
   );

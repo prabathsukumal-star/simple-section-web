@@ -94,8 +94,7 @@ const Classes = () => {
     const token = localStorage.getItem('access_token');
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      'ngrok-skip-browser-warning': 'true'
+      'Authorization': `Bearer ${token}`
     };
   };
 

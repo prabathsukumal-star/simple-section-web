@@ -171,8 +171,7 @@ const QRCodeScanner = () => {
                   localStorage.getItem('authToken');
     
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true'
+      'Content-Type': 'application/json'
     };
 
     if (token) {

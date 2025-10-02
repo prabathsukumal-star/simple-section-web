@@ -132,8 +132,7 @@ const Login = ({ onLogin, loginFunction }: LoginProps) => {
   };
 
   const getApiHeaders = () => ({
-    'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': 'true'
+    'Content-Type': 'application/json'
   });
 
   // OTP Timer function

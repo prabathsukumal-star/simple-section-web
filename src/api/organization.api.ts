@@ -432,8 +432,7 @@ class OrganizationSpecificApiClient {
 
   private getHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true'
+      'Content-Type': 'application/json'
     };
 
     const token = localStorage.getItem('org_access_token');

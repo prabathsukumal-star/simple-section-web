@@ -54,8 +54,7 @@ export const getAttendanceUrl = (): string => {
 
 export const getApiHeaders = (): Record<string, string> => {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': 'true'
+    'Content-Type': 'application/json'
   };
 
   // Always get token from localStorage for API calls
@@ -76,12 +75,13 @@ export const loginUser = async (credentials: LoginCredentials): Promise<ApiRespo
   
   console.log('Attempting login with credentials:', { email: credentials.email });
   
+  const loginHeaders: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+
   const response = await fetch(`${baseUrl}/auth/login`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true'
-    },
+    headers: loginHeaders,
     body: JSON.stringify(credentials)
   });
 

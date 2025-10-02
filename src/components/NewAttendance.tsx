@@ -145,8 +145,7 @@ const NewAttendance = () => {
                   localStorage.getItem('authToken');
     
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true'  // Add this header for ngrok
+      'Content-Type': 'application/json'  // Add this header for ngrok
     };
 
     if (token) {
