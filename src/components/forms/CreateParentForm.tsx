@@ -11,10 +11,7 @@ import { ParentCreateData } from '@/api/parents.api';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import dayjs from 'dayjs';
+import { DatePicker } from 'rsuite';
 
 interface CreateParentFormProps {
   onSubmit: (data: any) => void;
