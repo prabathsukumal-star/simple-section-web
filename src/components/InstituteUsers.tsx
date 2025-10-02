@@ -807,8 +807,20 @@ const InstituteUsers = () => {
                     )}
                     {selectedUser.guardianId && (
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Guardian ID</label>
-                        <p className="text-sm">{selectedUser.guardianId}</p>
+                        <label className="text-sm font-medium text-gray-500 flex items-center justify-between">
+                          <span>Guardian ID</span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 ml-2"
+                            onClick={() => handleViewBasicUser(selectedUser.guardianId)}
+                            aria-label="View guardian user details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </label>
+                        <p className="text-sm mt-1">{selectedUser.guardianId}</p>
                       </div>
                     )}
                   </div>
