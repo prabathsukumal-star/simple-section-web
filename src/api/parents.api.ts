@@ -6,8 +6,8 @@ export interface ParentCreateData {
     firstName: string;
     lastName: string;
     email: string;
+    password: string;
     phone: string;
-    userType: string;
     dateOfBirth: string;
     gender: string;
     nic?: string;
@@ -19,7 +19,9 @@ export interface ParentCreateData {
     province?: string;
     postalCode?: string;
     country?: string;
+    imageUrl?: string;
     isActive?: boolean;
+    userType: string; // Add missing userType field
   };
   occupation: string;
   workplace?: string;
@@ -43,21 +45,13 @@ export interface Parent {
     lastName: string;
     email: string;
     phoneNumber: string;
+    userType: string;
     dateOfBirth: string;
     gender: string;
     imageUrl?: string;
-    addressLine1?: string;
-    addressLine2?: string;
-    city?: string;
-    district?: string;
-    province?: string;
-    postalCode?: string;
-    country?: string;
-    userType: string;
     isActive: boolean;
     subscriptionPlan: string;
     createdAt: string;
-    updatedAt: string;
   };
 }
 

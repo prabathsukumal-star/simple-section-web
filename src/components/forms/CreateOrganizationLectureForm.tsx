@@ -14,7 +14,6 @@ import { getBaseUrl2 } from '@/contexts/utils/auth.api';
 
 interface CreateOrganizationLectureFormProps {
   courseId: string;
-  organizationId?: string;
   onSuccess: (lecture: any) => void;
   onCancel: () => void;
 }
@@ -34,7 +33,7 @@ interface LectureCreateData {
   isPublic: boolean;
 }
 
-const CreateOrganizationLectureForm = ({ courseId, organizationId, onSuccess, onCancel }: CreateOrganizationLectureFormProps) => {
+const CreateOrganizationLectureForm = ({ courseId, onSuccess, onCancel }: CreateOrganizationLectureFormProps) => {
   const [formData, setFormData] = useState<LectureCreateData>({
     causeId: courseId,
     title: '',
@@ -58,16 +57,8 @@ const CreateOrganizationLectureForm = ({ courseId, organizationId, onSuccess, on
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        // Fetch all courses with a high limit to show all available courses
-        const params = { limit: 1000, page: 1 };
-        
-        if (organizationId) {
-          const response = await organizationApi.getOrganizationCourses(organizationId, params);
-          setCourses(response.data);
-        } else {
-          const response = await organizationApi.getCourses(params);
-          setCourses(response.data);
-        }
+        const response = await organizationApi.getCourses();
+        setCourses(response.data);
       } catch (error) {
         console.error('Error fetching courses:', error);
         toast({
@@ -81,7 +72,7 @@ const CreateOrganizationLectureForm = ({ courseId, organizationId, onSuccess, on
     };
 
     fetchCourses();
-  }, [organizationId]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,7 +117,8 @@ const CreateOrganizationLectureForm = ({ courseId, organizationId, onSuccess, on
       const response = await fetch(`${baseUrl2}/organization/api/v1/lectures/with-documents/${formData.causeId}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('org_access_token')}`
+          'Authorization': `Bearer ${localStorage.getItem('org_access_token')}`,
+          'ngrok-skip-browser-warning': 'true'
         },
         body: fd,
       });
@@ -352,47 +344,20 @@ const CreateOrganizationLectureForm = ({ courseId, organizationId, onSuccess, on
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="documents">Documents (Multiple files allowed)</Label>
+                <Label htmlFor="documents">Documents (optional)</Label>
                 <Input
                   id="documents"
                   type="file"
                   multiple
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png"
                   onChange={(e) => {
-                    const input = e.target as HTMLInputElement;
-                    const newFiles = Array.from(input.files || []);
-                    setDocuments((prev) => {
-                      const merged: File[] = [...prev];
-                      newFiles.forEach((f) => {
-                        const exists = merged.some(
-                          (mf) => mf.name === f.name && mf.size === f.size && mf.lastModified === f.lastModified
-                        );
-                        if (!exists) merged.push(f);
-                      });
-                      return merged;
-                    });
-                    // Reset input so selecting the same file again re-triggers change
-                    input.value = '';
+                    const files = Array.from((e.target as HTMLInputElement).files || []);
+                    setDocuments(files);
                   }}
                   disabled={isLoading}
-                  className="cursor-pointer"
                 />
-                <p className="text-xs text-muted-foreground">
-                  You can select multiple documents at once. Supported formats: PDF, Word, PowerPoint, Excel, Images
-                </p>
                 {documents.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    <p className="text-sm font-medium">{documents.length} file(s) selected:</p>
-                    <ul className="space-y-1">
-                      {documents.map((file, index) => (
-                        <li key={index} className="flex items-center justify-between text-sm bg-muted p-2 rounded">
-                          <span className="truncate flex-1">{file.name}</span>
-                          <span className="text-xs text-muted-foreground ml-2">
-                            ({(file.size / 1024).toFixed(1)} KB)
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="text-sm text-muted-foreground">
+                    {documents.length} file(s) selected: {documents.map((f) => f.name).join(', ')}
                   </div>
                 )}
               </div>

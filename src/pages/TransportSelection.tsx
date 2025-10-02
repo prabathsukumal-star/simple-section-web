@@ -56,8 +56,7 @@ const TransportSelection = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ACTIVE': 
-      case 'APPROVED': return 'default';
+      case 'ACTIVE': return 'default';
       case 'PENDING': return 'secondary';
       case 'INACTIVE': return 'outline';
       default: return 'outline';

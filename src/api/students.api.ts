@@ -6,11 +6,11 @@ export interface StudentCreateData {
     firstName: string;
     lastName: string;
     email: string;
+    password: string;
     phone: string;
     userType: string;
     dateOfBirth: string;
     gender: string;
-    nic?: string;
     birthCertificateNo?: string;
     addressLine1?: string;
     addressLine2?: string;
@@ -19,11 +19,12 @@ export interface StudentCreateData {
     province?: string;
     postalCode?: string;
     country?: string;
+    imageUrl?: string;
     isActive?: boolean;
+    fatherId?: string | null;
+    motherId?: string | null;
+    guardianId?: string | null;
   };
-  fatherId?: string | null;
-  motherId?: string | null;
-  guardianId?: string | null;
   studentId: string;
   emergencyContact: string;
   medicalConditions?: string;

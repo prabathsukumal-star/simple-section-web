@@ -36,29 +36,15 @@ export interface User {
   dateOfBirth: string;
   gender: string;
   imageUrl?: string;
-  telegramId?: string;
-  rfid?: string;
   isActive: boolean;
   subscriptionPlan: string;
   paymentExpiresAt?: string;
   createdAt: string;
 }
 
-export interface BasicUser {
-  id: string;
-  imageUrl?: string;
-  fullName: string;
-  userType: string;
-}
-
 export const usersApi = {
   create: async (data: UserCreateData): Promise<User> => {
     const response = await apiClient.post('/users', data);
     return response.data;
-  },
-  
-  getBasicInfo: async (userId: string): Promise<BasicUser> => {
-    const response = await apiClient.get(`/users/basic/${userId}`);
-    return response;
   }
 };

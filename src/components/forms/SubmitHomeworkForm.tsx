@@ -9,11 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { homeworkSubmissionsApi, type HomeworkSubmissionCreateData } from '@/api/homeworkSubmissions.api';
-import { Upload, FileText, File, X, CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { Upload, FileText, Calendar, File, X } from 'lucide-react';
 
 const submissionSchema = z.object({
   submissionDate: z.string().min(1, 'Submission date is required'),

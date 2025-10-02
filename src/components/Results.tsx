@@ -72,7 +72,8 @@ const Results = () => {
     const token = getAuthToken();
     
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true'
     };
 
     if (token) {

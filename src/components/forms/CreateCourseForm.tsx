@@ -99,7 +99,8 @@ const CreateCourseForm = ({ onSuccess, onCancel }: CreateCourseFormProps) => {
       const response = await fetch(`${baseUrl2}/organization/api/v1/causes/with-image`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('org_access_token')}`
+          'Authorization': `Bearer ${localStorage.getItem('org_access_token')}`,
+          'ngrok-skip-browser-warning': 'true'
         },
         body: formData,
       });

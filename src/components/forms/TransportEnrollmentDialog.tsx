@@ -9,11 +9,6 @@ import { CalendarDays, Clock, MapPin, Phone, User, DollarSign, Bus } from 'lucid
 import { enrollInTransport, TransportEnrollmentRequest } from '@/api/transportEnrollment.api';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 
 interface TransportEnrollmentDialogProps {
   open: boolean;

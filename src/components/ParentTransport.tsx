@@ -57,8 +57,8 @@ const ParentTransport = () => {
       });
       setEnrollments(response.enrollments);
 
-      // Set first active/approved enrollment as selected by default
-      const activeEnrollment = response.enrollments.find(e => e.status === 'ACTIVE' || e.status === 'APPROVED');
+      // Set first active enrollment as selected by default
+      const activeEnrollment = response.enrollments.find(e => e.status === 'ACTIVE');
       if (activeEnrollment) {
         setSelectedTransport(activeEnrollment);
       }
@@ -72,7 +72,6 @@ const ParentTransport = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-      case 'APPROVED':
         return 'default';
       case 'PENDING':
         return 'secondary';
@@ -142,7 +141,7 @@ const ParentTransport = () => {
           </CardContent>
         </Card>}
 
-      {!loading && !error && enrollments.length > 0 && <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+      {!loading && !error && enrollments.length > 0 && <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {enrollments.map(enrollment => {
             const isExpanded = expandedCards.has(enrollment._id);
             
@@ -157,21 +156,9 @@ const ParentTransport = () => {
             };
 
             return (
-              <div key={enrollment._id} className="relative flex w-full max-w-sm mx-auto flex-col rounded-xl bg-card text-card-foreground shadow-md transition-all duration-200 hover:shadow-lg mb-8">
-                {/* Image/Gradient Header */}
+              <div key={enrollment._id} className="relative flex w-80 flex-col rounded-xl bg-card text-card-foreground shadow-md transition-all duration-200 hover:shadow-lg">
+                {/* Gradient Header */}
                 <div className="relative mx-4 -mt-6 h-40 overflow-hidden rounded-xl bg-gradient-to-r from-primary to-primary/80 bg-clip-border text-white shadow-lg shadow-primary/40">
-                  {enrollment.bookhireId.imageUrl ? (
-                    <>
-                      <img 
-                        src={enrollment.bookhireId.imageUrl} 
-                        alt={enrollment.bookhireId.title}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
-                    </>
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-primary to-primary/80"></div>
-                  )}
                 </div>
                 
                 {/* Content */}
@@ -179,23 +166,17 @@ const ParentTransport = () => {
                   <div className="space-y-4">
                     {/* Basic Info - Always Visible */}
                     <div className="space-y-2">
-                      <div className="text-center text-lg font-semibold">
-                        {enrollment.bookhireId.title || 'Henegama bus hire'}
-                      </div>
-                      <div className="text-center font-medium text-muted-foreground">
+                      <div className="flex items-center justify-center text-lg font-semibold">
                         {enrollment.bookhireId.vehicleNumber}
                       </div>
-                      <div className="text-center text-sm text-muted-foreground">
-                        {enrollment.bookhireId.year} • Capacity: {enrollment.bookhireId.capacity || 50}
+                      <div className="text-center text-muted-foreground">
+                        ({enrollment.bookhireId.year})
                       </div>
                       <div className="text-center font-medium">
                         {enrollment.bookhireId.route}
                       </div>
                       <div className="text-center">
                         {enrollment.ownerId.ownerName}
-                      </div>
-                      <div className="text-center text-sm">
-                        Colombo BookHire Services
                       </div>
                       <div className="text-center text-muted-foreground">
                         {enrollment.ownerId.phoneNumber}
@@ -261,7 +242,7 @@ const ParentTransport = () => {
                     className="w-full rounded-lg py-3 px-6 text-xs font-bold uppercase shadow-md transition-all hover:shadow-lg" 
                     onClick={() => handleTransportSelect(enrollment)}
                   >
-                    Select Transport
+                    Manage Transport
                   </Button>
                 </div>
               </div>

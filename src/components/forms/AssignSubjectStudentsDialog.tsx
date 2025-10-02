@@ -66,7 +66,8 @@ const AssignSubjectStudentsDialog: React.FC<AssignSubjectStudentsDialogProps> = 
     const token = localStorage.getItem('access_token');
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'Authorization': `Bearer ${token}`,
+      'ngrok-skip-browser-warning': 'true'
     };
   };
 
@@ -139,7 +140,8 @@ const AssignSubjectStudentsDialog: React.FC<AssignSubjectStudentsDialogProps> = 
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true'
           },
           body: JSON.stringify({
             instituteId: selectedInstitute.id,

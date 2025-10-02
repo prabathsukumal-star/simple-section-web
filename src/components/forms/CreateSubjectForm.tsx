@@ -71,7 +71,8 @@ const CreateSubjectForm = ({ onSubmit, onCancel, initialData }: CreateSubjectFor
     const token = getAuthToken();
     
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true'
     };
 
     if (token) {
@@ -128,7 +129,8 @@ const CreateSubjectForm = ({ onSubmit, onCancel, initialData }: CreateSubjectFor
         const response = await fetch(`${baseUrl}/subjects`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true'
           },
           body: formData
         });

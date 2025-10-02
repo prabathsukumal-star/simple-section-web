@@ -8,11 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { DatePicker } from 'rsuite';
 
 const teacherSchema = z.object({
   employeeId: z.string().min(1, 'Employee ID is required'),
@@ -190,34 +186,14 @@ const CreateTeacherForm = ({ onSubmit, onCancel, initialData }: CreateTeacherFor
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm font-medium">Join Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full h-10 justify-start text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {field.value ? format(new Date(field.value), "PPP") : <span>Select join date</span>}
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value ? new Date(field.value) : undefined}
-                            onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01")
-                            }
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <FormControl>
+                        <DatePicker 
+                          value={field.value ? new Date(field.value) : null}
+                          onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                          placeholder="Select join date"
+                          style={{ width: '100%', height: '40px' }}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
