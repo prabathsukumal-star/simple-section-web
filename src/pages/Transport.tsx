@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,11 +12,7 @@ const Transport: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [enrollments, setEnrollments] = useState<TransportEnrollment[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadEnrollments();
-  }, [user]);
+  const [loading, setLoading] = useState(false);
 
   const loadEnrollments = async () => {
     if (!user?.id) return;
@@ -59,6 +55,35 @@ const Transport: React.FC = () => {
     }
   };
 
+  if (enrollments.length === 0 && !loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">My Transport</h1>
+          <p className="text-muted-foreground">
+            View and manage your transport enrollments
+          </p>
+        </div>
+        
+        <Button onClick={loadEnrollments} disabled={loading}>
+          {loading ? 'Loading...' : 'Load Transport Enrollments'}
+        </Button>
+
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="max-w-md">
+            <CardContent className="pt-6 text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Transport Enrollments</h3>
+              <p className="text-muted-foreground">
+                Click the button above to load your transport enrollments.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -66,22 +91,6 @@ const Transport: React.FC = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading transport enrollments...</p>
         </div>
-      </div>
-    );
-  }
-
-  if (enrollments.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Card className="max-w-md">
-          <CardContent className="pt-6 text-center">
-            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Transport Enrollments</h3>
-            <p className="text-muted-foreground">
-              You are not enrolled in any transport services yet.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     );
   }
