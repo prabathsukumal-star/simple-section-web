@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/api/client';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
@@ -23,9 +24,10 @@ const CreateExamForm = ({ onClose, onSuccess }: CreateExamFormProps) => {
   const { user, currentInstituteId, currentClassId, currentSubjectId } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const instituteRole = useInstituteRole();
 
   // Check if user has permission to create exams - InstituteAdmin and Teachers
-  const canCreate = user?.role === 'InstituteAdmin' || user?.role === 'Teacher';
+  const canCreate = instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher';
 
   // Handle access denial in useEffect to avoid side effects during render
   React.useEffect(() => {

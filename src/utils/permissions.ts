@@ -1,5 +1,14 @@
 
-export type UserRole = 'Student' | 'Parent' | 'Teacher' | 'InstituteAdmin' | 'AttendanceMarker' | 'OrganizationManager';
+export type UserRole = 
+  | 'OrganizationManager'
+  | 'InstituteAdmin' 
+  | 'Student' 
+  | 'AttendanceMarker' 
+  | 'Teacher' 
+  | 'Parent'
+  | 'User'
+  | 'UserWithoutParent'
+  | 'UserWithoutStudent';
 
 export type Permission = 
   | 'view-dashboard'
@@ -75,7 +84,9 @@ export type Permission =
   | 'edit-organization'
   | 'delete-organization'
   | 'view-settings'
-  | 'view-appearance';
+  | 'view-appearance'
+  | 'view-transport'
+  | 'manage-transport';
 
 const rolePermissions: Record<UserRole, Permission[]> = {
   Student: [
@@ -87,7 +98,8 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     'view-results',
     'view-profile',
     'edit-profile',
-    'view-appearance'
+    'view-appearance',
+    'view-transport'
   ],
   Parent: [
     'view-dashboard',
@@ -100,7 +112,8 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     'view-results',
     'view-profile',
     'edit-profile',
-    'view-appearance'
+    'view-appearance',
+    'view-transport'
   ],
   Teacher: [
     'view-dashboard',
@@ -143,7 +156,8 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     'delete-result',
     'view-profile',
     'edit-profile',
-    'view-appearance'
+    'view-appearance',
+    'view-transport'
   ],
   AttendanceMarker: [
     'view-dashboard',
@@ -154,7 +168,9 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     'mark-attendance',
     'view-profile',
     'edit-profile',
-    'view-appearance'
+    'view-appearance',
+    'view-transport',
+    'manage-transport'
   ],
   InstituteAdmin: [
     'view-dashboard',
@@ -224,7 +240,9 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     'edit-profile',
     'view-institute-details',
     'edit-institute-details',
-    'view-appearance'
+    'view-appearance',
+    'view-transport',
+    'manage-transport'
   ],
   OrganizationManager: [
     'view-dashboard',
@@ -298,7 +316,99 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     'view-profile',
     'edit-profile',
     'view-settings',
-    'view-appearance'
+    'view-appearance',
+    'view-transport',
+    'manage-transport'
+  ],
+  User: [
+    'view-dashboard',
+    'view-users',
+    'view-students',
+    'create-student',
+    'edit-student',
+    'view-parents',
+    'create-parent',
+    'edit-parent',
+    'view-teachers',
+    'view-classes',
+    'view-subjects',
+    'view-attendance',
+    'mark-attendance',
+    'view-grades',
+    'create-grade',
+    'edit-grade',
+    'view-grading',
+    'view-lectures',
+    'create-lecture',
+    'edit-lecture',
+    'view-homework',
+    'create-homework',
+    'edit-homework',
+    'view-homework-submissions',
+    'view-exams',
+    'create-exam',
+    'edit-exam',
+    'view-results',
+    'create-result',
+    'edit-result',
+    'view-profile',
+    'edit-profile',
+    'view-appearance',
+    'view-transport'
+  ],
+  UserWithoutParent: [
+    'view-dashboard',
+    'view-users',
+    'view-students',
+    'create-student',
+    'edit-student',
+    'view-teachers',
+    'view-classes',
+    'view-subjects',
+    'view-attendance',
+    'mark-attendance',
+    'view-grades',
+    'create-grade',
+    'edit-grade',
+    'view-grading',
+    'view-lectures',
+    'create-lecture',
+    'edit-lecture',
+    'view-homework',
+    'create-homework',
+    'edit-homework',
+    'view-homework-submissions',
+    'view-exams',
+    'create-exam',
+    'edit-exam',
+    'view-results',
+    'create-result',
+    'edit-result',
+    'view-profile',
+    'edit-profile',
+    'view-appearance',
+    'view-transport'
+  ],
+  UserWithoutStudent: [
+    'view-dashboard',
+    'view-students',
+    'view-attendance',
+    'view-parents',
+    'create-parent',
+    'edit-parent',
+    'view-teachers',
+    'view-classes',
+    'view-subjects',
+    'view-grades',
+    'view-lectures',
+    'view-homework',
+    'view-homework-submissions',
+    'view-exams',
+    'view-results',
+    'view-profile',
+    'edit-profile',
+    'view-appearance',
+    'view-transport'
   ]
 };
 
@@ -349,7 +459,9 @@ export class AccessControl {
       '/institute-details': 'view-institute-details',
       '/organizations': 'view-organizations',
       '/settings': 'view-settings',
-      '/appearance': 'view-appearance'
+      '/appearance': 'view-appearance',
+      '/transport': 'view-transport',
+      '/transport-attendance': 'view-transport'
     };
 
     const requiredPermission = routePermissionMap[route];

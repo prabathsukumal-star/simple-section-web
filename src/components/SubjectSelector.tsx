@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
 import { instituteApi } from '@/api/institute.api';
 import { useApiRequest } from '@/hooks/useApiRequest';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 interface Subject {
   id: string;
   name: string;
@@ -64,6 +65,7 @@ const SubjectSelector = () => {
     currentInstituteId,
     currentClassId
   } = useAuth();
+  const instituteRole = useInstituteRole();
   const {
     toast
   } = useToast();
@@ -99,17 +101,17 @@ const SubjectSelector = () => {
       let url: string;
 
       // For Institute Admin and AttendanceMarker, use the new class subjects API endpoint
-      if (user.role === 'InstituteAdmin' || user.role === 'AttendanceMarker') {
+      if (instituteRole === 'InstituteAdmin' || instituteRole === 'AttendanceMarker') {
         if (!currentInstituteId || !currentClassId) {
           throw new Error('Missing required parameters for institute admin/attendance marker subject fetch');
         }
         url = `${baseUrl}/institutes/${currentInstituteId}/classes/${currentClassId}/subjects?page=${page}&limit=${limit}`;
-      } else if (user.role === 'Teacher') {
+      } else if (instituteRole === 'Teacher') {
         if (!currentInstituteId || !currentClassId || !user.id) {
           throw new Error('Missing required parameters for teacher subject fetch');
         }
         url = `${baseUrl}/institutes/${currentInstituteId}/classes/${currentClassId}/subjects/teacher/${user.id}?page=${page}&limit=${limit}`;
-      } else if (user.role === 'Student') {
+      } else if (instituteRole === 'Student') {
         if (!currentInstituteId || !currentClassId || !user.id) {
           throw new Error('Missing required parameters for student subject fetch');
         }
@@ -129,7 +131,7 @@ const SubjectSelector = () => {
       const result = await response.json();
       console.log('Raw API response:', result);
       let subjects: SubjectCardData[] = [];
-      if (user.role === 'InstituteAdmin' || user.role === 'Teacher' || user.role === 'AttendanceMarker') {
+      if (instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher' || instituteRole === 'AttendanceMarker') {
         // Handle the new API response format for Institute Admin and Teacher
         if (Array.isArray(result)) {
           // Direct array response
@@ -173,7 +175,7 @@ const SubjectSelector = () => {
         setTotalItems(totalSubjects);
         setTotalPages(totalPagesFromApi);
         setCurrentPage(result.page || page);
-      } else if (user.role === 'Student') {
+      } else if (instituteRole === 'Student') {
         // Handle the new API response format for students
         if (result.data && Array.isArray(result.data)) {
           subjects = result.data.map((item: any) => ({
@@ -279,7 +281,7 @@ const SubjectSelector = () => {
         <p className="text-gray-600 dark:text-gray-400">Please select an institute first.</p>
       </div>;
   }
-  if ((user.role === 'Student' || user.role === 'InstituteAdmin' || user.role === 'Teacher' || user.role === 'AttendanceMarker') && !currentClassId) {
+  if ((['Student','InstituteAdmin','Teacher','AttendanceMarker'].includes(instituteRole)) && !currentClassId) {
     return <div className="text-center py-12">
         <p className="text-gray-600 dark:text-gray-400">Please select a class first.</p>
       </div>;

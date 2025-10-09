@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { AccessControl } from '@/utils/permissions';
 import {
   LayoutDashboard,
@@ -29,7 +30,10 @@ import {
   CreditCard,
   Camera,
   AlertCircle,
-  Truck
+  Truck,
+  ImageIcon,
+  IdCard,
+  MessageSquare
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -41,9 +45,32 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) => {
   const { user, selectedInstitute, selectedClass, selectedSubject, selectedChild, selectedOrganization, logout, setSelectedInstitute, setSelectedClass, setSelectedSubject, setSelectedChild, setSelectedOrganization } = useAuth();
+  
+  // Institute-specific role
+  const userRole = useInstituteRole();
 
   // Get menu items based on current selection state
   const getMenuItems = () => {
+    // Special handling for transport attendance page
+    if (currentPage.includes('transport') && currentPage.includes('attendance')) {
+      return [
+        {
+          id: 'transport',
+          label: 'My Transports',
+          icon: Truck,
+          permission: 'view-dashboard',
+          alwaysShow: true
+        },
+        {
+          id: 'transport-attendance',
+          label: 'Attendance',
+          icon: UserCheck,
+          permission: 'view-dashboard',
+          alwaysShow: true
+        }
+      ];
+    }
+
     // Special handling for organization selection
     if (selectedOrganization) {
       return [
@@ -72,7 +99,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     }
 
     // Special handling for Student role
-    if (user?.role === 'Student') {
+    if (userRole === 'Student') {
       // 1. Student without institute - only show basic options + payment
       if (!selectedInstitute) {
         return [
@@ -94,24 +121,8 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             id: 'transport',
             label: 'Transport',
             icon: Truck,
-            permission: 'view-transport',
-            alwaysShow: true,
-            subItems: [
-              {
-                id: 'transport',
-                label: 'My Transport',
-                icon: Truck,
-                permission: 'view-transport',
-                alwaysShow: false
-              },
-              {
-                id: 'transport-attendance',
-                label: 'Transport Attendance',
-                icon: UserCheck,
-                permission: 'view-transport',
-                alwaysShow: false
-              }
-            ]
+            permission: 'view-dashboard',
+            alwaysShow: true
           }
         ];
       }
@@ -146,29 +157,6 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             icon: Video,
             permission: 'view-lectures',
             alwaysShow: false
-          },
-          {
-            id: 'student-transport',
-            label: 'Student Transport Service',
-            icon: Truck,
-            permission: 'view-transport',
-            alwaysShow: false,
-            subItems: [
-              {
-                id: 'transport',
-                label: 'My Transport',
-                icon: Truck,
-                permission: 'view-transport',
-                alwaysShow: false
-              },
-              {
-                id: 'transport-attendance',
-                label: 'Transport Attendance',
-                icon: UserCheck,
-                permission: 'view-transport',
-                alwaysShow: false
-              }
-            ]
           }
         ];
       }
@@ -239,13 +227,6 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             alwaysShow: false
           },
           {
-            id: 'results',
-            label: 'Results',
-            icon: ClipboardList,
-            permission: 'view-results',
-            alwaysShow: false
-          },
-          {
             id: 'subject-payments',
             label: 'Subject Payments',
             icon: CreditCard,
@@ -271,7 +252,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     }
 
     // Special handling for Teacher role
-    if (user?.role === 'Teacher') {
+    if (userRole === 'Teacher') {
       // 1. Teacher without institute - only show basic options + payment
       if (!selectedInstitute) {
         return [
@@ -372,13 +353,6 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             permission: 'view-students',
             alwaysShow: false
           },
-          {
-            id: 'unverified-students',
-            label: 'Unverified Students',
-            icon: AlertCircle,
-            permission: 'view-students',
-            alwaysShow: false
-          },
         ];
       }
 
@@ -414,13 +388,6 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             alwaysShow: false
           },
           {
-            id: 'unverified-students',
-            label: 'Unverified Students',
-            icon: AlertCircle,
-            permission: 'view-students',
-            alwaysShow: false
-          },
-          {
             id: 'subject-payments',
             label: 'Subject Payments',
             icon: CreditCard,
@@ -432,7 +399,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     }
 
     // Special handling for InstituteAdmin role
-    if (user?.role === 'InstituteAdmin') {
+    if (userRole === 'InstituteAdmin') {
       if (!selectedInstitute) {
         return [
           {
@@ -467,16 +434,14 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             label: 'Institute Users',
             icon: Users,
             permission: 'view-users',
-            alwaysShow: false,
-            section: 'Main'
+            alwaysShow: false
           },
           {
-            id: 'unverified-users-images',
-            label: 'Image Verification',
-            icon: Camera,
+            id: 'verify-image',
+            label: 'Verify Image',
+            icon: ImageIcon,
             permission: 'view-users',
-            alwaysShow: false,
-            section: 'Main'
+            alwaysShow: false
           },
           {
             id: 'parents',
@@ -530,13 +495,6 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             id: 'students',
             label: 'Students',
             icon: GraduationCap,
-            permission: 'view-students',
-            alwaysShow: false
-          },
-          {
-            id: 'unverified-students',
-            label: 'Unverified Students',
-            icon: AlertCircle,
             permission: 'view-students',
             alwaysShow: false
           },
@@ -635,7 +593,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     }
 
     // Special handling for Parent role
-    if (user?.role === 'Parent') {
+    if (userRole === 'Parent') {
       // 1. Parent without child selected - show Dashboard and Select Child
       if (!selectedChild) {
         return [
@@ -652,6 +610,29 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             icon: Users,
             permission: 'view-parents',
             alwaysShow: false
+          },
+          {
+            id: 'transport',
+            label: 'Transport',
+            icon: Truck,
+            permission: 'view-transport',
+            alwaysShow: true,
+            subItems: [
+              {
+                id: 'transport',
+                label: 'My Transport',
+                icon: Truck,
+                permission: 'view-transport',
+                alwaysShow: false
+              },
+              {
+                id: 'transport-attendance',
+                label: 'Transport Attendance',
+                icon: UserCheck,
+                permission: 'view-transport',
+                alwaysShow: false
+              }
+            ]
           }
         ];
       }
@@ -687,7 +668,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     }
 
     // Special handling for AttendanceMarker role - only show specific items when institute is selected
-    if (user?.role === 'AttendanceMarker') {
+    if (userRole === 'AttendanceMarker') {
       if (!selectedInstitute) {
         return [
           {
@@ -696,6 +677,29 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             icon: LayoutDashboard,
             permission: 'view-dashboard',
             alwaysShow: false
+          },
+          {
+            id: 'transport',
+            label: 'Transport',
+            icon: Truck,
+            permission: 'view-transport',
+            alwaysShow: true,
+            subItems: [
+              {
+                id: 'transport',
+                label: 'My Transport',
+                icon: Truck,
+                permission: 'view-transport',
+                alwaysShow: false
+              },
+              {
+                id: 'transport-attendance',
+                label: 'Transport Attendance',
+                icon: UserCheck,
+                permission: 'view-transport',
+                alwaysShow: false
+              }
+            ]
           }
         ];
       }
@@ -750,9 +754,34 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
       }
     ];
 
-    // If no institute is selected, return basic navigation including organizations
+    // If no institute is selected, return basic navigation including organizations and transport
     if (!selectedInstitute) {
-      return baseItems;
+      return [
+        ...baseItems,
+        {
+          id: 'transport',
+          label: 'Transport',
+          icon: Truck,
+          permission: 'view-transport',
+          alwaysShow: true,
+          subItems: [
+            {
+              id: 'transport',
+              label: 'My Transport',
+              icon: Truck,
+              permission: 'view-transport',
+              alwaysShow: false
+            },
+            {
+              id: 'transport-attendance',
+              label: 'Transport Attendance',
+              icon: UserCheck,
+              permission: 'view-transport',
+              alwaysShow: false
+            }
+          ]
+        }
+      ];
     }
 
     // If institute is selected, show full navigation for other roles
@@ -830,12 +859,12 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
 
   const getAttendanceItems = () => {
     // For Student - no additional attendance items needed as they are in main menu
-    if (user?.role === 'Student') {
+    if (userRole === 'Student') {
       return [];
     }
 
     // For Teacher - show specific attendance items based on selection state
-    if (user?.role === 'Teacher') {
+    if (userRole === 'Teacher') {
       // 3. Teacher with institute and class selected (but no subject)
       if (selectedInstitute && selectedClass && !selectedSubject) {
         return [
@@ -895,7 +924,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     }
 
     // For InstituteAdmin - show specific attendance items based on selection
-    if (user?.role === 'InstituteAdmin') {
+    if (userRole === 'InstituteAdmin') {
       if (!selectedInstitute) {
         return [];
       }
@@ -983,7 +1012,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
         label: 'QR Attendance',
         icon: QrCode,
         permission: 'mark-attendance',
-        alwaysShow: user?.role === 'AttendanceMarker' // Always show for AttendanceMarker
+        alwaysShow: userRole === 'AttendanceMarker' // Always show for AttendanceMarker
       }
     ];
 
@@ -992,12 +1021,12 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
 
   const getSystemItems = () => {
     // For Student - no additional system items needed as they are in main menu
-    if (user?.role === 'Student') {
+    if (userRole === 'Student') {
       return [];
     }
 
     // For Teacher - show academic items only when institute, class, and subject are all selected
-    if (user?.role === 'Teacher') {
+    if (userRole === 'Teacher') {
       if (selectedInstitute && selectedClass && selectedSubject) {
         return [
           {
@@ -1043,7 +1072,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     }
 
     // For InstituteAdmin - show academic items when institute, class, and subject are all selected
-    if (user?.role === 'InstituteAdmin') {
+    if (userRole === 'InstituteAdmin') {
       if (selectedInstitute && selectedClass && selectedSubject) {
         return [
           {
@@ -1130,9 +1159,25 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     return systemItems;
   };
 
+  const getSystemPaymentItems = () => {
+    // Show "System Payments" section when no institute is selected
+    if (!selectedInstitute) {
+      return [
+        {
+          id: 'system-payment',
+          label: 'System Payments',
+          icon: CreditCard,
+          permission: 'view-profile',
+          alwaysShow: true
+        }
+      ];
+    }
+    return [];
+  };
+
   const getPaymentItems = () => {
     // Only show payment sections for InstituteAdmin, Teacher, Student
-    if (!['InstituteAdmin', 'Teacher', 'Student'].includes(user?.role || '')) {
+    if (!['InstituteAdmin', 'Teacher', 'Student'].includes(userRole)) {
       return [];
     }
 
@@ -1150,7 +1195,9 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
       });
 
       // Add My Submissions for Students only when only institute is selected
-      if (user?.role === 'Student') {
+
+      // Add My Submissions for Students only when only institute is selected
+      if (userRole === 'Student') {
         paymentItems.push({
           id: 'my-submissions',
           label: 'My Submissions',
@@ -1160,6 +1207,8 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
         });
       }
     }
+
+    // 2. When institute and class selected (but no subject) - no payment items
 
     // 3. When institute, class, and subject are all selected - show Subject Payments only
     if (selectedInstitute && selectedClass && selectedSubject) {
@@ -1172,7 +1221,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
       });
 
       // 4. Add Subject Pay Submission for Students only when all three are selected
-      if (user?.role === 'Student') {
+      if (userRole === 'Student') {
         paymentItems.push({
           id: 'subject-pay-submission',
           label: 'Subject Pay Submission',
@@ -1184,6 +1233,27 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     }
 
     return paymentItems;
+  };
+
+  const getSmsItems = () => {
+    const items: any[] = [];
+    if (userRole === 'InstituteAdmin' && selectedInstitute) {
+      items.push({
+        id: 'sms',
+        label: 'SMS',
+        icon: MessageSquare,
+        permission: 'manage-sms',
+        alwaysShow: true
+      });
+      items.push({
+        id: 'sms-history',
+        label: 'SMS History',
+        icon: MessageSquare,
+        permission: 'manage-sms',
+        alwaysShow: true
+      });
+    }
+    return items;
   };
 
   const getSettingsItems = () => {
@@ -1208,7 +1278,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     }
 
     // For Parent - show specific settings items based on child selection
-    if (user?.role === 'Parent') {
+    if (userRole === 'Parent') {
       const baseItems = [
         {
           id: 'profile',
@@ -1241,7 +1311,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     }
 
     // For Student - always show Profile and Appearance + Payment if no institute
-    if (user?.role === 'Student') {
+    if (userRole === 'Student') {
       const baseItems = [
         {
           id: 'profile',
@@ -1258,6 +1328,17 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
           alwaysShow: false
         }
       ];
+
+      // Add Institute Profile when institute is selected
+      if (selectedInstitute) {
+        baseItems.push({
+          id: 'institute-profile',
+          label: 'Institute Profile',
+          icon: IdCard,
+          permission: 'view-profile',
+          alwaysShow: false
+        });
+      }
 
       // Add System Payment only when no institute is selected
       if (!selectedInstitute) {
@@ -1274,7 +1355,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     }
 
     // For Teacher - show specific settings items based on selection state + Payment if no institute
-    if (user?.role === 'Teacher') {
+    if (userRole === 'Teacher') {
       const baseItems = [
         {
           id: 'profile',
@@ -1292,6 +1373,17 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
         }
       ];
 
+      // Add Institute Profile when institute is selected
+      if (selectedInstitute) {
+        baseItems.push({
+          id: 'institute-profile',
+          label: 'Institute Profile',
+          icon: IdCard,
+          permission: 'view-profile',
+          alwaysShow: false
+        });
+      }
+
       // Add System Payment only when no institute is selected
       if (!selectedInstitute) {
         baseItems.push({
@@ -1307,7 +1399,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     }
 
     // For InstituteAdmin - show specific settings items + Payment if no institute
-    if (user?.role === 'InstituteAdmin') {
+    if (userRole === 'InstituteAdmin') {
       const baseItems = [
         {
           id: 'profile',
@@ -1335,7 +1427,14 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
           alwaysShow: false
         });
       } else {
-        // Add Institute Details when institute is selected
+        // Add Institute Profile and Institute Details when institute is selected
+        baseItems.push({
+          id: 'institute-profile',
+          label: 'Institute Profile',
+          icon: IdCard,
+          permission: 'view-profile',
+          alwaysShow: false
+        });
         baseItems.push({
           id: 'institute-details',
           label: 'Institute Details',
@@ -1348,7 +1447,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
       return baseItems;
     }
 
-    // Default settings items for other roles
+    // Default settings items for other roles (including AttendanceMarker)
     const settingsItems = [
       {
         id: 'profile',
@@ -1364,6 +1463,13 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
         permission: 'view-appearance',
         alwaysShow: false
       },
+      ...(selectedInstitute ? [{
+        id: 'institute-profile',
+        label: 'Institute Profile',
+        icon: Building2,
+        permission: 'view-profile',
+        alwaysShow: false
+      }] : []),
       ...(selectedInstitute ? [{
         id: 'institute-details',
         label: 'Institute Details',
@@ -1383,12 +1489,54 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     return settingsItems;
   };
 
-  const userRole = user?.role || 'Student';
   const menuItems = getMenuItems();
   const attendanceItems = getAttendanceItems();
   const systemItems = getSystemItems();
+  const systemPaymentItems = getSystemPaymentItems();
   const paymentItems = getPaymentItems();
+  const smsItems = getSmsItems();
   const settingsItems = getSettingsItems();
+
+  // Ensure the active page is always visible in the sidebar even if hidden by selection rules
+  const menuItemsDisplay = [...menuItems];
+  const attendanceItemsDisplay = [...attendanceItems];
+  const systemItemsDisplay = [...systemItems];
+  const systemPaymentItemsDisplay = [...systemPaymentItems];
+  const paymentItemsDisplay = [...paymentItems];
+  const smsItemsDisplay = [...(smsItems || [])];
+  const settingsItemsDisplay = [...settingsItems];
+
+  const activeExists = [
+    menuItemsDisplay,
+    attendanceItemsDisplay,
+    systemItemsDisplay,
+    systemPaymentItemsDisplay,
+    paymentItemsDisplay,
+    smsItemsDisplay,
+    settingsItemsDisplay
+  ].some(list => list.some(i => i.id === currentPage));
+
+  if (!activeExists && currentPage) {
+    const toTitle = (s: string) => s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    const label = toTitle(currentPage);
+
+    let target = menuItemsDisplay as any[];
+    let icon: any = LayoutDashboard;
+    let allowPush = true;
+
+    if (/payment/i.test(currentPage)) { target = paymentItemsDisplay; icon = CreditCard; }
+    else if (/sms/i.test(currentPage)) {
+      if (selectedInstitute) { target = smsItemsDisplay; icon = MessageSquare; }
+      else { allowPush = false; }
+    }
+    else if (/attendance/i.test(currentPage)) { target = attendanceItemsDisplay; icon = UserCheck; }
+    else if (/(lecture|homework|exam|result|grading)/i.test(currentPage)) { target = systemItemsDisplay; icon = Video; }
+    else if (/(profile|settings|appearance)/i.test(currentPage)) { target = settingsItemsDisplay; icon = Settings; }
+
+    if (allowPush) {
+      target.push({ id: currentPage, label, icon, permission: 'view-dashboard', alwaysShow: true });
+    }
+  }
 
   const filterItemsByPermission = (items: any[]) => {
     return items.filter(item => {
@@ -1417,6 +1565,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     // Handle System Payment click - navigate to payments page
     if (itemId === 'system-payment') {
       navigateToRoute('/payments');
+      onPageChange('payments');
       onClose();
       return;
     }
@@ -1424,6 +1573,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     // Handle Institute Payments click
     if (itemId === 'institute-payments') {
       navigateToRoute('/institute-payments');
+      onPageChange('institute-payments');
       onClose();
       return;
     }
@@ -1431,6 +1581,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     // Handle Subject Payments click
     if (itemId === 'subject-payments') {
       navigateToRoute('/subject-payments');
+      onPageChange('subject-payments');
       onClose();
       return;
     }
@@ -1438,6 +1589,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     // Handle Subject Submissions click (for Students only)
     if (itemId === 'subject-submissions') {
       navigateToRoute('/subject-submissions');
+      onPageChange('subject-submissions');
       onClose();
       return;
     }
@@ -1445,6 +1597,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     // Handle My Submissions click (for Students only)
     if (itemId === 'my-submissions') {
       navigateToRoute('/my-submissions');
+      onPageChange('my-submissions');
       onClose();
       return;
     }
@@ -1452,6 +1605,23 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     // Handle Subject Pay Submission click (for Students only)
     if (itemId === 'subject-pay-submission') {
       navigateToRoute('/subject-pay-submission');
+      onPageChange('subject-pay-submission');
+      onClose();
+      return;
+    }
+    
+    // Handle SMS click
+    if (itemId === 'sms') {
+      navigateToRoute('/sms');
+      onPageChange('sms');
+      onClose();
+      return;
+    }
+
+    // Handle SMS History click
+    if (itemId === 'sms-history') {
+      navigateToRoute('/sms-history');
+      onPageChange('sms-history');
       onClose();
       return;
     }
@@ -1553,9 +1723,20 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
         {/* Header */}
         <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-2 min-w-0">
-            <School className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
+            {selectedInstitute?.logo ? (
+              <img 
+                src={selectedInstitute.logo} 
+                alt="Institute logo"
+                className="h-8 w-8 object-contain rounded flex-shrink-0"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              <School className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
+            )}
             <span className="font-bold text-base sm:text-lg text-gray-900 dark:text-white truncate">
-              SurakshaLMS
+              {selectedInstitute?.shortName || 'SurakshaLMS'}
             </span>
           </div>
           <div className="flex items-center space-x-1">
@@ -1630,54 +1811,63 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
         <ScrollArea className="flex-1 px-2 sm:px-3 py-3 sm:py-4">
           <div className="space-y-2">
             {/* Main navigation items */}
-            <SidebarSection title="Main" items={menuItems.filter(item => !item.hasOwnProperty('section'))} />
+            <SidebarSection title="Main" items={menuItemsDisplay.filter(item => !item.hasOwnProperty('section'))} />
             
             {/* Main's section for items with section property */}
-            {menuItems.some(item => (item as any).section === "Main's") && (
-              <SidebarSection title="Main's" items={menuItems.filter(item => (item as any).section === "Main's")} />
+            {menuItemsDisplay.some(item => (item as any).section === "Main's") && (
+              <SidebarSection title="Main's" items={menuItemsDisplay.filter(item => (item as any).section === "Main's")} />
             )}
             
             {/* Show attendance section for Teacher based on selection state */}
-            {user?.role === 'Teacher' && attendanceItems.length > 0 && (
-              <SidebarSection title="Attendance" items={attendanceItems} />
+            {userRole === 'Teacher' && attendanceItemsDisplay.length > 0 && (
+              <SidebarSection title="Attendance" items={attendanceItemsDisplay} />
             )}
             
             {/* Show attendance section when institute is selected for InstituteAdmin */}
-            {user?.role === 'InstituteAdmin' && selectedInstitute && (
-              <SidebarSection title="Attendance" items={attendanceItems} />
+            {userRole === 'InstituteAdmin' && selectedInstitute && (
+              <SidebarSection title="Attendance" items={attendanceItemsDisplay} />
             )}
             
             {/* For AttendanceMarker role, only show QR Attendance when institute is selected */}
-            {user?.role === 'AttendanceMarker' && selectedInstitute && (
-              <SidebarSection title="Attendance" items={attendanceItems} />
+            {userRole === 'AttendanceMarker' && selectedInstitute && (
+              <SidebarSection title="Attendance" items={attendanceItemsDisplay} />
             )}
             
             {/* For other roles, show attendance navigation based on role */}
-            {user?.role !== 'AttendanceMarker' && user?.role !== 'InstituteAdmin' && user?.role !== 'Teacher' && user?.role !== 'Student' && selectedInstitute && (
-              <SidebarSection title="Attendance" items={attendanceItems} />
+            {userRole !== 'AttendanceMarker' && userRole !== 'InstituteAdmin' && userRole !== 'Teacher' && userRole !== 'Student' && selectedInstitute && (
+              <SidebarSection title="Attendance" items={attendanceItemsDisplay} />
             )}
             
             {/* Show academic items for Teacher only when institute, class and subject are all selected */}
-            {user?.role === 'Teacher' && systemItems.length > 0 && (
-              <SidebarSection title="Academic" items={systemItems} />
+            {userRole === 'Teacher' && systemItemsDisplay.length > 0 && (
+              <SidebarSection title="Academic" items={systemItemsDisplay} />
             )}
             
             {/* Show academic items for InstituteAdmin only when institute, class and subject are all selected */}
-            {user?.role === 'InstituteAdmin' && selectedInstitute && selectedClass && selectedSubject && (
-              <SidebarSection title="Academic" items={systemItems} />
+            {userRole === 'InstituteAdmin' && selectedInstitute && selectedClass && selectedSubject && (
+              <SidebarSection title="Academic" items={systemItemsDisplay} />
             )}
             
             {/* Show full academic section for other roles (excluding Student) */}
-            {selectedInstitute && user?.role !== 'AttendanceMarker' && user?.role !== 'InstituteAdmin' && user?.role !== 'Teacher' && user?.role !== 'Student' && (
-              <SidebarSection title="Academic" items={systemItems} />
+            {selectedInstitute && userRole !== 'AttendanceMarker' && userRole !== 'InstituteAdmin' && userRole !== 'Teacher' && userRole !== 'Student' && (
+              <SidebarSection title="Academic" items={systemItemsDisplay} />
+            )}
+            
+            {/* Show System Payments section before institute selection */}
+            {systemPaymentItemsDisplay.length > 0 && (
+              <SidebarSection title="System Payments" items={systemPaymentItemsDisplay} />
             )}
             
             {/* Show Payment section for specific user types based on new rules */}
-            {paymentItems.length > 0 && (
-              <SidebarSection title="Payments" items={paymentItems} />
+            {paymentItemsDisplay.length > 0 && (
+              <SidebarSection title="Payments" items={paymentItemsDisplay} />
             )}
             
-            <SidebarSection title="Settings" items={settingsItems} />
+            {smsItemsDisplay.length > 0 && (
+              <SidebarSection title="SMS" items={smsItemsDisplay} />
+            )}
+            
+            <SidebarSection title="Settings" items={settingsItemsDisplay} />
           </div>
         </ScrollArea>
 
@@ -1690,7 +1880,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             </div>
             <div>
               <span>Role:</span> 
-              <span className="font-medium ml-1">{user?.role}</span>
+              <span className="font-medium ml-1">{userRole}</span>
             </div>
           </div>
           <Button

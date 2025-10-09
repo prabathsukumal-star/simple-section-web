@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RefreshCw, Filter, Calendar, Clock, MapPin, Users } from 'lucide-react';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { AccessControl } from '@/utils/permissions';
 import { useToast } from '@/hooks/use-toast';
 import { DataCardView } from '@/components/ui/data-card-view';
@@ -18,6 +19,7 @@ interface LiveLecturesProps {
 
 const LiveLectures = ({ apiLevel = 'institute' }: LiveLecturesProps) => {
   const { user, selectedInstitute, selectedClass, selectedSubject, currentInstituteId, currentClassId, currentSubjectId } = useAuth();
+  const userRole = useInstituteRole();
   const { toast } = useToast();
   const [lecturesData, setLecturesData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +39,7 @@ const LiveLectures = ({ apiLevel = 'institute' }: LiveLecturesProps) => {
     };
 
     // Add context-aware filtering for InstituteAdmin
-    if (user?.role === 'InstituteAdmin' && currentInstituteId) {
+    if (userRole === 'InstituteAdmin' && currentInstituteId) {
       params.instituteId = currentInstituteId;
       
       if (currentClassId) {
@@ -66,7 +68,7 @@ const LiveLectures = ({ apiLevel = 'institute' }: LiveLecturesProps) => {
   };
 
   const handleLoadData = async (forceRefresh = false) => {
-    if (user?.role !== 'InstituteAdmin') {
+    if (userRole !== 'InstituteAdmin') {
       toast({
         title: "Access Denied",
         description: "Only Institute Admins can view this data.",
@@ -172,8 +174,7 @@ const LiveLectures = ({ apiLevel = 'institute' }: LiveLecturesProps) => {
     { key: 'maxParticipants', header: 'Max Participants' }
   ];
 
-  const userRole = (user?.role || 'Student') as UserRole;
-  const canView = user?.role === 'InstituteAdmin';
+  const canView = userRole === 'InstituteAdmin';
 
   const getTitle = () => {
     const contexts = [];

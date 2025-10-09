@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import MUITable from '@/components/ui/mui-table';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -68,6 +69,7 @@ const Classes = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<ClassData | null>(null);
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
   
   // Filter state
   const [showFilters, setShowFilters] = useState(false);
@@ -83,7 +85,7 @@ const Classes = () => {
 
   // Removed auto-loading useEffect - data now only loads when button is clicked
 
-  const userRole = (user?.role || 'Student') as UserRole;
+  const userRole = useInstituteRole();
   const isInstituteAdmin = userRole === 'InstituteAdmin';
   const canEdit = AccessControl.hasPermission(userRole, 'edit-class') && !isInstituteAdmin;
   const canDelete = AccessControl.hasPermission(userRole, 'delete-class') && !isInstituteAdmin;
@@ -208,6 +210,7 @@ const Classes = () => {
   };
 
   const handleLoadData = () => {
+    setHasAttemptedLoad(true);
     fetchClasses();
   };
 
@@ -319,11 +322,9 @@ const Classes = () => {
     }] : [])
   ];
 
-  const dataLoaded = classes.length > 0;
-
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {!dataLoaded ? (
+      {!hasAttemptedLoad ? (
         <div className="text-center py-12">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Classes</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">

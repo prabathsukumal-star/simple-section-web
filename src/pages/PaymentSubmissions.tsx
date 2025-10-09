@@ -8,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, FileText, CheckCircle, AlertCircle, Calendar, DollarSign, RefreshCw, ExternalLink, Eye, Search, Filter, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useNavigate, useParams } from 'react-router-dom';
 import { institutePaymentsApi, PaymentSubmissionsResponse, PaymentSubmission } from '@/api/institutePayments.api';
 import { subjectPaymentsApi, SubjectPaymentSubmission } from '@/api/subjectPayments.api';
+import { getBaseUrl } from '@/contexts/utils/auth.api';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import VerifySubmissionDialog from '@/components/forms/VerifySubmissionDialog';
@@ -37,6 +39,7 @@ const PaymentSubmissions = () => {
     selectedSubject,
     user
   } = useAuth();
+  const role = useInstituteRole();
   const navigate = useNavigate();
   const {
     paymentId
@@ -162,7 +165,7 @@ const PaymentSubmissions = () => {
       label: 'Actions',
       minWidth: 120,
       align: 'center',
-      format: (value: any, row: any) => canVerifySubmissions && row.status === 'PENDING' ? <Button onClick={() => handleVerifySubmission(row)} size="sm" variant="outline">
+      format: (value: any, row: any) => canVerifySubmissions && row.status === 'PENDING' ? <Button onClick={() => handleVerifySubmission(row)} size="sm">
               Verify
             </Button> : null
     });
@@ -231,14 +234,17 @@ const PaymentSubmissions = () => {
   };
 
   // Check if current user can verify submissions (only institute admins)
-  const canVerifySubmissions = user?.userType === 'INSTITUTE_ADMIN';
+  const canVerifySubmissions = role === 'InstituteAdmin';
   const handleVerifySubmission = (submission: PaymentSubmission | SubjectPaymentSubmission) => {
     setSelectedSubmission(submission);
     setVerifyDialogOpen(true);
   };
   const handleViewReceipt = (receiptUrl: string) => {
     if (receiptUrl) {
-      setSelectedReceiptUrl(receiptUrl);
+      // Convert relative URL to absolute URL using backend base URL
+      const baseUrl = getBaseUrl();
+      const fullUrl = receiptUrl.startsWith('http') ? receiptUrl : `${baseUrl}${receiptUrl}`;
+      setSelectedReceiptUrl(fullUrl);
       setReceiptModalOpen(true);
     }
   };

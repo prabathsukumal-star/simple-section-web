@@ -12,6 +12,7 @@ import ProfileImageUpload from '@/components/ProfileImageUpload';
 import { apiClient } from '@/api/client';
 import { useToast } from '@/hooks/use-toast';
 import { User, Mail, Phone, MapPin, Calendar, Shield, Edit, Save, X, Lock, Download, FileText, CreditCard, Eye, EyeOff } from 'lucide-react';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 interface UserData {
   id: string;
   firstName: string;
@@ -27,6 +28,7 @@ const Profile = () => {
   const {
     user
   } = useAuth();
+  const instituteRole = useInstituteRole();
   const {
     toast
   } = useToast();
@@ -214,13 +216,13 @@ const Profile = () => {
               {formData.name || "Welcome"}
             </h1>
             <p className="text-muted-foreground text-lg">
-              {user?.role || "User"} • Member since {formData.joinDate}
+              {(instituteRole || user?.role || "User")} • Member since {formData.joinDate}
             </p>
           </div>
           <div className="flex items-center justify-center gap-4">
             <Badge variant="secondary" className="text-sm">
               <Shield className="h-3 w-3 mr-1" />
-              {user?.role}
+              {instituteRole || user?.role}
             </Badge>
             <div className="flex gap-2">
               {!isEditing ? <>

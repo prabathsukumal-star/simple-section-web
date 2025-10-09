@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, Users, MapPin, Calendar, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useToast } from '@/hooks/use-toast';
 import { instituteStudentsApi, StudentAttendanceRecord, StudentAttendanceResponse } from '@/api/instituteStudents.api';
 import { childAttendanceApi, ChildAttendanceRecord } from '@/api/childAttendance.api';
@@ -43,13 +44,28 @@ const Attendance = () => {
   
   const [filters, setFilters] = useState<AttendanceFilterParams>({});
 
+  // Get institute role
+  const userRoleAuth = useInstituteRole();
+  
   // Check permissions and get view type based on role and context
   const getPermissionInfo = () => {
-    const userRole = user?.userType;
-    const userRoleAuth = user?.role; // From auth context
+    // Use institute-specific role
+    const userRole = userRoleAuth;
+    
+    console.log('🔍 Attendance Permission Check:', {
+      userRole,
+      currentInstituteId,
+      currentClassId,
+      currentSubjectId,
+      'selectedInstitute FULL': selectedInstitute,
+      'selectedInstitute.userRole': selectedInstitute?.userRole,
+      selectedClass: selectedClass?.name,
+      selectedSubject: selectedSubject?.name,
+      'user.role (login)': user?.role
+    });
     
     // Student - No permission to view attendance
-    if (userRole === 'STUDENT') {
+    if (userRole === 'Student') {
       return {
         hasPermission: false,
         title: 'Attendance Access Restricted',
@@ -59,7 +75,7 @@ const Attendance = () => {
     }
     
     // 1. InstituteAdmin and AttendanceMarker - Institute level attendance (Institute only selected)
-    if ((userRole === 'INSTITUTE_ADMIN' || userRoleAuth === 'AttendanceMarker') && currentInstituteId && !currentClassId) {
+    if ((userRole === 'InstituteAdmin' || userRole === 'AttendanceMarker') && currentInstituteId && !currentClassId) {
       return {
         hasPermission: true,
         title: 'Institute Student Attendance Overview',
@@ -69,7 +85,7 @@ const Attendance = () => {
     }
     
     // 2. InstituteAdmin, Teacher, and AttendanceMarker - Class attendance (Institute + Class selected)
-    if ((userRole === 'INSTITUTE_ADMIN' || userRole === 'TEACHER' || userRoleAuth === 'AttendanceMarker') && 
+    if ((userRole === 'InstituteAdmin' || userRole === 'Teacher' || userRole === 'AttendanceMarker') && 
         currentInstituteId && currentClassId && !currentSubjectId) {
       return {
         hasPermission: true,
@@ -80,7 +96,7 @@ const Attendance = () => {
     }
     
     // 3. InstituteAdmin, Teacher, and AttendanceMarker - Subject attendance (Institute + Class + Subject selected)
-    if ((userRole === 'INSTITUTE_ADMIN' || userRole === 'TEACHER' || userRoleAuth === 'AttendanceMarker') && 
+    if ((userRole === 'InstituteAdmin' || userRole === 'Teacher' || userRole === 'AttendanceMarker') && 
         currentInstituteId && currentClassId && currentSubjectId) {
       return {
         hasPermission: true,
@@ -244,14 +260,19 @@ const Attendance = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              {title}
+              Access Denied or Missing Selection
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center py-12">
               <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">{title}</h3>
-              <p className="text-muted-foreground">{description}</p>
+              <h3 className="text-lg font-medium mb-2">Please select the required context to view attendance records:</h3>
+              <div className="text-sm text-muted-foreground space-y-2 mt-4">
+                <p><strong>Institute Admin/Attendance Marker:</strong> Select Institute only for institute-level attendance</p>
+                <p><strong>Institute Admin/Teacher/Attendance Marker:</strong> Select Institute + Class for class-level attendance</p>
+                <p><strong>Institute Admin/Teacher/Attendance Marker:</strong> Select Institute + Class + Subject for subject-level attendance</p>
+                <p className="mt-4 font-medium">Current Selection: {getCurrentSelection()}</p>
+              </div>
             </div>
           </CardContent>
         </Card>

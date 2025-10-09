@@ -6,7 +6,7 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Card, CardContent } from '../ui/card';
 import { toast } from '../ui/use-toast';
-import { useAuth } from '../../contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { getBaseUrl, getApiHeaders } from '../../contexts/utils/auth.api';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -21,11 +21,11 @@ interface UpdateExamFormProps {
 }
 
 export const UpdateExamForm: React.FC<UpdateExamFormProps> = ({ exam, onClose, onSuccess }) => {
-  const { user } = useAuth();
+  const instituteRole = useInstituteRole();
   const [loading, setLoading] = useState(false);
   
   // Check if user has permission to update exams - InstituteAdmin and Teachers
-  const canUpdate = user?.role === 'InstituteAdmin' || user?.role === 'Teacher';
+  const canUpdate = instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher';
   
   useEffect(() => {
     if (!canUpdate) {

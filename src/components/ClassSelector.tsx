@@ -9,6 +9,7 @@ import { School, Users, BookOpen, Clock, RefreshCw, User, Search, Filter, Image,
 import { useToast } from '@/hooks/use-toast';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
 import { Input } from '@/components/ui/input';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { cachedApiClient } from '@/api/cachedClient';
@@ -119,6 +120,7 @@ interface ClassCardData {
 const ClassSelector = () => {
   const { user, selectedInstitute, setSelectedClass, currentInstituteId } = useAuth();
   const { toast } = useToast();
+  const effectiveRole = useInstituteRole();
   const [classesData, setClassesData] = useState<ClassCardData[]>([]);
   const [filteredClasses, setFilteredClasses] = useState<ClassCardData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -143,24 +145,23 @@ const ClassSelector = () => {
     if (!currentInstituteId) return;
 
     setIsLoading(true);
-    console.log('Loading classes data for user role:', user?.role, { page, limit, forceRefresh, dataLoaded });
+    console.log('Loading classes data for institute role:', effectiveRole, { page, limit, forceRefresh, dataLoaded });
     
     try {
-      const userRole = (user?.role || 'Student') as UserRole;
       let endpoint = '';
       let params: Record<string, any> = {};
       
-      if (userRole === 'Student') {
+      if (effectiveRole === 'Student') {
         // Use the new student-specific endpoint
         endpoint = `/institute-classes/${currentInstituteId}/student/${user?.id}`;
         params = { 
           page: page, 
           limit: limit 
         };
-      } else if (userRole === 'Teacher') {
+      } else if (effectiveRole === 'Teacher') {
         endpoint = `/institute-classes/${currentInstituteId}/teacher/${user?.id}`;
         params = { page, limit };
-      } else if (userRole === 'InstituteAdmin' || userRole === 'AttendanceMarker') {
+      } else if (effectiveRole === 'InstituteAdmin' || effectiveRole === 'AttendanceMarker') {
         endpoint = `/institute-classes/institute/${currentInstituteId}`;
         params = {};
       } else {
@@ -176,13 +177,13 @@ const ClassSelector = () => {
       });
 
       console.log('Raw API response:', result);
-      processClassesData(result, userRole, page);
+      processClassesData(result, effectiveRole, page);
       
     } catch (error) {
       console.error('Failed to load classes:', error);
       
       // Fallback: try alternative endpoint for admin users (not for students)
-      if ((user?.role === 'InstituteAdmin' || user?.role === 'AttendanceMarker') && !forceRefresh) {
+      if ((effectiveRole === 'InstituteAdmin' || effectiveRole === 'AttendanceMarker') && !forceRefresh) {
         try {
           console.log('Trying alternative endpoint...');
           const fallbackEndpoint = '/classes';
@@ -194,7 +195,7 @@ const ClassSelector = () => {
           });
           
           console.log('Fallback API response:', fallbackResult);
-          processClassesData(fallbackResult, user?.role as UserRole, page);
+          processClassesData(fallbackResult, effectiveRole, page);
           return;
         } catch (fallbackError) {
           console.error('Fallback also failed:', fallbackError);
@@ -404,7 +405,7 @@ const ClassSelector = () => {
     });
 
     // For AttendanceMarker role, auto-navigate to select subject
-    if (user?.role === 'AttendanceMarker') {
+    if (effectiveRole === 'AttendanceMarker') {
       console.log('AttendanceMarker detected - auto-navigating to select subject');
       setTimeout(() => {
         window.history.pushState({}, '', '/select-subject');

@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { DataCardView } from '@/components/ui/data-card-view';
 import { RefreshCw, Filter, Eye, Edit, Trash2 } from 'lucide-react';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { AccessControl } from '@/utils/permissions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -140,7 +141,7 @@ const Teachers = () => {
       const headers = getApiHeaders();
       
       // For InstituteAdmin, use the new API endpoint to get institute teachers
-      if (user?.role === 'InstituteAdmin' && currentInstituteId) {
+      if (userRole === 'InstituteAdmin' && currentInstituteId) {
         console.log('Loading institute teachers for InstituteAdmin...');
         const url = `${baseUrl}/institute-users/institute/${currentInstituteId}/teachers`;
         

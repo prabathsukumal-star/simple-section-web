@@ -8,6 +8,7 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -60,7 +61,8 @@ interface InstituteClassUnverifiedResponse {
 }
 
 const UnverifiedStudents = () => {
-  const { user, selectedInstitute, selectedClass, selectedSubject } = useAuth();
+  const { selectedInstitute, selectedClass, selectedSubject } = useAuth();
+  const userRole = useInstituteRole();
   const [students, setStudents] = useState<(UnverifiedStudent | NewUnverifiedStudent)[]>([]);
   const [loading, setLoading] = useState(false);
   const [verifyingIds, setVerifyingIds] = useState<Set<string>>(new Set());
@@ -345,7 +347,7 @@ const UnverifiedStudents = () => {
     return `Unverified Students - ${selectedClass?.name}`;
   };
 
-  if (!user || !['InstituteAdmin', 'Teacher'].includes(user.role)) {
+  if (!['InstituteAdmin', 'Teacher'].includes(userRole)) {
     return (
       <Alert>
         <AlertCircle className="h-4 w-4" />
