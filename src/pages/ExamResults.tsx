@@ -1,28 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Award, RefreshCw, AlertTriangle, TrendingUp, BookOpen, Calendar, Target, Download, Filter, ArrowLeft, Search, Users } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Award, RefreshCw, AlertTriangle, TrendingUp, BookOpen, Calendar, Target, Download, Filter } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { examResultsApi, type ExamResult, type ExamResultsQueryParams } from '@/api/examResults.api';
 import { useApiRequest } from '@/hooks/useApiRequest';
-import AppLayout from '@/components/layout/AppLayout';
-import MUITable from '@/components/ui/mui-table';
 
 const ExamResults = () => {
-  const navigate = useNavigate();
-  const { examId } = useParams<{ examId: string }>();
-  const [examDetails, setExamDetails] = useState<{
-    title?: string;
-    examType?: string;
-    totalMarks?: string;
-    passingMarks?: string;
-  }>({});
-  
-  const { user, selectedInstitute, selectedClass, selectedSubject, currentInstituteId, currentClassId, currentSubjectId } = useAuth();
+  const { user, selectedInstitute, selectedClass, selectedSubject } = useAuth();
   const { toast } = useToast();
   const [examResults, setExamResults] = useState<ExamResult[]>([]);
   const [totalResults, setTotalResults] = useState(0);
@@ -30,13 +18,11 @@ const ExamResults = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [hasPreviousPage, setHasPreviousPage] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   const { execute: fetchResults, loading } = useApiRequest(examResultsApi.getExamResults);
 
-  const loadExamResults = async (page = currentPage) => {
-    if (!currentInstituteId || !currentClassId || !currentSubjectId) {
+  const loadExamResults = async () => {
+    if (!selectedInstitute?.id || !selectedClass?.id || !selectedSubject?.id) {
       toast({
         title: "Selection Required",
         description: "Please select institute, class, and subject to view exam results",
@@ -47,35 +33,20 @@ const ExamResults = () => {
 
     try {
       const params: ExamResultsQueryParams = {
-        page,
+        page: currentPage,
         limit: 10,
-        instituteId: currentInstituteId,
-        classId: currentClassId,
-        subjectId: currentSubjectId
+        instituteId: selectedInstitute.id,
+        classId: selectedClass.id,
+        subjectId: selectedSubject.id
       };
 
-      if (examId) {
-        params.examId = examId;
-      }
-
-      const response = await fetchResults(params, true);
+      const response = await fetchResults(params);
       
       setExamResults(response.data);
       setTotalResults(response.meta.total);
       setTotalPages(response.meta.totalPages);
       setHasNextPage(response.meta.hasNextPage);
       setHasPreviousPage(response.meta.hasPreviousPage);
-      setCurrentPage(page);
-      setLastRefresh(new Date());
-
-      // Set exam details from first result
-      if (response.data.length > 0 && !examDetails.title) {
-        const firstResult = response.data[0];
-        setExamDetails({
-          title: firstResult.exam.title,
-          examType: firstResult.exam.examType,
-        });
-      }
       
       toast({
         title: "Results Loaded",
@@ -91,26 +62,9 @@ const ExamResults = () => {
     }
   };
 
-  useEffect(() => {
-    if (currentInstituteId && currentClassId && currentSubjectId && examId) {
-      loadExamResults(1);
-    }
-  }, [currentInstituteId, currentClassId, currentSubjectId, examId]);
-
   const handlePageChange = (newPage: number) => {
-    loadExamResults(newPage);
-  };
-
-  const handleGoBack = () => {
-    navigate('/exams');
-  };
-
-  const getContextBreadcrumb = () => {
-    const parts = [];
-    if (selectedInstitute) parts.push(selectedInstitute.name);
-    if (selectedClass) parts.push(selectedClass.name);
-    if (selectedSubject) parts.push(selectedSubject.name);
-    return parts.length > 0 ? `Exams (${parts.join(' → ')})` : 'Exams';
+    setCurrentPage(newPage);
+    loadExamResults();
   };
 
   const formatDate = (dateString: string) => {
@@ -159,112 +113,72 @@ const ExamResults = () => {
   const gradeDistribution = getGradeDistribution();
   const averageScore = calculateAverageScore();
 
-  // Filter results based on search term
-  const filteredResults = examResults.filter(result => {
-    if (!searchTerm) return true;
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      result.student.firstName.toLowerCase().includes(searchLower) ||
-      result.student.lastName.toLowerCase().includes(searchLower) ||
-      result.student.email.toLowerCase().includes(searchLower) ||
-      result.grade.toLowerCase().includes(searchLower) ||
-      (result.remarks && result.remarks.toLowerCase().includes(searchLower))
-    );
-  });
-
   return (
-    <AppLayout>
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <div className="flex-1">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleGoBack}
-              className="mb-2 -ml-2"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {getContextBreadcrumb()}
-            </Button>
-            <h1 className="text-3xl font-bold text-foreground">
-              Exam Results{examDetails.title ? `: ${examDetails.title}` : ''}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              View and analyze exam results
-            </p>
-            {lastRefresh && (
-              <p className="text-sm text-muted-foreground mt-1">
-                Last refreshed: {lastRefresh.toLocaleTimeString()}
-              </p>
-            )}
-          </div>
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Exam Results</h1>
+          <p className="text-muted-foreground">
+            View and analyze exam results for the selected context
+          </p>
         </div>
-
-        {/* Exam Info and Current Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" />
-              Exam Details & Selection
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {examDetails.title && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b">
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">Type: {examDetails.examType || 'N/A'}</Badge>
-                    <Badge variant="outline">Total: {examDetails.totalMarks || 'N/A'} marks</Badge>
-                    <Badge variant="outline">Passing: {examDetails.passingMarks || 'N/A'} marks</Badge>
-                  </div>
-                </div>
-              )}
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">Institute: {selectedInstitute?.name || 'Not Selected'}</Badge>
-                <Badge variant="outline">Class: {selectedClass?.name || 'Not Selected'}</Badge>
-                <Badge variant="outline">Subject: {selectedSubject?.name || 'Not Selected'}</Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Bar */}
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">
-            All Results ({filteredResults.length})
-          </h2>
-          <Button
-            variant="outline"
-            onClick={() => loadExamResults(currentPage)}
-            disabled={loading}
+        <div className="flex gap-2">
+          <Button 
+            onClick={loadExamResults} 
+            disabled={loading || !selectedInstitute || !selectedClass || !selectedSubject}
+            variant="default"
+            size="sm"
           >
             {loading ? (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Loading...
-              </>
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
             ) : (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </>
+              <RefreshCw className="h-4 w-4 mr-2" />
             )}
+            Load Results
+          </Button>
+          <Button variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Export
           </Button>
         </div>
+      </div>
 
-        {!currentInstituteId || !currentClassId || !currentSubjectId ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Selection Required</h3>
-              <p className="text-muted-foreground">
-                Please select institute, class, and subject to view exam results.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
+      {/* Current Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            Current Selection
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline">
+              Institute: {selectedInstitute?.name || 'Not Selected'}
+            </Badge>
+            <Badge variant="outline">
+              Class: {selectedClass?.name || 'Not Selected'}
+            </Badge>
+            <Badge variant="outline">
+              Subject: {selectedSubject?.name || 'Not Selected'}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {!selectedInstitute || !selectedClass || !selectedSubject ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Selection Required</h3>
+            <p className="text-muted-foreground">
+              Please select institute, class, and subject to view exam results.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
           {/* Summary Cards */}
           {examResults.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -344,152 +258,121 @@ const ExamResults = () => {
             </Card>
           )}
 
-            {/* Results Table */}
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      Student Results
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {totalResults} total result{totalResults !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                  {/* Search Bar */}
-                  <div className="relative max-w-sm">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="Search students, grade, remarks..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
+          {/* Results Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Detailed Exam Results</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {totalResults} total result{totalResults !== 1 ? 's' : ''}
+              </p>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center items-center py-8">
+                  <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+                  <span>Loading results...</span>
                 </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {loading ? (
-                  <div className="flex justify-center items-center py-8">
-                    <RefreshCw className="h-6 w-6 animate-spin mr-2" />
-                    <span>Loading results...</span>
+              ) : examResults.length > 0 ? (
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Student</TableHead>
+                          <TableHead>Exam Details</TableHead>
+                          <TableHead>Score</TableHead>
+                          <TableHead>Grade</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Remarks</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {examResults.map((result) => (
+                          <TableRow key={result.id}>
+                            <TableCell>
+                              <div className="flex flex-col">
+                                <span className="font-medium">
+                                  {result.student.firstName} {result.student.lastName}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {result.student.email}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col">
+                                <span className="font-medium">{result.exam.title}</span>
+                                <Badge variant="outline" className="text-xs w-fit mt-1">
+                                  {result.exam.examType}
+                                </Badge>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-lg font-semibold">{result.score}%</span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getGradeColor(result.grade)}>
+                                {result.grade}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1 text-sm">
+                                <Calendar className="h-3 w-3 text-muted-foreground" />
+                                {formatDate(result.createdAt)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="max-w-[200px]">
+                              <span className="text-sm text-muted-foreground truncate block" title={result.remarks}>
+                                {result.remarks || 'No remarks'}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
-                ) : filteredResults.length > 0 ? (
-                  <MUITable
-                    title=""
-                    columns={[
-                      {
-                        id: 'student',
-                        label: 'Student',
-                        minWidth: 180,
-                        format: (value: any, row: ExamResult) => (
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {row.student.firstName} {row.student.lastName}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {row.student.email}
-                            </span>
-                          </div>
-                        )
-                      },
-                      {
-                        id: 'exam',
-                        label: 'Exam Details',
-                        minWidth: 150,
-                        format: (value: any, row: ExamResult) => (
-                          <div className="flex flex-col">
-                            <span className="font-medium">{row.exam.title}</span>
-                            <Badge variant="outline" className="text-xs w-fit mt-1">
-                              {row.exam.examType}
-                            </Badge>
-                          </div>
-                        )
-                      },
-                      {
-                        id: 'score',
-                        label: 'Score',
-                        minWidth: 120,
-                        align: 'center' as const,
-                        format: (value: string, row: ExamResult) => (
-                          <div className="flex items-center gap-2 justify-center">
-                            <span className="font-semibold text-lg">{value}</span>
-                            {examDetails.totalMarks && <span className="text-muted-foreground">/ {examDetails.totalMarks}</span>}
-                          </div>
-                        )
-                      },
-                      {
-                        id: 'grade',
-                        label: 'Grade',
-                        minWidth: 100,
-                        align: 'center' as const,
-                        format: (value: string) => (
-                          <Badge className={getGradeColor(value)}>
-                            {value}
-                          </Badge>
-                        )
-                      },
-                      ...(examDetails.totalMarks && examDetails.passingMarks ? [{
-                        id: 'status',
-                        label: 'Pass/Fail',
-                        minWidth: 100,
-                        align: 'center' as const,
-                        format: (value: any, row: ExamResult) => (
-                          <Badge 
-                            variant={parseFloat(row.score) >= parseFloat(examDetails.passingMarks!) ? "default" : "destructive"}
-                          >
-                            {parseFloat(row.score) >= parseFloat(examDetails.passingMarks!) ? "Pass" : "Fail"}
-                          </Badge>
-                        )
-                      }] : []),
-                      {
-                        id: 'createdAt',
-                        label: 'Date',
-                        minWidth: 120,
-                        format: (value: string) => (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Calendar className="h-3 w-3" />
-                            {formatDate(value)}
-                          </div>
-                        )
-                      },
-                      {
-                        id: 'remarks',
-                        label: 'Remarks',
-                        minWidth: 150,
-                        format: (value: string) => (
-                          <span className="text-sm">
-                            {value || "No remarks"}
-                          </span>
-                        )
-                      }
-                    ]}
-                    data={filteredResults}
-                    page={currentPage - 1}
-                    rowsPerPage={10}
-                    totalCount={totalResults}
-                    onPageChange={(newPage) => handlePageChange(newPage + 1)}
-                    onRowsPerPageChange={() => {}}
-                    rowsPerPageOptions={[10]}
-                  />
-                ) : (
-                  <div className="text-center py-8">
-                    <Award className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">
-                      {searchTerm ? 'No results match your search' : 'No Exam Results'}
-                    </h3>
-                    <p className="text-muted-foreground">
-                      {searchTerm ? 'Try adjusting your search criteria.' : 'No exam results found for the selected context.'}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </div>
-    </AppLayout>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex justify-between items-center mt-4">
+                      <p className="text-sm text-muted-foreground">
+                        Page {currentPage} of {totalPages}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={!hasPreviousPage}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={!hasNextPage}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <Award className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Exam Results</h3>
+                  <p className="text-muted-foreground">
+                    No exam results found for the selected context.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
   );
 };
 

@@ -1,18 +1,26 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import MUITable from '@/components/ui/mui-table';
-import { Badge } from '@/components/ui/badge';
+import * as React from 'react';
+import { useState } from 'react';
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TablePagination from '@mui/material/TablePagination';
+import TableRow from '@mui/material/TableRow';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw, FileText, Plus, Filter, Calendar, Clock, ExternalLink, BarChart3, Eye } from 'lucide-react';
+import { RefreshCw, FileText, Plus, Search, Filter, Calendar, Clock, ExternalLink, MapPin, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CreateExamForm from '@/components/forms/CreateExamForm';
 import CreateResultsForm from '@/components/forms/CreateResultsForm';
 import { UpdateExamForm } from '@/components/forms/UpdateExamForm';
+import { ExamResultsDialog } from '@/components/ExamResultsDialog';
 import { useTableData } from '@/hooks/useTableData';
 
 interface TeacherExam {
@@ -53,9 +61,7 @@ interface Column {
 }
 
 const TeacherExams = () => {
-  const navigate = useNavigate();
   const { user, selectedInstitute, selectedClass, selectedSubject } = useAuth();
-  const effectiveRole = useInstituteRole();
   const { toast } = useToast();
   
   const [showFilters, setShowFilters] = useState(false);
@@ -63,8 +69,7 @@ const TeacherExams = () => {
   const [isCreateResultsDialogOpen, setIsCreateResultsDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [selectedExam, setSelectedExam] = useState<TeacherExam | null>(null);
-  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [isExamResultsDialogOpen, setIsExamResultsDialogOpen] = useState(false);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -72,7 +77,7 @@ const TeacherExams = () => {
   const [typeFilter, setTypeFilter] = useState('all');
 
   // Role check - only teachers can access this component
-  if (effectiveRole !== 'Teacher') {
+  if (user?.role !== 'Teacher') {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600 dark:text-gray-400">
@@ -98,96 +103,122 @@ const TeacherExams = () => {
 
   const { state: { data: exams, loading }, pagination, actions } = tableData;
 
-  const examsColumns = [
+  const columns: readonly Column[] = [
     {
-      key: 'title',
-      header: 'Title',
-      render: (value: string, row: TeacherExam) => (
+      id: 'title',
+      label: 'Title',
+      minWidth: 200,
+      format: (value: string, row: TeacherExam) => (
         <div>
           <div className="font-medium">{value}</div>
-          <div className="text-sm text-muted-foreground truncate">{row?.description || ''}</div>
+          <div className="text-sm text-gray-500 truncate">{row?.description || ''}</div>
         </div>
       )
     },
     {
-      key: 'examType',
-      header: 'Type',
-      render: (value: string) => (
+      id: 'examType',
+      label: 'Type',
+      minWidth: 120,
+      format: (value: 'online' | 'physical') => (
         <Badge variant={value === 'online' ? 'default' : 'secondary'}>
-          {value}
+          {value === 'online' ? (
+            <>
+              <ExternalLink className="h-3 w-3 mr-1" />
+              Online
+            </>
+          ) : (
+            <>
+              <MapPin className="h-3 w-3 mr-1" />
+              Physical
+            </>
+          )}
         </Badge>
       )
     },
     {
-      key: 'durationMinutes',
-      header: 'Duration (min)',
-      render: (value: number) => `${value} minutes`
-    },
-    { key: 'totalMarks', header: 'Total Marks' },
-    { key: 'passingMarks', header: 'Passing Marks' },
-    {
-      key: 'scheduleDate',
-      header: 'Schedule Date',
-      render: (value: string) => value ? new Date(value).toLocaleDateString() : 'Not set'
-    },
-    {
-      key: 'startTime',
-      header: 'Start Time',
-      render: (value: string) => value ? new Date(value).toLocaleString() : 'Not set'
-    },
-    {
-      key: 'endTime',
-      header: 'End Time',
-      render: (value: string) => value ? new Date(value).toLocaleString() : 'Not set'
-    },
-    { key: 'venue', header: 'Venue' },
-    {
-      key: 'examLink',
-      header: 'Exam Link',
-      render: (value: string, row: any) => value ? (
-        <Button
-          size="sm"
-          variant="destructive"
-          className="bg-red-600 hover:bg-red-700 text-white"
-          onClick={() => window.open(value, '_blank')}
-        >
-          <ExternalLink className="h-3 w-3 mr-1" />
-          Exam Link
-        </Button>
-      ) : (
-        <span className="text-muted-foreground">No link</span>
+      id: 'durationMinutes',
+      label: 'Duration',
+      minWidth: 100,
+      format: (value: number) => (
+        <div className="flex items-center gap-1">
+          <Clock className="h-4 w-4" />
+          {formatDuration(value)}
+        </div>
       )
     },
     {
-      key: 'status',
-      header: 'Status',
-      render: (value: string) => (
-        <Badge variant={
-          value === 'scheduled' ? 'default' : 
-          value === 'draft' ? 'secondary' : 
-          value === 'completed' ? 'outline' : 'destructive'
-        }>
-          {value}
+      id: 'totalMarks',
+      label: 'Marks',
+      minWidth: 100,
+      format: (value: string, row: TeacherExam) => `${value}/${row?.passingMarks || '0'}`
+    },
+    {
+      id: 'scheduleDate',
+      label: 'Date',
+      minWidth: 150,
+      format: (value: string) => (
+        <div className="flex items-center gap-1">
+          <Calendar className="h-4 w-4" />
+          {new Date(value).toLocaleDateString()}
+        </div>
+      )
+    },
+    {
+      id: 'venue',
+      label: 'Venue',
+      minWidth: 120,
+      format: (value: string | undefined) => value || '-'
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      minWidth: 100,
+      format: (value: string) => (
+        <Badge variant={getStatusColor(value)}>
+          {value.toUpperCase()}
         </Badge>
       )
     },
     {
-      key: 'results',
-      header: 'Results',
-      render: (value: any, row: TeacherExam) => (
-        <Button
-          size="sm"
-          variant="default"
-          onClick={() => handleViewResults(row)}
-          className="flex items-center gap-2"
-        >
-          <Eye className="h-3 w-3" />
-          View
-        </Button>
+      id: 'actions',
+      label: 'Actions',
+      minWidth: 200,
+      align: 'center',
+      format: (value: any, row: TeacherExam) => (
+        <div className="flex items-center gap-2">
+          {row.examLink && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => window.open(row.examLink, '_blank')}
+              className="flex items-center gap-1"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Exam Link
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleViewExam(row)}
+            className="flex items-center gap-1"
+          >
+            <FileText className="h-3 w-3" />
+            View
+          </Button>
+          <Button
+            size="sm"
+            variant="default"
+            onClick={() => handleEditExam(row)}
+            className="flex items-center gap-1"
+          >
+            <FileText className="h-3 w-3" />
+            Edit
+          </Button>
+        </div>
       )
     }
   ];
-
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -218,8 +249,9 @@ const TeacherExams = () => {
     setIsCreateResultsDialogOpen(true);
   };
 
-  const handleViewResults = (exam: TeacherExam) => {
-    navigate(`/exams/${exam.id}/results`);
+  const handleViewExam = (exam: TeacherExam) => {
+    setSelectedExam(exam);
+    setIsExamResultsDialogOpen(true);
   };
 
   const handleEditExam = (exam: TeacherExam) => {
@@ -230,17 +262,7 @@ const TeacherExams = () => {
   const handleUpdateExam = () => {
     setIsUpdateDialogOpen(false);
     setSelectedExam(null);
-    actions.refresh();
-  };
-
-  const handleLoadData = () => {
-    setHasAttemptedLoad(true);
-    actions.loadData();
-  };
-
-  const handleRefreshData = () => {
-    actions.refresh();
-    setLastRefresh(new Date());
+    actions.refresh(); // Refresh the list
   };
 
   const filteredExams = exams.filter(exam => {
@@ -267,11 +289,11 @@ const TeacherExams = () => {
     return (
       <div className="container mx-auto p-6 space-y-6">
         <div className="text-center py-12">
-          <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-2xl font-bold mb-4">
+          <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Select Subject
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-gray-600 dark:text-gray-400">
             Please select an institute, class, and subject to view your exams.
           </p>
         </div>
@@ -279,30 +301,34 @@ const TeacherExams = () => {
     );
   }
 
-  if (!hasAttemptedLoad) {
+  if (!exams.length && !loading) {
     return (
       <div className="container mx-auto p-6 space-y-6">
         <div className="text-center py-12">
+          <FileText className="h-16 w-16 mx-auto mb-4 text-blue-600" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Exams ({getCurrentSelection()})
+            My Subject Exams
           </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
+            Current Selection: {getCurrentSelection()}
+          </p>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Click the button below to load exams data
+            Click the button below to load your exams for this subject
           </p>
           <Button 
-            onClick={handleLoadData} 
+            onClick={() => actions.loadData()} 
             disabled={loading}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {loading ? (
               <>
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Loading Data...
+                Loading My Exams...
               </>
             ) : (
               <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Load Data
+                <FileText className="h-4 w-4 mr-2" />
+                Load My Exams
               </>
             )}
           </Button>
@@ -313,91 +339,99 @@ const TeacherExams = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              My Subject Exams
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Current Selection: {getCurrentSelection()}
-            </p>
-            {lastRefresh && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Last refreshed: {lastRefresh.toLocaleTimeString()}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2"
-            >
-              <Filter className="h-4 w-4" />
-              Filters
-            </Button>
-            <Button 
-              onClick={handleRefreshData} 
-              disabled={loading}
-              variant="outline"
-              size="sm"
-            >
-              {loading ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Refreshing...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh Data
-                </>
-              )}
-            </Button>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            My Subject Exams
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Current Selection: {getCurrentSelection()}
+          </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="flex items-center gap-1">
+            <FileText className="h-4 w-4" />
+            {exams.length} My Exams
+          </Badge>
+          <Button 
+            onClick={handleCreateResults}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Create Results
+          </Button>
+          <Button 
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Exam
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            Filters
+          </Button>
+          <Button 
+            onClick={() => actions.refresh()} 
+            disabled={loading}
+            variant="outline"
+            size="sm"
+          >
+            {loading ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Refreshing...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
 
-        {/* Filter Controls */}
-        {showFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                Search Exams
-              </label>
-              <Input
-                placeholder="Search exams..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                Status
-              </label>
+      {/* Filter Controls */}
+      {showFilters && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Filter className="h-5 w-5" />
+              Filter Exams
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search exams..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="scheduled">Scheduled</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                Type
-              </label>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Type" />
+                  <SelectValue placeholder="Filter by type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
@@ -405,9 +439,6 @@ const TeacherExams = () => {
                   <SelectItem value="physical">Physical</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="flex items-end">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -420,51 +451,94 @@ const TeacherExams = () => {
                 Clear Filters
               </Button>
             </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Add Create Buttons */}
-        <div className="flex justify-end gap-2 mb-4">
-          <Button 
-            onClick={handleCreateResults}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <BarChart3 className="h-4 w-4" />
-            Create Results
-          </Button>
-          <Button 
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Create Exam
-          </Button>
-        </div>
-
-        {/* MUI Table View */}
-        <MUITable
-          title=""
-          data={exams}
-          columns={examsColumns.map(col => ({
-            id: col.key,
-            label: col.header,
-            minWidth: 170,
-            format: col.render
-          }))}
-          onAdd={undefined}
-          onEdit={handleEditExam}
-          onView={undefined}
-          page={pagination.page}
-          rowsPerPage={pagination.limit}
-          totalCount={pagination.totalCount}
-          onPageChange={(newPage) => actions.setPage(newPage)}
-          onRowsPerPageChange={(newLimit) => {
-            actions.setLimit(newLimit);
-            actions.setPage(0);
-          }}
-        />
-      </>
+      {filteredExams.length === 0 && !loading ? (
+        <Card>
+          <CardContent className="text-center py-12">
+            <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No Exams Found
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              {searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
+                ? 'No exams match your current filters.' 
+                : 'No exams have been created for this subject yet.'}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Paper sx={{ 
+          width: '100%', 
+          height: 'calc(100vh - 250px)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <TableContainer sx={{ 
+            height: 'calc(100% - 52px)', 
+            flexGrow: 1 
+          }}>
+            <Table stickyHeader aria-label="exams table">
+              <TableHead>
+                <TableRow>
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.id}
+                      align={column.align}
+                      style={{ minWidth: column.minWidth }}
+                      sx={{
+                        fontWeight: 'bold',
+                        backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                      }}
+                    >
+                      {column.label}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredExams.map((row, index) => (
+                  <TableRow hover role="checkbox" tabIndex={-1} key={row.id || index}>
+                    {columns.map((column) => {
+                      const value = row[column.id];
+                      return (
+                        <TableCell key={column.id} align={column.align}>
+                          {column.format ? column.format(value, row) : value || '-'}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+                {filteredExams.length === 0 && loading && (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} align="center">
+                      <div className="py-12 text-center text-gray-500">
+                        <RefreshCw className="h-8 w-8 mx-auto mb-4 animate-spin" />
+                        <p className="text-lg">Loading exams...</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[25, 50, 100]}
+            component="div"
+            count={pagination.totalCount}
+            rowsPerPage={pagination.limit}
+            page={pagination.page}
+            onPageChange={(event, newPage) => actions.setPage(newPage)}
+            onRowsPerPageChange={(event) => {
+              actions.setLimit(parseInt(event.target.value, 10));
+              actions.setPage(0);
+            }}
+          />
+        </Paper>
+      )}
 
       {/* Create Exam Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -509,6 +583,22 @@ const TeacherExams = () => {
               exam={selectedExam}
               onClose={() => setIsUpdateDialogOpen(false)}
               onSuccess={handleUpdateExam}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Exam Results Dialog */}
+      <Dialog open={isExamResultsDialogOpen} onOpenChange={setIsExamResultsDialogOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Exam Results</DialogTitle>
+          </DialogHeader>
+          {selectedExam && (
+            <ExamResultsDialog
+              exam={selectedExam}
+              isOpen={isExamResultsDialogOpen}
+              onClose={() => setIsExamResultsDialogOpen(false)}
             />
           )}
         </DialogContent>

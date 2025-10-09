@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/api/client';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
@@ -23,10 +22,9 @@ const CreateHomeworkForm = ({ onClose, onSuccess }: CreateHomeworkFormProps) => 
   const { user, currentInstituteId, currentClassId, currentSubjectId } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const instituteRole = useInstituteRole();
 
   // Check if user has permission to create homework - InstituteAdmin and Teachers
-  const canCreate = instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher';
+  const canCreate = user?.role === 'InstituteAdmin' || user?.role === 'Teacher';
 
   // Handle access denial in useEffect to avoid side effects during render
   React.useEffect(() => {
@@ -91,15 +89,15 @@ const CreateHomeworkForm = ({ onClose, onSuccess }: CreateHomeworkFormProps) => 
         teacherId: user.id,
         title: formData.title,
         description: formData.description,
-        startDate: formData.startDate || undefined,
-        endDate: formData.endDate || undefined,
-        referenceLink: formData.referenceLink || undefined,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        referenceLink: formData.referenceLink || null,
         isActive: formData.isActive
       };
 
       console.log('Creating homework with data:', homeworkData);
       
-      const response = await apiClient.post('/homeworks', homeworkData);
+      const response = await apiClient.post('/institute-class-subject-homeworks', homeworkData);
       
       console.log('Homework created successfully:', response.data);
       

@@ -9,7 +9,6 @@ import { AccessControl, UserRole } from '@/utils/permissions';
 import { homeworkSubmissionsApi, type HomeworkSubmission } from '@/api/homeworkSubmissions.api';
 import { homeworkApi, type Homework } from '@/api/homework.api';
 import { FileText, Calendar, User, ExternalLink, RefreshCw, ArrowLeft, Lock, Edit } from 'lucide-react';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import AppLayout from '@/components/layout/AppLayout';
 import UploadCorrectionDialog from '@/components/forms/UploadCorrectionDialog';
 
@@ -18,7 +17,6 @@ const HomeworkSubmissionDetails = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const instituteRole = useInstituteRole();
   const [homework, setHomework] = useState<Homework | null>(null);
   const [submissions, setSubmissions] = useState<HomeworkSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -97,10 +95,11 @@ const HomeworkSubmissionDetails = () => {
   };
 
   // Check if user can upload corrections (InstituteAdmin or Teacher only)
-  const canUploadCorrections = ['InstituteAdmin', 'Teacher'].includes(instituteRole);
+  const canUploadCorrections = user?.role && 
+    (user.role === 'InstituteAdmin' || user.role === 'Teacher');
 
-  // Check if user has permission to view homework submissions (institute-specific)
-  if (!AccessControl.hasPermission(instituteRole as UserRole, 'view-homework-submissions')) {
+  // Check if user has permission to view homework submissions
+  if (!user?.role || !AccessControl.hasPermission(user.role as UserRole, 'view-homework-submissions')) {
     return (
       <AppLayout>
         <div className="container mx-auto py-8">

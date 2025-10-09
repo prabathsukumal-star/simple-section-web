@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -233,9 +232,8 @@ const Grading = () => {
     await handleRefreshData();
   };
 
-  const userRole = useInstituteRole();
-  const canGrade = AccessControl.hasPermission(userRole, 'grade-assignments');
-  const canManageGrades = AccessControl.hasPermission(userRole, 'manage-grades');
+  const canGrade = AccessControl.hasPermission((user?.role || 'Student') as UserRole, 'grade-assignments');
+  const canManageGrades = AccessControl.hasPermission((user?.role || 'Student') as UserRole, 'manage-grades');
 
   return (
     <div className="space-y-6">

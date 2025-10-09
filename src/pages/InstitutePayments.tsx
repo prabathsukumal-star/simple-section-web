@@ -15,7 +15,6 @@ import SubmitPaymentDialog from '@/components/forms/SubmitPaymentDialog';
 import MUITable from '@/components/ui/mui-table';
 import { useTableData } from '@/hooks/useTableData';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 const InstitutePayments = () => {
   console.log('🚀 InstitutePayments component rendering');
   
@@ -47,17 +46,14 @@ const InstitutePayments = () => {
   const {
     toast
   } = useToast();
-  
-  const effectiveRole = useInstituteRole();
-  
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<InstitutePayment | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   
-  const isInstituteAdmin = effectiveRole === 'InstituteAdmin';
-  const isStudent = effectiveRole === 'Student';
-  const isTeacher = effectiveRole === 'Teacher';
+  const isInstituteAdmin = user?.userType === 'INSTITUTE_ADMIN';
+  const isStudent = user?.userType === 'STUDENT';
+  const isTeacher = user?.userType === 'TEACHER';
   // Configure table data hook
   const tableData = useTableData<InstitutePayment>({
     endpoint: (isInstituteAdmin || isTeacher)

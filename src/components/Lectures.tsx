@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RefreshCw, Filter, Plus, Calendar, Clock, MapPin, Video, Users, ExternalLink, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { AccessControl } from '@/utils/permissions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -36,7 +35,7 @@ const Lectures = ({ apiLevel = 'institute' }: LecturesProps) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
 
-  const userRole = useInstituteRole();
+  const userRole = (user?.role || 'Student') as UserRole;
   
   // Enhanced pagination with useTableData hook - DISABLE AUTO-LOADING
   const tableData = useTableData({
@@ -56,8 +55,7 @@ const Lectures = ({ apiLevel = 'institute' }: LecturesProps) => {
     actions
   } = tableData;
 
-  // Track if we've attempted to load data at least once
-  const [hasAttemptedLoad, setHasAttemptedLoad] = React.useState(false);
+  const dataLoaded = lecturesData.length > 0;
 
   function getEndpoint() {
     if (userRole === 'Student') {
@@ -113,8 +111,6 @@ const Lectures = ({ apiLevel = 'institute' }: LecturesProps) => {
       }
     }
 
-    setHasAttemptedLoad(true);
-    
     // Update filters and load data
     const newFilters = buildDefaultParams();
     actions.updateFilters(newFilters);
@@ -228,6 +224,7 @@ const Lectures = ({ apiLevel = 'institute' }: LecturesProps) => {
           <Button
             size="sm"
             variant="default"
+            style={{ backgroundColor: '#3338A0', color: 'white' }}
             className="hover:opacity-90"
             onClick={() => window.open(recUrl, '_blank')}
           >
@@ -244,18 +241,6 @@ const Lectures = ({ apiLevel = 'institute' }: LecturesProps) => {
   const canAdd = AccessControl.hasPermission(userRole, 'create-lecture');
   const canEdit = userRole === 'Teacher' ? true : AccessControl.hasPermission(userRole, 'edit-lecture');
   const canDelete = userRole === 'Teacher' ? true : AccessControl.hasPermission(userRole, 'delete-lecture');
-
-  // DEBUG: Log role and institute information
-  console.log('🔍 LECTURES DEBUG:', {
-    userRole,
-    selectedInstitute,
-    'selectedInstitute.userRole': selectedInstitute?.userRole,
-    'selectedInstitute.instituteUserType': (selectedInstitute as any)?.instituteUserType,
-    'user.role': user?.role,
-    canEdit,
-    canDelete,
-    canAdd
-  });
 
   const getTitle = () => {
     const contexts = [];
@@ -298,7 +283,7 @@ const Lectures = ({ apiLevel = 'institute' }: LecturesProps) => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {!hasAttemptedLoad ? (
+      {!dataLoaded ? (
         <div className="text-center py-12">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             {getTitle()}
@@ -459,7 +444,7 @@ const Lectures = ({ apiLevel = 'institute' }: LecturesProps) => {
               format: col.render
             }))}
             onAdd={canAdd ? () => setIsCreateDialogOpen(true) : undefined}
-            onEdit={(userRole === 'InstituteAdmin' || userRole === 'Teacher') ? handleEditLecture : undefined}
+            onEdit={userRole === 'InstituteAdmin' ? handleEditLecture : undefined}
             onDelete={canDelete ? handleDeleteLecture : undefined}
             page={pagination.page}
             rowsPerPage={pagination.limit}
@@ -467,7 +452,7 @@ const Lectures = ({ apiLevel = 'institute' }: LecturesProps) => {
             onPageChange={(newPage: number) => actions.setPage(newPage)}
             onRowsPerPageChange={(newLimit: number) => actions.setLimit(newLimit)}
             sectionType="lectures"
-            allowEdit={userRole === 'InstituteAdmin' || userRole === 'Teacher'}
+            allowEdit={userRole === 'InstituteAdmin'}
             allowDelete={canDelete}
           />
         </>

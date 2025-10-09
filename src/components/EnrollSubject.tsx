@@ -1,13 +1,11 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 
 const EnrollSubject = () => {
   const { selectedInstitute, selectedClass, user } = useAuth();
-  const effectiveRole = useInstituteRole();
 
   // Only show for students
-  if (effectiveRole !== 'Student') {
+  if (user?.role !== 'Student') {
     return (
       <div className="p-6">
         <div className="text-center">

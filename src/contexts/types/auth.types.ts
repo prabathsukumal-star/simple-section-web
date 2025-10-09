@@ -26,16 +26,7 @@ export interface User {
 }
 
 // Export UserRole type for use in other components
-export type UserRole = 
-  | 'OrganizationManager'
-  | 'InstituteAdmin' 
-  | 'Student' 
-  | 'AttendanceMarker' 
-  | 'Teacher' 
-  | 'Parent'
-  | 'User'
-  | 'UserWithoutParent'
-  | 'UserWithoutStudent';
+export type UserRole = 'InstituteAdmin' | 'Teacher' | 'Student' | 'AttendanceMarker' | 'Parent' | 'OrganizationManager';
 
 export interface Institute {
   id: string;
@@ -44,11 +35,6 @@ export interface Institute {
   description: string;
   type?: string;
   isActive: boolean;
-  instituteUserType?: string; // Raw API value: STUDENT, INSTITUTE_ADMIN, TEACHER, etc.
-  userRole?: string; // Mapped role (kept for backward compatibility)
-  userIdByInstitute?: string; // User's ID within this institute
-  shortName?: string; // Institute's short name
-  logo?: string; // Institute's logo URL
 }
 
 export interface Class {

@@ -104,7 +104,7 @@ const AssignSubjectToClassForm: React.FC<AssignSubjectToClassFormProps> = ({
       const baseUrl = getBaseUrl();
       const headers = getApiHeaders();
       
-      const params = new URLSearchParams({ page: '1', limit: '50' });
+      const params = new URLSearchParams({ npage: '1', limit: '10' });
       if (selectedInstituteType) {
         params.set('instituteType', selectedInstituteType);
       }

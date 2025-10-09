@@ -65,23 +65,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Raw API institutes response:', apiInstitutes);
       
       // Ensure apiInstitutes is an array and filter out any undefined/null values
-      const validInstitutes = Array.isArray(apiInstitutes)
-        ? apiInstitutes.filter((institute: any) => institute && (institute.id || institute.instituteId))
-        : [];
+      const validInstitutes = Array.isArray(apiInstitutes) ? apiInstitutes.filter(institute => institute && institute.id) : [];
       
-      // Map API response to AuthContext Institute type with safe property access
-      const institutes = validInstitutes.map((institute: any): Institute => ({
-        id: institute.instituteId || institute.id || '',
-        name: institute.instituteName || institute.name || 'Unknown Institute',
+      // Map ApiInstitute to AuthContext Institute type with safe property access
+      const institutes = validInstitutes.map((institute: ApiInstitute): Institute => ({
+        id: institute.id || '',
+        name: institute.name || 'Unknown Institute',
         code: institute.code || '',
-        description: `${institute.instituteAddress || institute.address || ''}, ${institute.instituteCity || institute.city || ''}`.trim() || 'No description available',
-        isActive: institute.instituteIsActive !== undefined ? institute.instituteIsActive : (institute.isActive !== undefined ? institute.isActive : true),
-        type: institute.instituteType || institute.type,
-        instituteUserType: institute.instituteUserType, // Preserve raw API value
-        userRole: institute.instituteUserType, // Keep for backward compatibility
-        userIdByInstitute: institute.userIdByInstitute,
-        shortName: institute.instituteShortName || institute.name || 'Unknown Institute',
-        logo: institute.instituteLogo || ''
+        description: `${institute.address || ''}, ${institute.city || ''}`.trim() || 'No description available',
+        isActive: institute.isActive !== undefined ? institute.isActive : true,
+        type: institute.type
       }));
 
       console.log('Mapped institutes:', institutes);

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import DataTable from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -232,7 +231,7 @@ const Results = () => {
     setIsCreateDialogOpen(false);
   };
 
-  const userRole = useInstituteRole();
+  const userRole = (user?.role || 'Student') as UserRole;
   const canAdd = AccessControl.hasPermission(userRole, 'create-result');
   const canEdit = AccessControl.hasPermission(userRole, 'edit-result');
   const canDelete = AccessControl.hasPermission(userRole, 'delete-result');

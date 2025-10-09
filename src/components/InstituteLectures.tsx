@@ -10,11 +10,9 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import CreateInstituteLectureForm from '@/components/forms/CreateInstituteLectureForm';
 import UpdateInstituteLectureForm from '@/components/forms/UpdateInstituteLectureForm';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 
 const InstituteLectures = () => {
   const { selectedInstitute, user } = useAuth();
-  const effectiveRole = useInstituteRole();
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -114,7 +112,7 @@ const InstituteLectures = () => {
     setShowUpdateDialog(true);
   };
 
-  const isInstituteAdmin = effectiveRole === 'InstituteAdmin';
+  const isInstituteAdmin = user?.role === 'InstituteAdmin';
 
   if (!selectedInstitute) {
     return (
@@ -128,7 +126,7 @@ const InstituteLectures = () => {
   }
 
   // Check if user has permission to view institute lectures
-  if (!effectiveRole || !['InstituteAdmin', 'Teacher', 'Student'].includes(effectiveRole)) {
+  if (!user || !['InstituteAdmin', 'Teacher', 'Student'].includes(user.role)) {
     return (
       <div className="p-6">
         <div className="text-center">
@@ -141,6 +139,16 @@ const InstituteLectures = () => {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Current Selection Display */}
+      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">Current Selection</h3>
+        <div className="space-y-1">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            <span className="font-medium">Institute:</span> {selectedInstitute.name}
+          </p>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Institute Lectures</h1>

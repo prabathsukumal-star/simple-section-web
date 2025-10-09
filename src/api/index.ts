@@ -123,12 +123,5 @@ export type {
   StudentAttendanceParams
 } from './studentAttendance.api';
 
-// Transport API
-export { transportApi } from './transport.api';
-export type { 
-  TransportEnrollment,
-  TransportEnrollmentsResponse
-} from './transport.api';
-
 // Re-export auth API utilities
 export { getBaseUrl, getApiHeaders } from '@/contexts/utils/auth.api';

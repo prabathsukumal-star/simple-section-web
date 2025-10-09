@@ -1,18 +1,25 @@
-import React, { useState } from 'react';
-import MUITable from '@/components/ui/mui-table';
-import { Badge } from '@/components/ui/badge';
+import * as React from 'react';
+import { useState } from 'react';
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TablePagination from '@mui/material/TablePagination';
+import TableRow from '@mui/material/TableRow';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw, Filter, Plus, Video, ExternalLink } from 'lucide-react';
+import { RefreshCw, Video, Plus, Search, Filter, Calendar, Clock, ExternalLink, MapPin, Users, Edit } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CreateLectureForm from '@/components/forms/CreateLectureForm';
 import UpdateLectureForm from '@/components/forms/UpdateLectureForm';
 import { useTableData } from '@/hooks/useTableData';
-import { cachedApiClient } from '@/api/cachedClient';
 
 interface TeacherLecture {
   id: string;
@@ -38,17 +45,22 @@ interface TeacherLecture {
   updatedAt: string;
 }
 
+interface Column {
+  id: 'title' | 'lectureType' | 'startTime' | 'endTime' | 'venue' | 'maxParticipants' | 'status' | 'actions';
+  label: string;
+  minWidth?: number;
+  align?: 'right' | 'left' | 'center';
+  format?: (value: any, row?: TeacherLecture) => React.ReactNode;
+}
 
 const TeacherLectures = () => {
   const { user, selectedInstitute, selectedClass, selectedSubject } = useAuth();
-  const effectiveRole = useInstituteRole();
   const { toast } = useToast();
   
   const [showFilters, setShowFilters] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [selectedLecture, setSelectedLecture] = useState<TeacherLecture | null>(null);
-  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,7 +68,7 @@ const TeacherLectures = () => {
   const [typeFilter, setTypeFilter] = useState('all');
 
   // Role check - only teachers can access this component
-  if (effectiveRole !== 'Teacher') {
+  if (user?.role !== 'Teacher') {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600 dark:text-gray-400">
@@ -81,113 +93,142 @@ const TeacherLectures = () => {
   });
 
   const { state: { data: lectures, loading }, pagination, actions } = tableData;
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  const lecturesColumns = [
-    { key: 'title', header: 'Title' },
-    { key: 'description', header: 'Description' },
-    { key: 'lectureType', header: 'Type', render: (value: string) => <Badge variant="outline">{value}</Badge> },
-    { key: 'venue', header: 'Venue' },
-    { key: 'startTime', header: 'Start Time', render: (value: string) => new Date(value).toLocaleString() },
-    { key: 'endTime', header: 'End Time', render: (value: string) => new Date(value).toLocaleString() },
-    { 
-      key: 'status', 
-      header: 'Status',
-      render: (value: string) => (
-        <Badge variant={value === 'scheduled' ? 'default' : value === 'completed' ? 'secondary' : 'destructive'}>
-          {value}
+  const columns: readonly Column[] = [
+    {
+      id: 'title',
+      label: 'Title',
+      minWidth: 200,
+      format: (value: string, row: TeacherLecture) => (
+        <div>
+          <div className="font-medium">{value}</div>
+          <div className="text-sm text-gray-500 truncate">{row?.description || ''}</div>
+        </div>
+      )
+    },
+    {
+      id: 'lectureType',
+      label: 'Type',
+      minWidth: 120,
+      format: (value: 'online' | 'physical') => (
+        <Badge variant={value === 'online' ? 'default' : 'secondary'}>
+          {value === 'online' ? (
+            <>
+              <ExternalLink className="h-3 w-3 mr-1" />
+              Online
+            </>
+          ) : (
+            <>
+              <MapPin className="h-3 w-3 mr-1" />
+              Physical
+            </>
+          )}
         </Badge>
       )
     },
     {
-      key: 'meetingLink',
-      header: 'Join Lecture',
-      render: (value: string, row: any) => value ? (
-        <Button
-          size="sm"
-          variant="default"
-          className="bg-green-600 hover:bg-green-700 text-white"
-          onClick={() => window.open(value, '_blank')}
-        >
-          <ExternalLink className="h-3 w-3 mr-1" />
-          Join
-        </Button>
-      ) : (
-        <span className="text-gray-400">No link</span>
+      id: 'startTime',
+      label: 'Start Time',
+      minWidth: 150,
+      format: (value: string) => (
+        <div className="flex items-center gap-1">
+          <Calendar className="h-4 w-4" />
+          {new Date(value).toLocaleString()}
+        </div>
       )
     },
     {
-      key: 'recordingUrl',
-      header: 'Recording',
-      render: (value: string, row: any) => {
-        const recUrl = value || row.recordingUrl || row.recording_url || row.recUrl || row.videoUrl || row.video_url;
-        return recUrl ? (
+      id: 'endTime',
+      label: 'End Time',
+      minWidth: 150,
+      format: (value: string) => (
+        <div className="flex items-center gap-1">
+          <Clock className="h-4 w-4" />
+          {new Date(value).toLocaleString()}
+        </div>
+      )
+    },
+    {
+      id: 'venue',
+      label: 'Venue',
+      minWidth: 120,
+      format: (value: string | undefined) => value || '-'
+    },
+    {
+      id: 'maxParticipants',
+      label: 'Max Participants',
+      minWidth: 150,
+      format: (value: number | undefined) => value ? (
+        <div className="flex items-center gap-1">
+          <Users className="h-4 w-4" />
+          {value}
+        </div>
+      ) : '-'
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      minWidth: 100,
+      format: (value: string) => (
+        <Badge variant={getStatusColor(value)}>
+          {value.toUpperCase()}
+        </Badge>
+      )
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      minWidth: 200,
+      align: 'center',
+      format: (value: any, row: TeacherLecture) => (
+        <div className="flex items-center gap-2">
+          {row.recordingUrl && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => window.open(row.recordingUrl, '_blank')}
+              className="flex items-center gap-1"
+            >
+              <Video className="h-3 w-3" />
+              Recording
+            </Button>
+          )}
           <Button
             size="sm"
             variant="default"
-            className="hover:opacity-90"
-            onClick={() => window.open(recUrl, '_blank')}
+            onClick={() => handleEditLecture(row)}
+            className="flex items-center gap-1"
           >
-            <Video className="h-3 w-3 mr-1" />
-            View Rec
+            <Edit className="h-3 w-3" />
+            Edit
           </Button>
-        ) : (
-          <span className="text-gray-400">No recording</span>
-        );
-      }
+        </div>
+      )
     }
   ];
 
-  const handleEditLecture = (lectureData: any) => {
-    console.log('Opening update lecture dialog:', lectureData);
-    setSelectedLecture(lectureData);
-    setIsUpdateDialogOpen(true);
-  };
-
-  const handleUpdateLecture = async () => {
-    setIsUpdateDialogOpen(false);
-    setSelectedLecture(null);
-    actions.refresh();
-  };
-
-  const handleDeleteLecture = async (lectureData: any) => {
-    console.log('Deleting lecture:', lectureData);
-    
-    try {
-      await cachedApiClient.delete(`/institute-class-subject-lectures/${lectureData.id}`);
-      
-      toast({
-        title: "Lecture Deleted",
-        description: `Lecture ${lectureData.title} has been deleted successfully.`,
-        variant: "destructive"
-      });
-      
-      actions.refresh();
-      
-    } catch (error) {
-      console.error('Error deleting lecture:', error);
-      toast({
-        title: "Delete Failed",
-        description: "Failed to delete lecture. Please try again.",
-        variant: "destructive"
-      });
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'default';
+      case 'scheduled':
+        return 'default';
+      case 'cancelled':
+        return 'destructive';
+      default:
+        return 'secondary';
     }
   };
 
-  const handleCreateLecture = async () => {
-    setIsCreateDialogOpen(false);
-    actions.refresh();
+  const handleEditLecture = (lecture: TeacherLecture) => {
+    setSelectedLecture(lecture);
+    setIsUpdateDialogOpen(true);
   };
 
-  const handleLoadData = () => {
-    setHasAttemptedLoad(true);
-    actions.loadData();
-  };
-
-  const handleRefreshData = async () => {
-    console.log('Force refreshing lectures data...');
-    actions.refresh();
-    setLastRefresh(new Date());
+  const handleUpdateLecture = () => {
+    setIsUpdateDialogOpen(false);
+    setSelectedLecture(null);
+    actions.refresh(); // Refresh the list
   };
 
   const filteredLectures = lectures.filter(lecture => {
@@ -202,38 +243,23 @@ const TeacherLectures = () => {
     return matchesSearch && matchesStatus && matchesType;
   });
 
-  const getTitle = () => {
-    const contexts = [];
-    
-    if (selectedInstitute) {
-      contexts.push(selectedInstitute.name);
-    }
-    
-    if (selectedClass) {
-      contexts.push(selectedClass.name);
-    }
-    
-    if (selectedSubject) {
-      contexts.push(selectedSubject.name);
-    }
-    
-    let title = 'Lectures';
-    if (contexts.length > 0) {
-      title += ` (${contexts.join(' → ')})`;
-    }
-    
-    return title;
+  const getCurrentSelection = () => {
+    const parts = [];
+    if (selectedInstitute) parts.push(`Institute: ${selectedInstitute.name}`);
+    if (selectedClass) parts.push(`Class: ${selectedClass.name}`);
+    if (selectedSubject) parts.push(`Subject: ${selectedSubject.name}`);
+    return parts.join(' → ');
   };
 
   if (!selectedInstitute || !selectedClass || !selectedSubject) {
     return (
       <div className="container mx-auto p-6 space-y-6">
         <div className="text-center py-12">
-          <Video className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-2xl font-bold mb-4">
+          <Video className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Select Subject
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-gray-600 dark:text-gray-400">
             Please select an institute, class, and subject to view lectures.
           </p>
         </div>
@@ -241,29 +267,34 @@ const TeacherLectures = () => {
     );
   }
 
-  if (!hasAttemptedLoad) {
+  if (!lectures.length && !loading) {
     return (
       <div className="container mx-auto p-6 space-y-6">
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-4">
-            {getTitle()}
+          <Video className="h-16 w-16 mx-auto mb-4 text-blue-600" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            My Subject Lectures
           </h2>
-          <p className="text-muted-foreground mb-6">
-            Click the button below to load lectures data
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
+            Current Selection: {getCurrentSelection()}
+          </p>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Click the button below to load your lectures
           </p>
           <Button 
-            onClick={handleLoadData} 
+            onClick={() => actions.loadData()} 
             disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700"
           >
             {loading ? (
               <>
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Loading Data...
+                Loading Lectures...
               </>
             ) : (
               <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Load Data
+                <Video className="h-4 w-4 mr-2" />
+                Load My Lectures
               </>
             )}
           </Button>
@@ -276,16 +307,25 @@ const TeacherLectures = () => {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">
-            {getTitle()}
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            My Subject Lectures
           </h1>
-          {lastRefresh && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Last refreshed: {lastRefresh.toLocaleTimeString()}
-            </p>
-          )}
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Current Selection: {getCurrentSelection()}
+          </p>
         </div>
         <div className="flex items-center gap-2">
+          <Badge variant="outline" className="flex items-center gap-1">
+            <Video className="h-4 w-4" />
+            {lectures.length} Lectures
+          </Badge>
+          <Button 
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Lecture
+          </Button>
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
@@ -295,7 +335,7 @@ const TeacherLectures = () => {
             Filters
           </Button>
           <Button 
-            onClick={handleRefreshData} 
+            onClick={() => actions.refresh()} 
             disabled={loading}
             variant="outline"
             size="sm"
@@ -308,7 +348,7 @@ const TeacherLectures = () => {
             ) : (
               <>
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh Data
+                Refresh
               </>
             )}
           </Button>
@@ -317,102 +357,145 @@ const TeacherLectures = () => {
 
       {/* Filter Controls */}
       {showFilters && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-              Search Lectures
-            </label>
-            <Input
-              placeholder="Search lectures..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-              Status
-            </label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="ongoing">Ongoing</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-              Type
-            </label>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="physical">Physical</SelectItem>
-                <SelectItem value="online">Online</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-end">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchTerm('');
-                setStatusFilter('all');
-                setTypeFilter('all');
-              }}
-              className="w-full"
-            >
-              Clear Filters
-            </Button>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Filter className="h-5 w-5" />
+              Filter Lectures
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search lectures..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="online">Online</SelectItem>
+                  <SelectItem value="physical">Physical</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchTerm('');
+                  setStatusFilter('all');
+                  setTypeFilter('all');
+                }}
+                className="w-full"
+              >
+                Clear Filters
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Add Create Button */}
-      <div className="flex justify-end mb-4">
-        <Button 
-          onClick={() => setIsCreateDialogOpen(true)}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Create Lecture
-        </Button>
-      </div>
-
-      {/* MUI Table View */}
-      <MUITable
-        title=""
-        data={lectures}
-        columns={lecturesColumns.map(col => ({
-          id: col.key,
-          label: col.header,
-          minWidth: 170,
-          format: col.render
-        }))}
-        onAdd={() => setIsCreateDialogOpen(true)}
-        onEdit={handleEditLecture}
-        onDelete={handleDeleteLecture}
-        page={pagination.page}
-        rowsPerPage={pagination.limit}
-        totalCount={pagination.totalCount}
-        onPageChange={(newPage: number) => actions.setPage(newPage)}
-        onRowsPerPageChange={(newLimit: number) => actions.setLimit(newLimit)}
-        sectionType="lectures"
-        allowEdit={true}
-        allowDelete={true}
-      />
+      {filteredLectures.length === 0 && !loading ? (
+        <Card>
+          <CardContent className="text-center py-12">
+            <Video className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No Lectures Found
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              {searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
+                ? 'No lectures match your current filters.' 
+                : 'No lectures have been created for this subject yet.'}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Paper sx={{ 
+          width: '100%', 
+          height: 'calc(100vh - 250px)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <TableContainer sx={{ 
+            height: 'calc(100% - 52px)', 
+            flexGrow: 1 
+          }}>
+            <Table stickyHeader aria-label="lectures table">
+              <TableHead>
+                <TableRow>
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.id}
+                      align={column.align}
+                      style={{ minWidth: column.minWidth }}
+                      sx={{
+                        fontWeight: 'bold',
+                        backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                      }}
+                    >
+                      {column.label}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredLectures.map((row, index) => (
+                  <TableRow hover role="checkbox" tabIndex={-1} key={row.id || index}>
+                    {columns.map((column) => {
+                      const value = row[column.id];
+                      return (
+                        <TableCell key={column.id} align={column.align}>
+                          {column.format ? column.format(value, row) : value || '-'}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+                {filteredLectures.length === 0 && loading && (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} align="center">
+                      <div className="py-12 text-center text-gray-500">
+                        <RefreshCw className="h-8 w-8 mx-auto mb-4 animate-spin" />
+                        <p className="text-lg">Loading lectures...</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[25, 50, 100]}
+            component="div"
+            count={pagination.totalCount}
+            rowsPerPage={pagination.limit}
+            page={pagination.page}
+            onPageChange={(event, newPage) => actions.setPage(newPage)}
+            onRowsPerPageChange={(event) => {
+              actions.setLimit(parseInt(event.target.value, 10));
+              actions.setPage(0);
+            }}
+          />
+        </Paper>
+      )}
 
       {/* Create Lecture Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -422,7 +505,10 @@ const TeacherLectures = () => {
           </DialogHeader>
           <CreateLectureForm
             onClose={() => setIsCreateDialogOpen(false)}
-            onSuccess={handleCreateLecture}
+            onSuccess={() => {
+              setIsCreateDialogOpen(false);
+              actions.refresh();
+            }}
           />
         </DialogContent>
       </Dialog>

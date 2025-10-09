@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -106,8 +105,8 @@ const Grades = () => {
   const [availableClasses, setAvailableClasses] = useState<Class[]>([]);
   const [assignedClasses, setAssignedClasses] = useState<Class[]>([]);
   const [selectedClass, setSelectedClass] = useState('');
-  const userRole = useInstituteRole();
-  const isSystemAdmin = user?.role === 'SystemAdmin'; // Keep global role check for SystemAdmin
+  const userRole = user?.role || 'Student';
+  const isSystemAdmin = userRole === 'SystemAdmin';
 
   useEffect(() => {
     if (selectedOrganization) {

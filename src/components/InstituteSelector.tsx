@@ -60,8 +60,7 @@ const InstituteSelector = ({ useChildId = false }: InstituteSelectorProps) => {
       for (const ep of endpoints) {
         try {
           console.log('Trying endpoint:', ep);
-          const query = '?page=1&limit=10';
-          const res = await fetch(`${baseUrl}${ep}${query}`, {
+          const res = await fetch(`${baseUrl}${ep}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -109,27 +108,12 @@ const InstituteSelector = ({ useChildId = false }: InstituteSelectorProps) => {
 
       console.log('Institutes API Response:', result);
       
-      // Normalize API response to expected shape
-      const normalized = (result as any[]).map((raw: any) => ({
-        id: raw.id || raw.instituteId || '',
-        name: raw.name || raw.instituteName || '',
-        email: raw.email || raw.instituteEmail || '',
-        phone: raw.phone || raw.institutePhone || '',
-        address: raw.address || raw.instituteAddress || '',
-        city: raw.city || raw.instituteCity || '',
-        state: raw.state || raw.instituteState || '',
-        country: raw.country || raw.instituteCountry || '',
-        type: raw.type || raw.instituteType || '',
-        isActive: raw.isActive !== undefined ? raw.isActive : (raw.instituteIsActive !== undefined ? raw.instituteIsActive : true),
-        createdAt: raw.createdAt || '',
-        imageUrl: raw.imageUrl || raw.instituteLogo || '',
-        instituteUserType: raw.instituteUserType || '',
-        userIdByInstitute: raw.userIdByInstitute || '',
-        status: raw.status || ''
-      }));
-      
       // Filter out any invalid institute data
-      const validInstitutes = normalized.filter(inst => inst && inst.id && inst.name);
+      const validInstitutes = result.filter(institute => 
+        institute && 
+        institute.id && 
+        institute.name
+      );
       
       setInstitutes(validInstitutes);
       
@@ -163,11 +147,7 @@ const InstituteSelector = ({ useChildId = false }: InstituteSelectorProps) => {
       code: institute.id, // Using id as code since it's not in the API response
       description: `${institute.address || ''}, ${institute.city || ''}`.trim(),
       isActive: institute.isActive,
-      type: institute.type,
-      userRole: (institute as any).instituteUserType || '',
-      userIdByInstitute: (institute as any).userIdByInstitute || '',
-      shortName: (institute as any).instituteShortName || institute.name,
-      logo: (institute as any).instituteLogo || institute.imageUrl || ''
+      type: institute.type
     };
     setSelectedInstitute(selectedInstitute);
     
@@ -256,16 +236,9 @@ const InstituteSelector = ({ useChildId = false }: InstituteSelectorProps) => {
                           <p className="text-sm text-gray-500 mb-1">
                             ID: {institute.id}
                           </p>
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                              <Users className="h-4 w-4 mr-2" />
-                              <span>Type: {institute.type}</span>
-                            </div>
-                            {(institute as any).instituteUserType && (
-                              <Badge variant="outline" className="text-xs">
-                                Role: {(institute as any).instituteUserType}
-                              </Badge>
-                            )}
+                          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-2">
+                            <Users className="h-4 w-4 mr-2" />
+                            <span>Type: {institute.type}</span>
                           </div>
                         </div>
                       </div>

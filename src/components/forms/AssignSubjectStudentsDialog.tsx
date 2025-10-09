@@ -18,7 +18,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
 import { enrollmentApi } from '@/api/enrollment.api';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 
 interface Student {
   id: string;
@@ -51,11 +50,10 @@ const AssignSubjectStudentsDialog: React.FC<AssignSubjectStudentsDialogProps> = 
   onAssignmentComplete
 }) => {
   const { selectedInstitute, selectedClass, selectedSubject, user } = useAuth();
-  const instituteRole = useInstituteRole();
   const { toast } = useToast();
   
   // Check permissions - InstituteAdmin and Teacher only
-  const hasPermission = instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher';
+  const hasPermission = user?.role === 'InstituteAdmin' || user?.role === 'Teacher';
   
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);

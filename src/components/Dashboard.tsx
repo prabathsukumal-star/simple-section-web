@@ -1,6 +1,5 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import ClassSelector from './ClassSelector';
 import SubjectSelector from './SubjectSelector';
 
@@ -47,11 +46,8 @@ const Dashboard = () => {
     selectedChild
   } = useAuth();
 
-  const userRole = useInstituteRole(); // CRITICAL: Use institute-specific role
-  console.log('🎯 Dashboard - Institute Role:', userRole, 'from instituteUserType:', selectedInstitute?.userRole);
-
   // Special handling for Parent role
-  if (userRole === 'Parent') {
+  if (user?.role === 'Parent') {
     // If no child selected, show child selector with dashboard styling
     if (!selectedChild) {
       return (
@@ -199,7 +195,7 @@ const Dashboard = () => {
   }
 
   // For Attendance Markers, show dashboard
-  if (userRole === 'AttendanceMarker') {
+  if (user?.role === 'AttendanceMarker') {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600 dark:text-gray-400">Welcome, Attendance Marker!</p>

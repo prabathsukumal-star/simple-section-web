@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import MUITable from '@/components/ui/mui-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RefreshCw, Filter, Plus, Calendar, Clock, FileText, CheckCircle, ExternalLink, BarChart3, Eye } from 'lucide-react';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { AccessControl } from '@/utils/permissions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -18,18 +16,19 @@ import CreateResultsForm from '@/components/forms/CreateResultsForm';
 import { DataCardView } from '@/components/ui/data-card-view';
 import { useTableData } from '@/hooks/useTableData';
 import { cachedApiClient } from '@/api/cachedClient';
+import { ExamResultsDialog } from '@/components/ExamResultsDialog';
 
 interface ExamsProps {
   apiLevel?: 'institute' | 'class' | 'subject';
 }
 
 const Exams = ({ apiLevel = 'institute' }: ExamsProps) => {
-  const navigate = useNavigate();
   const { user, selectedInstitute, selectedClass, selectedSubject, currentInstituteId, currentClassId, currentSubjectId } = useAuth();
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [isCreateResultsDialogOpen, setIsCreateResultsDialogOpen] = useState(false);
+  const [isExamResultsDialogOpen, setIsExamResultsDialogOpen] = useState(false);
   const [selectedExam, setSelectedExam] = useState<any>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
@@ -39,7 +38,7 @@ const Exams = ({ apiLevel = 'institute' }: ExamsProps) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
 
-  const userRole = useInstituteRole();
+  const userRole = (user?.role || 'Student') as UserRole;
 
   // Enhanced pagination with useTableData hook
   const {
@@ -58,8 +57,7 @@ const Exams = ({ apiLevel = 'institute' }: ExamsProps) => {
     autoLoad: false // DISABLE AUTO-LOADING - only load on explicit button clicks
   });
 
-  // Track if we've attempted to load data at least once
-  const [hasAttemptedLoad, setHasAttemptedLoad] = React.useState(false);
+  const dataLoaded = examsData.length > 0;
 
   function buildDefaultParams() {
     const params: Record<string, any> = {};
@@ -108,8 +106,6 @@ const Exams = ({ apiLevel = 'institute' }: ExamsProps) => {
       }
     }
 
-    setHasAttemptedLoad(true);
-
     // Update filters and load data
     const newFilters = buildDefaultParams();
     updateFilters(newFilters);
@@ -142,7 +138,9 @@ const Exams = ({ apiLevel = 'institute' }: ExamsProps) => {
   };
 
   const handleViewResults = (examData: any) => {
-    navigate(`/exams/${examData.id}/results`);
+    console.log('View exam results:', examData);
+    setSelectedExam(examData);
+    setIsExamResultsDialogOpen(true);
   };
 
   const handleDeleteExam = async (examData: any) => {
@@ -243,21 +241,6 @@ const Exams = ({ apiLevel = 'institute' }: ExamsProps) => {
           {value}
         </Badge>
       )
-    },
-    {
-      key: 'results',
-      header: 'Results',
-      render: (value: any, row: any) => (
-        <Button
-          size="sm"
-          variant="default"
-          onClick={() => handleViewResults(row)}
-          className="flex items-center gap-2"
-        >
-          <Eye className="h-4 w-4" />
-          View
-        </Button>
-      )
     }
   ];
 
@@ -266,13 +249,8 @@ const Exams = ({ apiLevel = 'institute' }: ExamsProps) => {
   const canDelete = userRole === 'Teacher' ? true : AccessControl.hasPermission(userRole, 'delete-exam');
   const canView = true; // All users can view exams
   
-  // DEBUG: Log role and institute information
-  console.log('🔍 EXAMS DEBUG:', {
+  console.log('Exams Component Debug:', {
     userRole,
-    selectedInstitute,
-    'selectedInstitute.userRole': selectedInstitute?.userRole,
-    'selectedInstitute.instituteUserType': (selectedInstitute as any)?.instituteUserType,
-    'user.role': user?.role,
     canAdd,
     canEdit,
     canDelete,
@@ -342,7 +320,7 @@ const Exams = ({ apiLevel = 'institute' }: ExamsProps) => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {!hasAttemptedLoad ? (
+      {!dataLoaded ? (
         <div className="text-center py-12">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             {getTitle()}
@@ -508,7 +486,7 @@ const Exams = ({ apiLevel = 'institute' }: ExamsProps) => {
               format: col.render
             }))}
             onAdd={canAdd ? () => setIsCreateDialogOpen(true) : undefined}
-            onEdit={(userRole === 'InstituteAdmin' || userRole === 'Teacher') ? handleEditExam : undefined}
+            onEdit={userRole === 'InstituteAdmin' ? handleEditExam : undefined}
             onView={undefined}
             page={pagination.page}
             rowsPerPage={pagination.limit}
@@ -517,8 +495,16 @@ const Exams = ({ apiLevel = 'institute' }: ExamsProps) => {
             onRowsPerPageChange={setLimit}
             rowsPerPageOptions={[25, 50, 100]}
             sectionType="exams"
-            allowEdit={userRole === 'InstituteAdmin' || userRole === 'Teacher'}
+            allowEdit={userRole === 'InstituteAdmin'}
             allowDelete={canDelete}
+            customActions={[
+              {
+                label: '',
+                action: handleViewResults,
+                icon: <Eye className="h-4 w-4" />,
+                variant: 'outline' as const
+              }
+            ]}
           />
         </>
       )}
@@ -571,6 +557,15 @@ const Exams = ({ apiLevel = 'institute' }: ExamsProps) => {
         </DialogContent>
       </Dialog>
 
+      {/* Exam Results Dialog */}
+      <ExamResultsDialog
+        isOpen={isExamResultsDialogOpen}
+        onClose={() => {
+          setIsExamResultsDialogOpen(false);
+          setSelectedExam(null);
+        }}
+        exam={selectedExam}
+      />
     </div>
   );
 };

@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { RefreshCw, Users, Mail, Phone, Search, Filter, UserPlus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useToast } from '@/hooks/use-toast';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
 import { DataCardView } from '@/components/ui/data-card-view';
@@ -40,7 +39,6 @@ interface ClassSubjectStudentsResponse {
 
 const TeacherStudents = () => {
   const { user, selectedInstitute, selectedClass, selectedSubject } = useAuth();
-  const effectiveRole = useInstituteRole();
   const { toast } = useToast();
   
   const [students, setStudents] = useState<ClassSubjectStudent[]>([]);
@@ -53,7 +51,7 @@ const TeacherStudents = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Role check - only InstituteAdmin and Teacher can access this component
-  if (!effectiveRole || !['InstituteAdmin', 'Teacher'].includes(effectiveRole)) {
+  if (!user || !['InstituteAdmin', 'Teacher'].includes(user.role)) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600 dark:text-gray-400">
@@ -275,11 +273,11 @@ const TeacherStudents = () => {
     return (
       <div className="container mx-auto p-6 space-y-6">
         <div className="text-center py-12">
-          <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-2xl font-bold mb-4">
+          <Users className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Select Class
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-gray-600 dark:text-gray-400">
             Please select an institute and class to view your students.
           </p>
         </div>
@@ -291,19 +289,20 @@ const TeacherStudents = () => {
     return (
       <div className="container mx-auto p-6 space-y-6">
         <div className="text-center py-12">
-          <Users className="h-16 w-16 mx-auto mb-4 text-primary" />
-          <h2 className="text-2xl font-bold mb-4">
+          <Users className="h-16 w-16 mx-auto mb-4 text-blue-600" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             {getTitle()}
           </h2>
-          <p className="text-muted-foreground mb-2">
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
             Current Selection: {getCurrentSelection()}
           </p>
-          <p className="text-muted-foreground mb-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             Click the button below to load your students
           </p>
           <Button 
             onClick={getLoadFunction()} 
             disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700"
           >
             {loading ? (
               <>
@@ -326,10 +325,10 @@ const TeacherStudents = () => {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             {getTitle()}
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Current Selection: {getCurrentSelection()}
           </p>
         </div>

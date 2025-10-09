@@ -17,10 +17,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, RefreshCw, GraduationCap, Users, UserCheck, Plus, UserPlus, UserCog, Filter, Search, Shield, Upload, CheckCircle } from 'lucide-react';
+import { Eye, RefreshCw, GraduationCap, Users, UserCheck, Plus, UserPlus, UserCog, Filter, Search, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { instituteApi } from '@/api/institute.api';
 import { studentsApi } from '@/api/students.api';
 import { useApiRequest } from '@/hooks/useApiRequest';
@@ -33,7 +32,6 @@ import CreateStudentForm from '@/components/forms/CreateStudentForm';
 import AssignUserMethodsDialog from '@/components/forms/AssignUserMethodsDialog';
 import { usersApi, BasicUser } from '@/api/users.api';
 import UserInfoDialog from '@/components/forms/UserInfoDialog';
-import { getBaseUrl } from '@/contexts/utils/auth.api';
 
 interface InstituteUserData {
   id: string;
@@ -43,7 +41,6 @@ interface InstituteUserData {
   addressLine2?: string;
   phoneNumber?: string;
   imageUrl?: string;
-  instituteUserImageUrl?: string;
   dateOfBirth?: string;
   userIdByInstitute?: string | null;
   verifiedBy?: string | null;
@@ -85,8 +82,6 @@ const InstituteUsers = () => {
     open: false,
     user: null,
   });
-  const [uploadingUserId, setUploadingUserId] = useState<string | null>(null);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   // Table data management for each user type
   const studentsTable = useTableData<InstituteUserData>({
@@ -155,7 +150,6 @@ const InstituteUsers = () => {
         title: 'Failed to load user',
         description: error?.message || 'Could not fetch user information',
         variant: 'destructive',
-        duration: 1500
       });
     }
   };
@@ -173,7 +167,6 @@ const InstituteUsers = () => {
     toast({
       title: "User Created",
       description: "User has been created successfully.",
-      duration: 1500
     });
   };
 
@@ -184,7 +177,6 @@ const InstituteUsers = () => {
     toast({
       title: "User Assigned",
       description: "User has been assigned to institute successfully.",
-      duration: 1500
     });
     
     // Refresh the current tab data
@@ -213,7 +205,6 @@ const InstituteUsers = () => {
       toast({
         title: "Student Created",
         description: "Student has been created successfully.",
-        duration: 1500
       });
       
       setShowCreateStudentDialog(false);
@@ -225,53 +216,7 @@ const InstituteUsers = () => {
       toast({
         title: "Error",
         description: "Failed to create student.",
-        variant: "destructive",
-        duration: 1500
-      });
-    }
-  };
-
-  const handleImageUpload = async (userId: string) => {
-    if (!selectedImage || !currentInstituteId) return;
-
-    const formData = new FormData();
-    formData.append('image', selectedImage);
-
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(
-        `${getBaseUrl()}/institute-users/institute/${currentInstituteId}/users/${userId}/upload-image`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: formData
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to upload image');
-      }
-
-      const result = await response.json();
-      
-      toast({
-        title: "Success",
-        description: result.message || "Image uploaded successfully",
-        duration: 1500
-      });
-
-      setUploadingUserId(null);
-      setSelectedImage(null);
-      getCurrentTable().actions.refresh();
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast({
-        title: "Error",
-        description: "Failed to upload image",
-        variant: "destructive",
-        duration: 1500
+        variant: "destructive"
       });
     }
   };
@@ -333,9 +278,7 @@ const InstituteUsers = () => {
     }
   };
 
-  const userRole = useInstituteRole();
-
-  if (userRole !== 'InstituteAdmin') {
+  if (!user || user.role !== 'InstituteAdmin') {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600 dark:text-gray-400">Access denied. InstituteAdmin role required.</p>
@@ -673,26 +616,6 @@ const InstituteUsers = () => {
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
-                      {userData.instituteUserImageUrl ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-green-600 hover:text-green-700 pointer-events-none"
-                          disabled
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Uploaded
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setUploadingUserId(userData.id)}
-                        >
-                          <Upload className="h-4 w-4 mr-1" />
-                          Upload
-                        </Button>
-                      )}
                       {activeTab === 'STUDENT' && (
                         <Button
                           size="sm"
@@ -985,33 +908,6 @@ const InstituteUsers = () => {
         onClose={() => setUserInfoDialog({ open: false, user: null })}
         user={userInfoDialog.user}
       />
-
-      {/* Upload Image Dialog */}
-      <Dialog open={!!uploadingUserId} onOpenChange={() => { setUploadingUserId(null); setSelectedImage(null); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Upload User Image</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Select Image</label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
-              />
-            </div>
-            <Button
-              onClick={() => uploadingUserId && handleImageUpload(uploadingUserId)}
-              disabled={!selectedImage}
-              className="w-full"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Image
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

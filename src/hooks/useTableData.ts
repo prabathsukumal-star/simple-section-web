@@ -74,7 +74,7 @@ export const useTableData = <T = any>(config: TableDataConfig): UseTableDataRetu
 
       console.log('Table data loaded successfully:', result);
       
-      // Handle various API response formats
+      // Handle institute payments API response format
       let data, total;
       if (result?.data?.submissions) {
         // Institute payment submissions API format
@@ -84,10 +84,6 @@ export const useTableData = <T = any>(config: TableDataConfig): UseTableDataRetu
         // Institute payments API format
         data = result.data.payments;
         total = result.data.pagination?.totalItems || data.length;
-      } else if ((result as any)?.messages) {
-        // Enhanced SMS history API format
-        data = (result as any).messages;
-        total = (result as any).total || data.length;
       } else if (Array.isArray(result)) {
         // Direct array response
         data = result;

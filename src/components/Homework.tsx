@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import MUITable from '@/components/ui/mui-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,17 +25,7 @@ interface HomeworkProps {
 const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
   const navigate = useNavigate();
   const { user, selectedInstitute, selectedClass, selectedSubject, currentInstituteId, currentClassId, currentSubjectId } = useAuth();
-  const instituteRole = useInstituteRole();
   const { toast } = useToast();
-  
-  // DEBUG: Log role and institute information
-  console.log('🔍 HOMEWORK DEBUG:', {
-    instituteRole,
-    selectedInstitute,
-    'selectedInstitute.userRole': selectedInstitute?.userRole,
-    'selectedInstitute.instituteUserType': (selectedInstitute as any)?.instituteUserType,
-    'user.role': user?.role
-  });
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
@@ -61,7 +50,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
   // Removed auto-loading useEffects - data now only loads when button is clicked
 
   const buildQueryParams = () => {
-    const userRole = instituteRole;
+    const userRole = (user?.role || 'Student') as UserRole;
     const params: Record<string, any> = {
       page: page + 1, // MUI pagination is 0-based, API is 1-based
       limit: rowsPerPage
@@ -98,7 +87,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
   };
 
   const handleLoadData = async (forceRefresh = false) => {
-    const userRole = instituteRole;
+    const userRole = (user?.role || 'Student') as UserRole;
     let endpoint = '';
     const params = buildQueryParams();
     
@@ -257,10 +246,11 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
     await handleLoadData(true);
   };
 
-  const canAdd = AccessControl.hasPermission(instituteRole, 'create-homework');
-  const canEdit = instituteRole === 'Teacher' ? true : AccessControl.hasPermission(instituteRole, 'edit-homework');
-  const canDelete = instituteRole === 'Teacher' ? true : AccessControl.hasPermission(instituteRole, 'delete-homework');
-  const isStudent = instituteRole === 'Student';
+  const userRole = (user?.role || 'Student') as UserRole;
+  const canAdd = AccessControl.hasPermission(userRole, 'create-homework');
+  const canEdit = userRole === 'Teacher' ? true : AccessControl.hasPermission(userRole, 'edit-homework');
+  const canDelete = userRole === 'Teacher' ? true : AccessControl.hasPermission(userRole, 'delete-homework');
+  const isStudent = userRole === 'Student';
 
   const homeworkColumns = [
     { key: 'title', header: 'Title' },
@@ -268,7 +258,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
     { key: 'teacher', header: 'Teacher', render: (value: any) => value?.name || 'N/A' },
     { key: 'startDate', header: 'Start Date', render: (value: string) => value ? new Date(value).toLocaleDateString() : 'N/A' },
     { key: 'endDate', header: 'End Date', render: (value: string) => value ? new Date(value).toLocaleDateString() : 'N/A' },
-    ...((['InstituteAdmin', 'Teacher', 'Student'] as UserRole[]).includes(instituteRole) ? [{
+    ...((['InstituteAdmin', 'Teacher', 'Student'] as UserRole[]).includes(userRole) ? [{
       key: 'referenceLink', 
       header: 'Reference', 
       render: (value: string, row: any) => value ? (
@@ -285,7 +275,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
         <span className="text-gray-400">No reference</span>
       )
     }] : []),
-    ...(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher' ? [{
+    ...(userRole === 'InstituteAdmin' || userRole === 'Teacher' ? [{
       key: 'submissions',
       header: 'Submissions',
       render: (value: any, row: any) => (
@@ -313,7 +303,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
   // Custom actions based on user role
   const customActions = [
     // Actions for InstituteAdmin and Teacher
-    ...((instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') ? [
+    ...((userRole === 'InstituteAdmin' || userRole === 'Teacher') ? [
       {
         label: '',
         action: (homework: any) => handleViewHomework(homework),
@@ -331,7 +321,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
     ] : []),
     
     // Actions for Students
-    ...(instituteRole === 'Student' ? [
+    ...(userRole === 'Student' ? [
       {
         label: '',
         action: (homework: any) => handleViewHomework(homework),
@@ -393,14 +383,14 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
             {getTitle()}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {instituteRole === 'Student' && (!currentInstituteId || !currentClassId || !currentSubjectId)
+            {userRole === 'Student' && (!currentInstituteId || !currentClassId || !currentSubjectId)
               ? 'Please select institute, class, and subject to view homework.'
               : 'Click the button below to load homework data'
             }
           </p>
           <Button 
             onClick={() => handleLoadData(false)} 
-            disabled={isLoading || (instituteRole === 'Student' && (!currentInstituteId || !currentClassId || !currentSubjectId))}
+            disabled={isLoading || (userRole === 'Student' && (!currentInstituteId || !currentClassId || !currentSubjectId))}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {isLoading ? (
@@ -506,7 +496,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
           )}
 
           {/* Add Create Button for InstituteAdmin and Teacher */}
-          {(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && canAdd && (
+          {(userRole === 'InstituteAdmin' || userRole === 'Teacher') && canAdd && (
             <div className="flex justify-end mb-4">
               <Button 
                 onClick={() => setIsCreateDialogOpen(true)}
@@ -529,7 +519,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
               format: col.render
             }))}
             onAdd={canAdd ? () => setIsCreateDialogOpen(true) : undefined}
-            onEdit={canEdit && !isStudent ? handleEditHomework : undefined}
+            onEdit={canEdit ? handleEditHomework : undefined}
             onView={handleViewHomework}
             page={page}
             rowsPerPage={rowsPerPage}
@@ -544,8 +534,8 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
               handleLoadData(false);
             }}
             sectionType="homework"
-            allowEdit={canEdit && !isStudent}
-            allowDelete={canDelete && !isStudent}
+            allowEdit={canEdit}
+            allowDelete={canDelete}
           />
         </>
       )}

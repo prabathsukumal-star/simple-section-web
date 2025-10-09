@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, Save, Video, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
+import { useAuth } from '@/contexts/AuthContext';
 import { lectureApi } from '@/api/lecture.api';
 
 interface UpdateLectureFormProps {
@@ -17,12 +17,12 @@ interface UpdateLectureFormProps {
 }
 
 const UpdateLectureForm = ({ lecture, onClose, onSuccess }: UpdateLectureFormProps) => {
-  const userRole = useInstituteRole();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   // Check if user has permission to update lectures
-  const canUpdate = userRole === 'InstituteAdmin' || userRole === 'Teacher';
+  const canUpdate = user?.role === 'InstituteAdmin' || user?.role === 'Teacher';
 
   if (!canUpdate) {
     return (
