@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, BookOpen, Users, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useToast } from '@/hooks/use-toast';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
 import { DataCardView } from '@/components/ui/data-card-view';
@@ -50,6 +51,7 @@ interface ApiResponse {
 
 const TeacherClasses = () => {
   const { user, selectedInstitute, setSelectedClass } = useAuth();
+  const effectiveRole = useInstituteRole();
   const { toast } = useToast();
   
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -63,7 +65,7 @@ const TeacherClasses = () => {
   const [totalPages, setTotalPages] = useState(0);
 
   // Role check - only teachers can access this component
-  if (user?.role !== 'Teacher') {
+  if (effectiveRole !== 'Teacher') {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600 dark:text-gray-400">
@@ -197,24 +199,36 @@ const TeacherClasses = () => {
     }
   ];
 
+  if (!selectedInstitute) {
+    return (
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="text-center py-12">
+          <GraduationCap className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-2xl font-bold mb-4">
+            Select Institute
+          </h2>
+          <p className="text-muted-foreground">
+            Please select an institute to view your classes.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!dataLoaded) {
     return (
       <div className="container mx-auto p-6 space-y-6">
         <div className="text-center py-12">
-          <GraduationCap className="h-16 w-16 mx-auto mb-4 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+          <GraduationCap className="h-16 w-16 mx-auto mb-4 text-primary" />
+          <h2 className="text-2xl font-bold mb-4">
             Your Classes
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {!selectedInstitute 
-              ? 'Please select an institute to view your classes.' 
-              : 'Click the button below to load your classes'
-            }
+          <p className="text-muted-foreground mb-6">
+            Click the button below to load your classes
           </p>
           <Button 
             onClick={fetchTeacherClasses} 
-            disabled={loading || !selectedInstitute}
-            className="bg-primary hover:bg-primary/90"
+            disabled={loading}
           >
             {loading ? (
               <>
@@ -224,7 +238,7 @@ const TeacherClasses = () => {
             ) : (
               <>
                 <BookOpen className="h-4 w-4 mr-2" />
-                Load My Classes
+                Load Data
               </>
             )}
           </Button>
@@ -237,10 +251,10 @@ const TeacherClasses = () => {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold">
             My Classes
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-muted-foreground mt-1">
             Classes where you are the class teacher at {selectedInstitute?.name}
           </p>
         </div>

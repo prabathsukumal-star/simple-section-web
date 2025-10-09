@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Calendar, Clock, MapPin, Video } from 'lucide-react';
-import { lectureApi } from '@/api/lecture.api';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiClient } from '@/api/client';
 
 interface CreateLectureFormProps {
   onClose?: () => void;
@@ -29,6 +29,7 @@ const CreateLectureForm = ({ onClose, onSuccess, courseId }: CreateLectureFormPr
     liveLink: '',
     recordingUrl: '',
     maxParticipants: 30,
+    meetingId: '',
     meetingPassword: ''
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -62,24 +63,25 @@ const CreateLectureForm = ({ onClose, onSuccess, courseId }: CreateLectureFormPr
         classId: selectedClass.id,
         subjectId: selectedSubject.id,
         instructorId: user.id,
-        title: formData.title,
-        description: formData.description,
-        lectureType: formData.mode as 'online' | 'physical',
-        venue: formData.venue,
-        startTime: formData.timeStart,
-        endTime: formData.timeEnd,
-        status: 'scheduled' as const,
-        meetingLink: formData.liveLink || undefined,
-        meetingPassword: formData.meetingPassword || undefined,
-        recordingUrl: formData.recordingUrl || undefined,
-        isRecorded: !!formData.recordingUrl,
-        maxParticipants: formData.maxParticipants,
-        isActive: true
+        lectures: {
+          title: formData.title,
+          description: formData.description,
+          lectureType: formData.mode as 'online' | 'physical',
+          venue: formData.venue,
+          startTime: formData.timeStart,
+          endTime: formData.timeEnd,
+          meetingLink: formData.liveLink || undefined,
+          meetingId: formData.meetingId || undefined,
+          recordingUrl: formData.recordingUrl || undefined,
+          maxParticipants: formData.maxParticipants,
+          meetingPassword: formData.meetingPassword || undefined
+        }
       };
       
       console.log('Creating lecture with data:', lectureData);
       
-      const newLecture = await lectureApi.createLecture(lectureData);
+      const response = await apiClient.post('/lectures', lectureData);
+      const newLecture = response.data;
       
       toast({
         title: "Success",
@@ -98,6 +100,7 @@ const CreateLectureForm = ({ onClose, onSuccess, courseId }: CreateLectureFormPr
         liveLink: '',
         recordingUrl: '',
         maxParticipants: 30,
+        meetingId: '',
         meetingPassword: ''
       });
 
@@ -262,15 +265,26 @@ const CreateLectureForm = ({ onClose, onSuccess, courseId }: CreateLectureFormPr
               </div>
 
               {formData.mode === 'online' && (
-                <div className="space-y-2">
-                  <Label htmlFor="meetingPassword">Meeting Password (Optional)</Label>
-                  <Input
-                    id="meetingPassword"
-                    placeholder="Password for the meeting"
-                    value={formData.meetingPassword}
-                    onChange={(e) => handleInputChange('meetingPassword', e.target.value)}
-                  />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="meetingPassword">Meeting Password (Optional)</Label>
+                    <Input
+                      id="meetingPassword"
+                      placeholder="Password for the meeting"
+                      value={formData.meetingPassword}
+                      onChange={(e) => handleInputChange('meetingPassword', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="meetingId">Meeting ID (Optional)</Label>
+                    <Input
+                      id="meetingId"
+                      placeholder="Enter meeting ID"
+                      value={formData.meetingId}
+                      onChange={(e) => handleInputChange('meetingId', e.target.value)}
+                    />
+                  </div>
+                </>
               )}
             </div>
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Building2, BookOpen, GraduationCap, User, Palette, Menu, X, ArrowLeft } from 'lucide-react';
@@ -13,6 +14,7 @@ import Teachers from '@/components/Teachers';
 import Parents from '@/components/Parents';
 import ChildAttendance from '@/components/ChildAttendance';
 import ChildResults from '@/components/ChildResults';
+import VerifyImage from '@/components/VerifyImage';
 
 import Grades from '@/components/Grades';
 import Classes from '@/components/Classes';
@@ -59,15 +61,12 @@ import UnverifiedStudents from '@/components/UnverifiedStudents';
 import EnrollClass from '@/components/EnrollClass';
 import EnrollSubject from '@/components/EnrollSubject';
 import InstituteUsers from '@/components/InstituteUsers';
-import UnverifiedUsersWithImages from '@/components/UnverifiedUsersWithImages';
 import SetupGuide from '@/components/SetupGuide';
+import InstituteProfile from '@/components/InstituteProfile';
 import StudentHomeworkSubmissions from '@/components/StudentHomeworkSubmissions';
 import FreeLectures from '@/components/FreeLectures';
-import Transport from '@/components/Transport';
-import StudentTransport from '@/components/StudentTransport';
-import ParentTransport from '@/components/ParentTransport';
-import TransportSelection from '@/pages/TransportSelection';
-import TransportAttendance from '@/pages/TransportAttendance';
+import SMS from '@/components/SMS';
+import SMSHistory from '@/pages/SMSHistory';
 
 interface AppContentProps {
   initialPage?: string;
@@ -76,6 +75,11 @@ interface AppContentProps {
 const AppContent = ({ initialPage }: AppContentProps) => {
   const { user, login, selectedInstitute, selectedClass, selectedSubject, selectedChild, selectedOrganization, setSelectedOrganization, currentInstituteId } = useAuth();
   const { navigateToPage, getPageFromPath } = useAppNavigation();
+  
+  // Institute-specific role - always uses selectedInstitute.userRole
+  const userRole = useInstituteRole();
+  
+  console.log('🎯 AppContent - Role:', userRole, 'Institute UserType:', selectedInstitute?.userRole);
   
   // Initialize currentPage from URL or prop or default to dashboard
   const [currentPage, setCurrentPageState] = useState(() => {
@@ -111,6 +115,19 @@ const AppContent = ({ initialPage }: AppContentProps) => {
   const [showCreateOrgForm, setShowCreateOrgForm] = useState(false);
   const [organizationCurrentPage, setOrganizationCurrentPage] = useState('organizations');
 
+  // Listen to URL changes and update currentPage accordingly
+  useEffect(() => {
+    const handlePopState = () => {
+      const pathname = window.location.pathname;
+      console.log('URL changed to:', pathname);
+      const pageName = getPageFromPath(pathname);
+      console.log('Setting page to:', pageName);
+      setCurrentPageState(pageName);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [getPageFromPath]);
 
   const setCurrentPage = (page: string) => {
     setCurrentPageState(page);
@@ -177,7 +194,6 @@ const AppContent = ({ initialPage }: AppContentProps) => {
   const OrganizationNavigation = () => {
     if (!organizationLoginData) return null;
 
-    const userRole = user?.role;
     const isOrganizationManager = userRole === 'OrganizationManager';
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     
@@ -398,7 +414,7 @@ const AppContent = ({ initialPage }: AppContentProps) => {
       }
       
       // Show organization login for all specified user roles
-      if (!organizationLoginData && ['InstituteAdmin', 'Student', 'Teacher', 'OrganizationManager'].includes(user?.role || '')) {
+      if (!organizationLoginData && ['InstituteAdmin', 'Student', 'Teacher', 'OrganizationManager'].includes(userRole || '')) {
         return (
           <OrganizationLogin
             onLogin={handleOrganizationLogin}
@@ -436,7 +452,7 @@ const AppContent = ({ initialPage }: AppContentProps) => {
     }
 
     // For Organization Manager - show organizations list or organization-specific dashboard
-    if (user?.role === 'OrganizationManager') {
+    if (userRole === 'OrganizationManager') {
       if (!selectedOrganization && currentPage !== 'organizations') {
         return <Organizations />;
       }
@@ -484,29 +500,10 @@ const AppContent = ({ initialPage }: AppContentProps) => {
     }
 
     // For Student role - simplified interface
-    if (user?.role === 'Student') {
+    if (userRole === 'Student') {
       if (!selectedInstitute && user.institutes.length === 1) {
         // Auto-select the only institute available
         // This should be handled by the auth context
-      }
-      
-      // Transport pages don't require institute selection
-      if (currentPage === 'transport' || currentPage === 'student-transport' || currentPage === 'parent-transport' || currentPage === 'transport-selection' || currentPage === 'transport-attendance') {
-        if (currentPage === 'transport') {
-          return <Transport />;
-        }
-        if (currentPage === 'student-transport') {
-          return <StudentTransport />;
-        }
-        if (currentPage === 'parent-transport') {
-          return <ParentTransport />;
-        }
-        if (currentPage === 'transport-selection') {
-          return <TransportSelection />;
-        }
-        if (currentPage === 'transport-attendance') {
-          return <TransportAttendance />;
-        }
       }
       
       if (!selectedInstitute && currentPage !== 'institutes' && currentPage !== 'select-institute') {
@@ -546,39 +543,17 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <InstituteSelector />;
         case 'appearance':
           return <Appearance />;
+        case 'institute-profile':
+          return <InstituteProfile />;
         case 'organizations':
           return renderComponent();
-        case 'transport':
-          return <Transport />;
-        case 'student-transport':
-          return <StudentTransport />;
-        case 'transport-selection':
-          return <TransportSelection />;
-        case 'transport-attendance':
-          return <TransportAttendance />;
         default:
           return <Dashboard />;
       }
     }
 
     // For Parent role
-    if (user?.role === 'Parent') {
-      // Transport pages don't require child or institute selection
-      if (currentPage === 'transport' || currentPage === 'parent-transport' || currentPage === 'transport-selection' || currentPage === 'transport-attendance') {
-        if (currentPage === 'transport') {
-          return <Transport />;
-        }
-        if (currentPage === 'parent-transport') {
-          return <ParentTransport />;
-        }
-        if (currentPage === 'transport-selection') {
-          return <TransportSelection />;
-        }
-        if (currentPage === 'transport-attendance') {
-          return <TransportAttendance />;
-        }
-      }
-
+    if (userRole === 'Parent') {
       if (currentPage === 'parents') {
         return <ParentChildrenSelector />;
       }
@@ -616,21 +591,13 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <ParentChildrenSelector />;
         case 'appearance':
           return <Appearance />;
-        case 'transport':
-          return <Transport />;
-        case 'parent-transport':
-          return <ParentTransport />;
-        case 'transport-selection':
-          return <TransportSelection />;
-        case 'transport-attendance':
-          return <TransportAttendance />;
         default:
           return <ParentChildrenSelector />;
       }
     }
 
     // For Teacher role
-    if (user?.role === 'Teacher') {
+    if (userRole === 'Teacher') {
       if (!selectedInstitute && currentPage !== 'institutes' && currentPage !== 'select-institute') {
         return <InstituteSelector />;
       }
@@ -683,28 +650,34 @@ const AppContent = ({ initialPage }: AppContentProps) => {
         case 'rfid-attendance':
           return <RFIDAttendance />;
         case 'lectures':
-          return user?.role === 'Teacher' ? <TeacherLectures /> : <Lectures />;
+          return userRole === 'Teacher' ? <TeacherLectures /> : <Lectures />;
         case 'institute-lectures':
           return <InstituteLectures />;
+        case 'free-lectures':
+          return <FreeLectures />;
+        case 'live-lectures':
+          return <LiveLectures />;
         case 'homework':
-          return user?.role === 'Teacher' ? <TeacherHomework /> : <Homework />;
+          return userRole === 'Teacher' ? <TeacherHomework /> : <Homework />;
         case 'homework-submissions':
           return <StudentHomeworkSubmissions />;
         case 'exams':
-          return user?.role === 'Teacher' ? <TeacherExams /> : <Exams />;
+          return userRole === 'Teacher' ? <TeacherExams /> : <Exams />;
         case 'results':
           return <Results />;
         case 'profile':
           return <Profile />;
         case 'appearance':
           return <Appearance />;
+        case 'institute-profile':
+          return <InstituteProfile />;
         default:
           return <Dashboard />;
       }
     }
 
     // For AttendanceMarker role
-    if (user?.role === 'AttendanceMarker') {
+    if (userRole === 'AttendanceMarker') {
       if (!selectedInstitute && currentPage !== 'select-institute') {
         return <InstituteSelector />;
       }
@@ -738,9 +711,11 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <InstituteSelector />;
         case 'select-class':
           return <ClassSelector />;
-        case 'appearance':
-          return <Appearance />;
-        case 'settings':
+      case 'appearance':
+        return <Appearance />;
+      case 'institute-profile':
+        return <InstituteProfile />;
+      case 'settings':
           return <Settings />;
         default:
           return <Dashboard />;
@@ -748,7 +723,9 @@ const AppContent = ({ initialPage }: AppContentProps) => {
     }
 
     // For InstituteAdmin and other roles - full access within their institute
-    if (!selectedInstitute && currentPage !== 'institutes' && currentPage !== 'select-institute') {
+    // Transport pages don't require institute selection
+    const transportPages = ['transport', 'parent-transport', 'transport-selection', 'transport-attendance'];
+    if (!selectedInstitute && currentPage !== 'institutes' && currentPage !== 'select-institute' && !transportPages.includes(currentPage)) {
       return <InstituteSelector />;
     }
 
@@ -775,11 +752,11 @@ const AppContent = ({ initialPage }: AppContentProps) => {
         return <Dashboard />;
       case 'institute-users':
         return <InstituteUsers />;
-      case 'unverified-users-images':
-        return <UnverifiedUsersWithImages />;
+      case 'verify-image':
+        return <VerifyImage />;
       case 'users':
         // Show InstituteUsers for InstituteAdmin
-        if (user?.role === 'InstituteAdmin') {
+        if (userRole === 'InstituteAdmin') {
           return <InstituteUsers />;
         }
         return <Users />;
@@ -827,6 +804,10 @@ const AppContent = ({ initialPage }: AppContentProps) => {
         return <Lectures />;
       case 'free-lectures':
         return <FreeLectures />;
+      case 'institute-lectures':
+        return <InstituteLectures />;
+      case 'live-lectures':
+        return <LiveLectures />;
       case 'homework':
         return <Homework />;
       case 'homework-submissions':
@@ -855,6 +836,12 @@ const AppContent = ({ initialPage }: AppContentProps) => {
         return <InstituteDetails />;
       case 'appearance':
         return <Appearance />;
+      case 'institute-profile':
+        return <InstituteProfile />;
+      case 'sms':
+        return <SMS />;
+      case 'sms-history':
+        return <SMSHistory />;
       default:
         return <Dashboard />;
     }

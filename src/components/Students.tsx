@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Plus, RefreshCw, Users, Search, Filter, UserPlus, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { DataCardView } from '@/components/ui/data-card-view';
 import MUITable from '@/components/ui/mui-table';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import CreateStudentForm from '@/components/forms/CreateStudentForm';
 import AssignStudentsDialog from '@/components/forms/AssignStudentsDialog';
 import AssignSubjectStudentsDialog from '@/components/forms/AssignSubjectStudentsDialog';
-import CurrentSelection from '@/components/ui/current-selection';
 import { cachedApiClient } from '@/api/cachedClient';
 import { useApiRequest } from '@/hooks/useApiRequest';
 import { useTableData } from '@/hooks/useTableData';
@@ -91,6 +91,7 @@ interface StudentsResponse {
 const Students = () => {
   const { toast } = useToast();
   const { user, selectedInstitute, selectedClass, selectedSubject } = useAuth();
+  const userRole = useInstituteRole();
   
   // State for both types of student data
   const [students, setStudents] = useState<Student[]>([]);
@@ -125,7 +126,7 @@ const Students = () => {
 
   // Check if user should use new institute-based API
   const shouldUseInstituteApi = () => {
-    return user && (user.role === 'InstituteAdmin' || user.role === 'Teacher') && selectedInstitute;
+    return ['InstituteAdmin', 'Teacher'].includes(userRole) && !!selectedInstitute;
   };
 
   const getApiHeaders = () => {
@@ -525,13 +526,6 @@ const Students = () => {
     return (
       <div className="container mx-auto p-6 space-y-6">
         {/* Current Selection Display */}
-        {(selectedInstitute || selectedClass || selectedSubject) && (
-          <CurrentSelection 
-            institute={selectedInstitute}
-            class={selectedClass}
-            subject={selectedSubject}
-          />
-        )}
         
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -614,13 +608,6 @@ const Students = () => {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Current Selection Display */}
-      {shouldUseInstituteApi() && (selectedInstitute || selectedClass || selectedSubject) && (
-        <CurrentSelection 
-          institute={selectedInstitute}
-          class={selectedClass}
-          subject={selectedSubject}
-        />
-      )}
       
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -657,7 +644,7 @@ const Students = () => {
             {pagination.totalCount} Students
           </Badge>
           {/* Assign User Buttons - Only for InstituteAdmin and Teacher */}
-          {shouldUseInstituteApi() && selectedClass && (user?.role === 'InstituteAdmin' || user?.role === 'Teacher') && (
+          {shouldUseInstituteApi() && selectedClass && (userRole === 'InstituteAdmin' || userRole === 'Teacher') && (
             <>
               {selectedSubject ? (
                 <Button

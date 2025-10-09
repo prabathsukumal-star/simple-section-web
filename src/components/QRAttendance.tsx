@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Camera, QrCode, UserCheck, CheckCircle, MapPin, X, BarChart3, Smartphone, AlertCircle } from 'lucide-react';
 import jsQR from 'jsqr';
 import { childAttendanceApi, MarkAttendanceByCardRequest, MarkAttendanceRequest } from '@/api/childAttendance.api';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import AppLayout from '@/components/layout/AppLayout';
 
 interface AttendanceAlert {
@@ -26,6 +27,7 @@ interface AttendanceAlert {
 
 const QRAttendance = () => {
   const { selectedInstitute, selectedClass, selectedSubject, currentInstituteId, user } = useAuth();
+  const instituteRole = useInstituteRole();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -46,7 +48,7 @@ const QRAttendance = () => {
   const streamRef = useRef<MediaStream | null>(null);
 
   // Check if user has permission - InstituteAdmin, Teacher, and AttendanceMarker can mark attendance
-  const hasPermission = user?.userType === 'INSTITUTE_ADMIN' || user?.role === 'Teacher' || user?.role === 'AttendanceMarker';
+  const hasPermission = ['InstituteAdmin', 'Teacher', 'AttendanceMarker'].includes(instituteRole);
 
   useEffect(() => {
     fetchLocation();

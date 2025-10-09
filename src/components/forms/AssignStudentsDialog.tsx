@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
 import { instituteClassesApi, BulkAssignStudentsData } from '@/api/instituteClasses.api';
 import { enrollmentApi } from '@/api/enrollment.api';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 
 interface Student {
   id: string;
@@ -52,10 +53,11 @@ const AssignStudentsDialog: React.FC<AssignStudentsDialogProps> = ({
   onAssignmentComplete
 }) => {
   const { selectedInstitute, selectedClass, user } = useAuth();
+  const instituteRole = useInstituteRole();
   const { toast } = useToast();
   
   // Check permissions - InstituteAdmin and Teacher only
-  const hasPermission = user?.role === 'InstituteAdmin' || user?.role === 'Teacher';
+  const hasPermission = instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher';
   
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
@@ -197,11 +199,40 @@ const AssignStudentsDialog: React.FC<AssignStudentsDialogProps> = ({
         onOpenChange(false);
         setSelectedStudentIds([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error assigning students:', error);
+      console.error('Full error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      // Extract error message from API response
+      let errorMessage = "Failed to assign students to the class";
+      
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        
+        // Try to get detailed error message
+        if (errorData.message && typeof errorData.message === 'string') {
+          errorMessage = errorData.message;
+        } else if (errorData.details?.message) {
+          errorMessage = errorData.details.message;
+        } else if (errorData.error) {
+          errorMessage = `${errorData.error}: ${errorData.message || 'Unknown error'}`;
+        }
+        
+        // Add status code if available
+        if (errorData.statusCode) {
+          errorMessage = `[${errorData.statusCode}] ${errorMessage}`;
+        }
+        
+        console.log('Extracted error message:', errorMessage);
+      }
+      
       toast({
-        title: "Network Error",
-        description: "Failed to communicate with the server. Please try again.",
+        title: "Assignment Failed",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

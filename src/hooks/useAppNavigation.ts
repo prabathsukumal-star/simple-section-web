@@ -11,8 +11,6 @@ export const useAppNavigation = () => {
       'institutes': '/institutes',
       'institute-users': '/institutes/users', 
       'institute-classes': '/institutes/classes',
-      'unverified-users-images': '/unverified-users-images',
-      'image-verification': '/unverified-users-images',
       'organizations': '/organizations',
       'profile': '/profile',
       'users': '/users',
@@ -52,17 +50,19 @@ export const useAppNavigation = () => {
       'subject-payments': '/subject-payments',
       'subject-pay-submission': '/subject-pay-submission',
       'unverified-students': '/unverified-students',
+      'verify-image': '/verify-image',
       'enroll-class': '/enroll-class',
       'enroll-subject': '/enroll-subject',
       'child-attendance': '/child-attendance',
       'child-results': '/child-results',
       'free-lectures': '/free-lectures',
+      'institute-profile': '/institute-profile',
+      'sms': '/sms',
+      'sms-history': '/sms-history',
+      'system-payment': '/payments',
+      'payments': '/payments',
       'transport': '/transport',
-      'student-transport': '/student-transport',
-      'parent-transport': '/parent-transport',
-      'transport-selection': '/transport-selection',
-      'transport-attendance': '/transport-attendance',
-      'transport-info': '/transport-info'
+      'transport-attendance': '/transport/:transportId/attendance'
     };
     
     const route = routeMap[page] || `/${page}`;

@@ -17,7 +17,28 @@ interface HeaderProps {
 }
 
 const Header = ({ onMenuClick }: HeaderProps) => {
-  const { user, logout } = useAuth();
+  const { user, logout, selectedInstitute } = useAuth();
+
+  // Map backend instituteUserType to display role
+  const mapInstituteRoleToDisplayRole = (raw?: string) => {
+    switch (raw) {
+      case 'INSTITUTE_ADMIN':
+        return 'InstituteAdmin';
+      case 'STUDENT':
+        return 'Student';
+      case 'TEACHER':
+        return 'Teacher';
+      case 'ATTENDANCE_MARKER':
+        return 'AttendanceMarker';
+      default:
+        return undefined;
+    }
+  };
+
+  // Display role: use institute-specific role if available, otherwise global role
+  const displayRole = selectedInstitute?.userRole 
+    ? mapInstituteRoleToDisplayRole(selectedInstitute.userRole) 
+    : user?.role;
 
   const handleLogout = () => {
     logout();
@@ -36,9 +57,21 @@ const Header = ({ onMenuClick }: HeaderProps) => {
           <Menu className="h-5 w-5" />
         </Button>
         
-        <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">
-          SurakshaLMS
-        </h1>
+        <div className="flex items-center gap-2">
+          {selectedInstitute?.logo && (
+            <img 
+              src={selectedInstitute.logo} 
+              alt="Institute logo"
+              className="h-8 w-8 object-contain rounded"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          )}
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">
+            {selectedInstitute?.shortName || 'SurakshaLMS'}
+          </h1>
+        </div>
         
         <div className="flex items-center space-x-1 sm:space-x-2">
           <ThemeToggle />
@@ -65,7 +98,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               </DropdownMenuItem>
               <DropdownMenuItem disabled className="cursor-default">
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {user?.role}
+                  {displayRole}
                 </span>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />

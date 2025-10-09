@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RefreshCw, Search, Filter, Calendar, User, Clock, CheckCircle, MapPin, School, BookOpen, UserCheck, UserX, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useToast } from '@/hooks/use-toast';
 import { getAttendanceUrl, getBaseUrl } from '@/contexts/utils/auth.api';
 
@@ -71,7 +72,8 @@ interface AttendanceResponse {
 }
 
 const NewAttendance = () => {
-  const { selectedInstitute, selectedClass, selectedSubject, currentInstituteId, currentClassId, currentSubjectId, user } = useAuth();
+  const { selectedInstitute, selectedClass, selectedSubject, currentInstituteId, currentClassId, currentSubjectId } = useAuth();
+  const userRole = useInstituteRole();
   const { toast } = useToast();
   
   const [attendanceData, setAttendanceData] = useState<AttendanceResponse | null>(null);
@@ -89,7 +91,6 @@ const NewAttendance = () => {
 
   // Check permissions based on role and context
   const getPermissionAndEndpoint = () => {
-    const userRole = user?.role;
     // Determine permissions purely from role and current selection
     const canViewSubject = (userRole === 'InstituteAdmin' || userRole === 'Teacher' || userRole === 'AttendanceMarker') && currentInstituteId && currentClassId && currentSubjectId;
     const canViewClass = (userRole === 'InstituteAdmin' || userRole === 'Teacher' || userRole === 'AttendanceMarker') && currentInstituteId && currentClassId;

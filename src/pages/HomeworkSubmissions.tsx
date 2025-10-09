@@ -10,12 +10,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { homeworkSubmissionsApi, type HomeworkSubmission } from '@/api/homeworkSubmissions.api';
 import { AccessControl, UserRole } from '@/utils/permissions';
 import { FileText, Calendar, User, ExternalLink, RefreshCw, ArrowLeft, BookOpen, School, Users, Lock } from 'lucide-react';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import AppLayout from '@/components/layout/AppLayout';
 
 const HomeworkSubmissions = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, selectedInstitute, selectedClass, selectedSubject, currentInstituteId, currentClassId, currentSubjectId } = useAuth();
+  const instituteRole = useInstituteRole();
   const [submissions, setSubmissions] = useState<HomeworkSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
@@ -153,8 +155,8 @@ const HomeworkSubmissions = () => {
     return contexts.join(' → ');
   };
 
-  // Check if user has permission to view homework submissions
-  if (!user?.role || !AccessControl.hasPermission(user.role as UserRole, 'view-homework-submissions')) {
+  // Check if user has permission to view homework submissions (institute-specific)
+  if (!AccessControl.hasPermission(instituteRole as UserRole, 'view-homework-submissions')) {
     return (
       <AppLayout>
         <div className="container mx-auto p-6">

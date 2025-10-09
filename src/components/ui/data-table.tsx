@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, Edit, Trash2, Eye, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Upload } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -73,6 +74,7 @@ const DataTable = ({
   sectionType
 }: DataTableProps) => {
   const { user } = useAuth();
+  const instituteRole = useInstituteRole();
   const [searchTerm, setSearchTerm] = React.useState('');
   
   // Use server-side pagination if props are provided, otherwise use client-side
@@ -92,14 +94,14 @@ const DataTable = ({
   const displayTotalPages = isServerSidePagination ? totalPages : clientTotalPages;
 
   // Simplified permission check - if onAdd is provided, show the button
-  const canAdd = allowAdd && onAdd && (user?.role === 'SUPER_ADMIN' || user?.role === 'INSTITUTE_ADMIN' || user?.role === 'Teacher' || !user?.role);
-  const canEdit = allowEdit && onEdit && (user?.role !== 'Student');
-  const canDelete = allowDelete && onDelete && (user?.role === 'SUPER_ADMIN' || user?.role === 'INSTITUTE_ADMIN' || user?.role === 'Teacher');
+  const canAdd = allowAdd && onAdd && (instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher');
+  const canEdit = allowEdit && onEdit && (instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher');
+  const canDelete = allowDelete && onDelete && (instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher');
 
   const hasActions = (canEdit && onEdit) || (canDelete && onDelete) || onView || onExport || customActions.length > 0;
   
   console.log('DataTable Debug:', {
-    userRole: user?.role,
+    userRole: instituteRole,
     allowEdit,
     canEdit,
     onEdit: !!onEdit,
@@ -214,7 +216,7 @@ const DataTable = ({
                     {(onEdit || onView || onDelete || onExport || customActions.length > 0) && (
                       <td className="px-2 py-3 text-center min-w-[200px] border-l border-gray-200 dark:border-gray-700">
                         <div className="flex justify-center items-center gap-1 flex-wrap">
-                          {onEdit && user?.role === 'InstituteAdmin' && (
+                          {onEdit && (instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -226,7 +228,7 @@ const DataTable = ({
                               {sectionType === 'lectures' ? 'Edit Lectures' : sectionType === 'homework' ? 'Edit Homework' : 'Edit Exam'}
                             </Button>
                           )}
-                          {onView && user?.role === 'InstituteAdmin' && sectionType !== 'lectures' && (
+                          {onView && (instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && sectionType !== 'lectures' && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -239,7 +241,7 @@ const DataTable = ({
                             </Button>
                           )}
                           {/* Student-specific actions */}
-                          {user?.role === 'Student' && sectionType === 'homework' && onEdit && (
+                          {instituteRole === 'Student' && sectionType === 'homework' && onEdit && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -251,7 +253,7 @@ const DataTable = ({
                               Submit
                             </Button>
                           )}
-                           {user?.role === 'Student' && sectionType === 'exams' && onView && (
+                           {instituteRole === 'Student' && sectionType === 'exams' && onView && (
                             <Button
                               variant="outline"
                               size="sm"

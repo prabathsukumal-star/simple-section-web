@@ -10,6 +10,7 @@ import TableRow from '@mui/material/TableRow';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Eye, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 interface Column {
   id: string;
   label: string;
@@ -67,6 +68,8 @@ export default function MUITable({
   const {
     user
   } = useAuth();
+  const instituteRole = useInstituteRole();
+  
   const handleChangePage = (event: unknown, newPage: number) => {
     onPageChange(newPage);
   };
@@ -76,10 +79,10 @@ export default function MUITable({
     onPageChange(0);
   };
 
-  // Permission checks
-  const canAdd = allowAdd && onAdd && (user?.role === 'SUPER_ADMIN' || user?.role === 'INSTITUTE_ADMIN' || user?.role === 'InstituteAdmin' || user?.role === 'Teacher' || !user?.role);
-  const canEdit = allowEdit && onEdit && user?.role !== 'Student';
-  const canDelete = allowDelete && onDelete && (user?.role === 'SUPER_ADMIN' || user?.role === 'INSTITUTE_ADMIN' || user?.role === 'InstituteAdmin' || user?.role === 'Teacher');
+  // Permission checks using institute role
+  const canAdd = allowAdd && onAdd && (instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher');
+  const canEdit = allowEdit && onEdit && (instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher');
+  const canDelete = allowDelete && onDelete && (instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher');
 
   // Add actions column if needed
   const hasActions = canEdit && onEdit || canDelete && onDelete || onView || customActions.length > 0;
@@ -97,10 +100,10 @@ export default function MUITable({
       <Paper sx={{
       width: '100%',
       overflow: 'hidden',
-      height: 'calc(100vh - 280px)' // Fixed height for full screen
+      height: 'calc(100vh - 280px)'
     }}>
         <TableContainer sx={{
-        height: 'calc(100% - 52px)' // Subtract pagination height
+        height: 'calc(100% - 52px)'
       }}>
           <Table stickyHeader aria-label="sticky table">
             <TableHead>
@@ -109,7 +112,9 @@ export default function MUITable({
                 minWidth: column.minWidth
               }} sx={{
                 fontWeight: 'bold',
-                backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                backgroundColor: 'hsl(var(--muted))',
+                color: 'hsl(var(--foreground))',
+                borderBottom: '1px solid hsl(var(--border))'
               }}>
                     {column.label}
                   </TableCell>)}
@@ -128,24 +133,24 @@ export default function MUITable({
                 })}
                     {hasActions && <TableCell align="center">
                       <div className="flex justify-center items-center gap-1 flex-wrap">
-                        {/* Institute Admin Actions */}
-                         {onEdit && user?.role === 'InstituteAdmin' && <Button variant="outline" size="sm" onClick={() => onEdit(row)} title={sectionType === 'lectures' ? 'Edit Lectures' : sectionType === 'homework' ? 'Edit Homework' : 'Edit Exam'} className="h-8 px-3 text-xs mr-1">
+                        {/* InstituteAdmin and Teacher Actions */}
+                         {onEdit && (instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && <Button variant="outline" size="sm" onClick={() => onEdit(row)} title={sectionType === 'lectures' ? 'Edit Lectures' : sectionType === 'homework' ? 'Edit Homework' : 'Edit Exam'} className="h-8 px-3 text-xs mr-1">
                             <Edit className="h-3 w-3 mr-1" />
                             Edit
                           </Button>}
                         
-                         {onView && user?.role === 'InstituteAdmin' && sectionType !== 'lectures' && <Button variant="outline" size="sm" onClick={() => onView(row)} title={sectionType === 'homework' ? 'View Submissions' : 'View Results'} className="h-8 px-3 text-xs">
+                         {onView && (instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher' || (instituteRole === 'Student' && sectionType === 'homework')) && sectionType !== 'lectures' && <Button variant="outline" size="sm" onClick={() => onView(row)} title={sectionType === 'homework' ? 'View Homework' : sectionType === 'exams' ? 'View Results' : 'View'} className="h-8 px-3 text-xs">
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </Button>}
                         
                         {/* Student Actions */}
-                        {user?.role === 'Student' && sectionType === 'homework' && onEdit && <Button variant="outline" size="sm" onClick={() => onEdit(row)} title="Submit" className="h-8 px-3 text-xs">
+                        {instituteRole === 'Student' && sectionType === 'homework' && onEdit && <Button variant="outline" size="sm" onClick={() => onEdit(row)} title="Submit" className="h-8 px-3 text-xs">
                             <Plus className="h-3 w-3 mr-1" />
                             Submit
                           </Button>}
                         
-                        {user?.role === 'Student' && sectionType === 'exams' && onView && <Button variant="outline" size="sm" onClick={() => onView(row)} title="View Results" className="h-8 px-3 text-xs">
+                        {instituteRole === 'Student' && sectionType === 'exams' && onView && <Button variant="outline" size="sm" onClick={() => onView(row)} title="View Results" className="h-8 px-3 text-xs">
                             <Eye className="h-3 w-3 mr-1" />
                             View Results
                           </Button>}

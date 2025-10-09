@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CreditCard, ArrowLeft, Download, Search, BookOpen, Eye, CheckCircle, Clock, FileText, History, Shield, Plus, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +32,7 @@ const SubjectPayments = () => {
     selectedClass,
     selectedSubject
   } = useAuth();
+  const instituteRole = useInstituteRole();
   const navigate = useNavigate();
   const {
     toast
@@ -63,10 +65,10 @@ const SubjectPayments = () => {
     setLoading(true);
     try {
       let response: SubjectPaymentsResponse;
-      if (user?.role === 'Student') {
+      if (instituteRole === 'Student') {
         // For students, use my-payments endpoint
         response = await subjectPaymentsApi.getMySubjectPayments(selectedInstitute.id, selectedClass.id, selectedSubject.id, pageNum + 1, limitNum);
-      } else if (user?.role === 'InstituteAdmin' || user?.role === 'Teacher') {
+      } else if (instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') {
         // For admins and teachers, use regular endpoint
         response = await subjectPaymentsApi.getSubjectPayments(selectedInstitute.id, selectedClass.id, selectedSubject.id, pageNum + 1, limitNum);
       } else {
@@ -95,7 +97,7 @@ const SubjectPayments = () => {
 
   // Handle verification for admins
   const handleVerify = (submission: PaymentSubmission) => {
-    if (user?.role !== 'InstituteAdmin') {
+    if (instituteRole !== 'InstituteAdmin') {
       toast({
         title: "Access Denied",
         description: "Only Institute Admins can verify submissions.",
@@ -109,7 +111,7 @@ const SubjectPayments = () => {
 
   // View submissions for a payment (admins/teachers only)
   const viewSubmissions = (payment: SubjectPayment) => {
-    if (user?.userType?.toUpperCase() !== 'INSTITUTEADMIN' && user?.userType?.toUpperCase() !== 'TEACHER' && user?.role?.toLowerCase() !== 'instituteadmin' && user?.role?.toLowerCase() !== 'teacher') {
+    if (instituteRole !== 'InstituteAdmin' && instituteRole !== 'Teacher') {
       toast({
         title: "Access Denied",
         description: "You don't have permission to view submissions.",
@@ -122,7 +124,7 @@ const SubjectPayments = () => {
 
   // Handle view my submissions for students
   const handleViewMySubmissions = () => {
-    if (user?.userType !== 'Student') {
+    if (instituteRole !== 'Student') {
       toast({
         title: "Access Denied",
         description: "This feature is only available for students.",
@@ -228,10 +230,7 @@ const SubjectPayments = () => {
               )}
             </div>
           </div>
-          {(user?.userType?.toUpperCase() === 'INSTITUTEADMIN' || 
-            user?.userType?.toUpperCase() === 'TEACHER' || 
-            user?.role?.toLowerCase() === 'instituteadmin' || 
-            user?.role?.toLowerCase() === 'teacher') && (
+          {(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && (
             <Button 
               onClick={() => setCreatePaymentDialogOpen(true)} 
               className="shrink-0"
@@ -286,7 +285,7 @@ const SubjectPayments = () => {
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 {loading ? 'Loading...' : 'Load Data'}
               </Button>
-              {user?.userType === 'Student' && (
+              {instituteRole === 'Student' && (
                 <Button 
                   onClick={handleViewMySubmissions} 
                   variant="outline" 
@@ -327,7 +326,7 @@ const SubjectPayments = () => {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <CreditCard className="h-5 w-5 text-primary" />
-                {user?.role === 'Student' ? 'My Subject Payments' : 'Subject Payment Records'}
+                {instituteRole === 'Student' ? 'My Subject Payments' : 'Subject Payment Records'}
               </CardTitle>
               {subjectPaymentsData && (
                 <Badge variant="outline" className="text-sm">
@@ -349,7 +348,7 @@ const SubjectPayments = () => {
               </div>
             ) : (
               <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                <TableContainer sx={{ height: 'calc(100vh - 350px)' }}>
+                <TableContainer sx={{ maxHeight: 'calc(100vh - 350px)', overflow: 'auto' }}>
                   <Table stickyHeader aria-label="subject payments table">
                     <TableHead>
                       <TableRow>
@@ -359,8 +358,13 @@ const SubjectPayments = () => {
                             align={column.align}
                             style={{ minWidth: column.minWidth }}
                             sx={{
-                              fontWeight: 'bold',
-                              backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                              fontWeight: 600,
+                              position: 'sticky',
+                              top: 0,
+                              zIndex: 2,
+                              backgroundColor: 'hsl(var(--muted))',
+                              color: 'hsl(var(--foreground))',
+                              borderBottom: '1px solid hsl(var(--border))'
                             }}
                           >
                             {column.label}
@@ -420,7 +424,7 @@ const SubjectPayments = () => {
                                 {new Date(payment.lastDate).toLocaleDateString()}
                               </TableCell>
                               <TableCell>
-                                {(user?.role === 'InstituteAdmin' || user?.role === 'Teacher') && (
+                                {(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && (
                                   <div className="text-xs space-y-1">
                                     <div className="flex items-center space-x-1">
                                       <FileText className="h-3 w-3" />
@@ -439,7 +443,7 @@ const SubjectPayments = () => {
                               </TableCell>
                               <TableCell>
                                 <div className="flex flex-col space-y-1">
-                                  {user?.role === 'Student' && (
+                                  {instituteRole === 'Student' && (
                                     <Button 
                                       variant="outline" 
                                       size="sm" 
@@ -454,10 +458,7 @@ const SubjectPayments = () => {
                                     </Button>
                                   )}
                                   
-                                  {(user?.userType?.toUpperCase() === 'INSTITUTEADMIN' || 
-                                    user?.userType?.toUpperCase() === 'TEACHER' || 
-                                    user?.role?.toLowerCase() === 'instituteadmin' || 
-                                    user?.role?.toLowerCase() === 'teacher') && (
+                                  {(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && (
                                     <Button 
                                       variant="outline" 
                                       size="sm" 
@@ -547,7 +548,16 @@ const SubjectPayments = () => {
         {user?.userType === 'Student' && selectedInstitute && selectedClass && selectedSubject && <StudentSubmissionsDialog open={submissionsDialogOpen} onOpenChange={setSubmissionsDialogOpen} instituteId={selectedInstitute.id} classId={selectedClass.id} subjectId={selectedSubject.id} />}
 
         {/* Create Subject Payment Dialog */}
-        {(user?.userType?.toUpperCase() === 'INSTITUTEADMIN' || user?.userType?.toUpperCase() === 'TEACHER' || user?.role?.toLowerCase() === 'instituteadmin' || user?.role?.toLowerCase() === 'teacher') && selectedInstitute && selectedClass && selectedSubject && <CreateSubjectPaymentForm open={createPaymentDialogOpen} onOpenChange={setCreatePaymentDialogOpen} instituteId={selectedInstitute.id} classId={selectedClass.id} subjectId={selectedSubject.id} onSuccess={loadSubjectPayments} />}
+        {selectedInstitute && selectedClass && selectedSubject && (
+          <CreateSubjectPaymentForm 
+            open={createPaymentDialogOpen} 
+            onOpenChange={setCreatePaymentDialogOpen} 
+            instituteId={selectedInstitute.id} 
+            classId={selectedClass.id} 
+            subjectId={selectedSubject.id} 
+            onSuccess={loadSubjectPayments} 
+          />
+        )}
 
         {/* Submit Payment Dialog for Students */}
         {user?.role === 'Student' && selectedPaymentForSubmission && <SubmitSubjectPaymentDialog open={submitPaymentDialogOpen} onOpenChange={setSubmitPaymentDialogOpen} payment={selectedPaymentForSubmission} onSuccess={() => {

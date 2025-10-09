@@ -9,6 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import MUITable from '@/components/ui/mui-table';
 import { Users, RefreshCw, Search, Plus, AlertTriangle, User, MapPin, Phone, Briefcase, Calendar, Home, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { type UserRole } from '@/contexts/types/auth.types';
 import { useToast } from '@/hooks/use-toast';
 import { useTableData } from '@/hooks/useTableData';
@@ -33,7 +34,7 @@ const Parents = () => {
     address: '',
     occupation: ''
   });
-  const userRole = (user?.role || 'Student') as UserRole;
+  const userRole = useInstituteRole();
   const canViewParents = userRole === 'InstituteAdmin';
   const canCreateParents = userRole === 'InstituteAdmin';
 

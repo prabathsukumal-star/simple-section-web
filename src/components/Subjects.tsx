@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { DataCardView } from '@/components/ui/data-card-view';
 import { RefreshCw, Filter, Eye, Edit, Trash2, Plus } from 'lucide-react';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { AccessControl } from '@/utils/permissions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -76,7 +77,7 @@ const Subjects = () => {
     actions
   } = tableData;
   const dataLoaded = subjectsData.length > 0;
-  const userRole = (user?.role || 'Student') as UserRole;
+  const userRole = useInstituteRole();
   const isInstituteAdmin = userRole === 'InstituteAdmin';
   const canEdit = AccessControl.hasPermission(userRole, 'edit-subject') && !isInstituteAdmin;
   const canDelete = AccessControl.hasPermission(userRole, 'delete-subject') && !isInstituteAdmin;

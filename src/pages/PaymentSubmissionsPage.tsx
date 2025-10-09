@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Eye, CheckCircle, Clock, XCircle, User, Calendar, FileText, DollarSign, Shield, RefreshCw, School, Search } from 'lucide-react';
+import { ArrowLeft, Eye, CheckCircle, Clock, XCircle, User, Calendar, FileText, DollarSign, Shield, RefreshCw, School, Search, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { subjectPaymentsApi, SubjectPaymentSubmission } from '@/api/subjectPayments.api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import VerifySubjectPaymentDialog from '@/components/forms/VerifySubjectPaymentDialog';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -24,8 +25,12 @@ const PaymentSubmissionsPage: React.FC = () => {
     toast
   } = useToast();
   const {
-    user
+    user,
+    selectedInstitute,
+    selectedClass,
+    selectedSubject
   } = useAuth();
+  const role = useInstituteRole();
   const [searchParams] = useSearchParams();
   const paymentId = searchParams.get('paymentId');
   const paymentTitle = searchParams.get('paymentTitle');
@@ -39,7 +44,7 @@ const PaymentSubmissionsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Check if user can verify submissions (InstituteAdmin or Teacher only)
-  const canVerifySubmissions = user?.userType === 'INSTITUTE_ADMIN' || user?.userType === 'TEACHER';
+  const canVerifySubmissions = role === 'InstituteAdmin' || role === 'Teacher';
   const loadSubmissions = async (newPage?: number, newRowsPerPage?: number) => {
     if (loading || !paymentId) return;
     const currentPage = newPage !== undefined ? newPage + 1 : page + 1; // API uses 1-based indexing
@@ -168,31 +173,21 @@ const PaymentSubmissionsPage: React.FC = () => {
           </Button>
         </div>
 
-        {/* Current Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <School className="h-5 w-5" />
-              <span>Current Selection</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <span className="font-medium text-gray-600 dark:text-gray-400">Institute:</span>
-                <span className="font-semibold">Mahinda College</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="font-medium text-gray-600 dark:text-gray-400">Class:</span>
-                <span className="font-semibold">Grade 10 - Maths</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="font-medium text-gray-600 dark:text-gray-400">Subject:</span>
-                <span className="font-semibold">Grade 10 Maths</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Subject Info */}
+        {selectedSubject && (
+          <Card className="border-border">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <BookOpen className="h-5 w-5 text-primary" />
+                {selectedSubject.name}
+              </CardTitle>
+              <p className="text-muted-foreground text-sm">
+                Class: {selectedClass?.name} | Institute: {selectedInstitute?.name}
+              </p>
+            </CardHeader>
+          </Card>
+        )}
+
 
         {/* Payment Submissions Section */}
         <Card>

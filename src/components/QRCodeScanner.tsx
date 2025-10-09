@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Camera, QrCode, UserCheck, CheckCircle, MapPin, Monitor, Users, X, RefreshCw } from 'lucide-react';
 import jsQR from 'jsqr';
@@ -46,6 +47,7 @@ interface AttendanceNotification {
 
 const QRCodeScanner = () => {
   const { selectedInstitute, selectedClass, selectedSubject, currentInstituteId, currentClassId, currentSubjectId, user } = useAuth();
+  const userRole = useInstituteRole();
   const { toast } = useToast();
   
   const [studentId, setStudentId] = useState('');
@@ -63,7 +65,7 @@ const QRCodeScanner = () => {
   const streamRef = useRef<MediaStream | null>(null);
 
   // Check if user has permission - InstituteAdmin, Teacher, and AttendanceMarker can mark attendance
-  const hasPermission = user?.role === 'InstituteAdmin' || user?.role === 'Teacher' || user?.role === 'AttendanceMarker';
+  const hasPermission = userRole === 'InstituteAdmin' || userRole === 'Teacher' || userRole === 'AttendanceMarker';
 
   useEffect(() => {
     if (attendanceNotification) {
