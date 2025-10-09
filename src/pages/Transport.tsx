@@ -115,10 +115,10 @@ const Transport: React.FC = () => {
                 </Badge>
               </div>
               <CardTitle className="text-xl">
-                {enrollment.vehicleModel || 'Transport Service'}
+                Transport Service
               </CardTitle>
               <CardDescription>
-                {enrollment.vehicleNumber || `ID: ${enrollment.bookhireId.slice(0, 8)}`}
+                Bookhire ID: {enrollment.bookhireId}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -158,16 +158,6 @@ const Transport: React.FC = () => {
                   <span className="text-lg font-bold text-primary">
                     LKR {enrollment.monthlyFee.toLocaleString()}
                   </span>
-                </div>
-              )}
-
-              {enrollment.driverName && (
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-primary" />
-                  <div className="text-sm">
-                    <span className="font-medium">Driver: </span>
-                    <span className="text-muted-foreground">{enrollment.driverName}</span>
-                  </div>
                 </div>
               )}
 

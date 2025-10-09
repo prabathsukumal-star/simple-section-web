@@ -54,7 +54,7 @@ const TransportAttendance: React.FC = () => {
       <CurrentSelection
         transport={{
           id: transport.id,
-          vehicleModel: transport.vehicleModel || 'Transport Service'
+          vehicleModel: `Bookhire ${transport.bookhireId}`
         }}
       />
 

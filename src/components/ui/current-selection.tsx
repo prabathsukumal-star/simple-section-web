@@ -86,6 +86,12 @@ const CurrentSelection: React.FC<CurrentSelectionProps> = ({
           </div>
         )}
 
+        {transport && (
+          <div className="mt-3 text-sm text-muted-foreground">
+            Transport: <span className="font-medium text-foreground">{transport.vehicleModel}</span>
+          </div>
+        )}
+
         {(user?.name || effectiveRole) && (
           <div className="mt-2 text-sm text-muted-foreground space-y-1">
             {user?.name && (

@@ -18,6 +18,9 @@ export interface TransportEnrollment {
   monthlyFee: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BookhireDetails {
   vehicleModel?: string;
   vehicleNumber?: string;
   driverName?: string;
@@ -45,6 +48,6 @@ export const transportApi = {
       limit: String(params?.limit || 10)
     });
     
-    return attendanceApiClient.get(`/student-bookhire-enrollment/student/${studentId}?${queryParams}`);
+    return attendanceApiClient.get(`/api/student-bookhire-enrollment/student/${studentId}?${queryParams}`);
   }
 };
