@@ -27,7 +27,13 @@ const Transport: React.FC = () => {
       setEnrollments(response.data.enrollments);
     } catch (error) {
       console.error('Failed to load transport enrollments:', error);
-      toast.error('Failed to load transport enrollments');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load transport enrollments';
+      
+      if (errorMessage.includes('404') || errorMessage.includes('Cannot GET')) {
+        toast.error('Transport endpoint not available. Please ensure the attendance backend is running and the endpoint exists.');
+      } else {
+        toast.error('Failed to load transport enrollments. Please check your attendance backend configuration.');
+      }
     } finally {
       setLoading(false);
     }
