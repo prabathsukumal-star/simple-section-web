@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { attendanceApiClient } from './attendanceClient';
 
 export interface TransportEnrollment {
   id: string;
@@ -45,6 +45,6 @@ export const transportApi = {
       limit: String(params?.limit || 10)
     });
     
-    return apiClient.get(`/student-bookhire-enrollment/student/${studentId}?${queryParams}`);
+    return attendanceApiClient.get(`/student-bookhire-enrollment/student/${studentId}?${queryParams}`);
   }
 };
