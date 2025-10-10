@@ -51,9 +51,16 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
 
   // Get menu items based on current selection state
   const getMenuItems = () => {
-    // Special handling for transport attendance page - ONLY Attendance
-    if (currentPage === 'transport-attendance') {
+    // Special handling for transport attendance page
+    if (currentPage.includes('transport') && currentPage.includes('attendance')) {
       return [
+        {
+          id: 'transport',
+          label: 'My Transports',
+          icon: Truck,
+          permission: 'view-dashboard',
+          alwaysShow: true
+        },
         {
           id: 'transport-attendance',
           label: 'Attendance',

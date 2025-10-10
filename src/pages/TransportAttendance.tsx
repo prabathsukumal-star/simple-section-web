@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, Clock } from 'lucide-react';
-import { TransportEnrollment } from '@/api/transport.api';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { transportApi, TransportEnrollment } from '@/api/transport.api';
+import { toast } from 'sonner';
 import CurrentSelection from '@/components/ui/current-selection';
-import AppLayout from '@/components/layout/AppLayout';
-import PageContainer from '@/components/layout/PageContainer';
 
 const TransportAttendance: React.FC = () => {
   const { transportId } = useParams<{ transportId: string }>();
@@ -30,57 +30,49 @@ const TransportAttendance: React.FC = () => {
 
   if (loading || !transport) {
     return (
-      <AppLayout currentPage="transport-attendance">
-        <PageContainer>
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading...</p>
-            </div>
-          </div>
-        </PageContainer>
-      </AppLayout>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <AppLayout currentPage="transport-attendance">
-      <PageContainer>
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={handleBack}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold">Transport Attendance</h1>
-              <p className="text-muted-foreground">Track your transport usage</p>
-            </div>
-          </div>
-
-          <CurrentSelection
-            transport={{
-              id: transport.id,
-              vehicleModel: `Bookhire ${transport.bookhireId}`
-            }}
-          />
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Attendance Records
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Attendance tracking will be available soon</p>
-              </div>
-            </CardContent>
-          </Card>
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={handleBack}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold">Transport Attendance</h1>
+          <p className="text-muted-foreground">Track your transport usage</p>
         </div>
-      </PageContainer>
-    </AppLayout>
+      </div>
+
+      <CurrentSelection
+        transport={{
+          id: transport.id,
+          vehicleModel: `Bookhire ${transport.bookhireId}`
+        }}
+      />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Attendance Records
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12 text-muted-foreground">
+            <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Attendance tracking will be available soon</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
