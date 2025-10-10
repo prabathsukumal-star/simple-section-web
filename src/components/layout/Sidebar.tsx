@@ -51,40 +51,15 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
 
   // Get menu items based on current selection state
   const getMenuItems = () => {
-    // Special handling for transport attendance page
-    if (currentPage.includes('transport') && currentPage.includes('attendance')) {
+    // Special handling for transport attendance page - ONLY Attendance
+    if (currentPage === 'transport-attendance') {
       return [
         {
           id: 'transport-attendance',
           label: 'Attendance',
           icon: UserCheck,
           permission: 'view-dashboard',
-          alwaysShow: true,
-          section: 'MAIN'
-        },
-        {
-          id: 'system-payment',
-          label: 'System Payments',
-          icon: CreditCard,
-          permission: 'view-payments',
-          alwaysShow: true,
-          section: 'SYSTEM PAYMENTS'
-        },
-        {
-          id: 'profile',
-          label: 'Profile',
-          icon: User,
-          permission: 'view-dashboard',
-          alwaysShow: true,
-          section: 'SETTINGS'
-        },
-        {
-          id: 'appearance',
-          label: 'Appearance',
-          icon: Palette,
-          permission: 'view-dashboard',
-          alwaysShow: true,
-          section: 'SETTINGS'
+          alwaysShow: true
         }
       ];
     }
