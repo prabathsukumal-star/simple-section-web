@@ -59,7 +59,32 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
           label: 'Attendance',
           icon: UserCheck,
           permission: 'view-dashboard',
-          alwaysShow: true
+          alwaysShow: true,
+          section: 'MAIN'
+        },
+        {
+          id: 'system-payment',
+          label: 'System Payments',
+          icon: CreditCard,
+          permission: 'view-payments',
+          alwaysShow: true,
+          section: 'SYSTEM PAYMENTS'
+        },
+        {
+          id: 'profile',
+          label: 'Profile',
+          icon: User,
+          permission: 'view-dashboard',
+          alwaysShow: true,
+          section: 'SETTINGS'
+        },
+        {
+          id: 'appearance',
+          label: 'Appearance',
+          icon: Palette,
+          permission: 'view-dashboard',
+          alwaysShow: true,
+          section: 'SETTINGS'
         }
       ];
     }
