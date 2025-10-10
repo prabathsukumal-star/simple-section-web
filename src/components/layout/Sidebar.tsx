@@ -55,13 +55,6 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     if (currentPage.includes('transport') && currentPage.includes('attendance')) {
       return [
         {
-          id: 'transport',
-          label: 'My Transports',
-          icon: Truck,
-          permission: 'view-dashboard',
-          alwaysShow: true
-        },
-        {
           id: 'transport-attendance',
           label: 'Attendance',
           icon: UserCheck,
