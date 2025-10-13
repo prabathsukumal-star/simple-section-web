@@ -13,11 +13,9 @@ import { organizationApi, OrganizationCreateData } from '@/api/organization.api'
 interface CreateOrganizationFormProps {
   onSuccess?: (organization: any) => void;
   onCancel?: () => void;
-  instituteId?: string;
-  instituteName?: string;
 }
 
-const CreateOrganizationForm = ({ onSuccess, onCancel, instituteId, instituteName }: CreateOrganizationFormProps) => {
+const CreateOrganizationForm = ({ onSuccess, onCancel }: CreateOrganizationFormProps) => {
   const [formData, setFormData] = useState<OrganizationCreateData>({
     name: '',
     type: 'INSTITUTE',
@@ -26,7 +24,7 @@ const CreateOrganizationForm = ({ onSuccess, onCancel, instituteId, instituteNam
     needEnrollmentVerification: true,
     enabledEnrollments: true,
     imageUrl: '',
-    instituteId: instituteId || ''
+    instituteId: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -60,7 +58,7 @@ const CreateOrganizationForm = ({ onSuccess, onCancel, instituteId, instituteNam
       
       toast({
         title: "Success",
-        description: `Organization "${organization.name}" created successfully`,
+        description: "Organization created successfully",
       });
       
       if (onSuccess) {
@@ -68,25 +66,9 @@ const CreateOrganizationForm = ({ onSuccess, onCancel, instituteId, instituteNam
       }
     } catch (error) {
       console.error('Error creating organization:', error);
-      
-      // Provide specific error messages
-      let errorMessage = "Failed to create organization";
-      
-      if (error instanceof Error) {
-        if (error.message.includes("Only Organization Managers, Super Admins, or Institute Admins")) {
-          errorMessage = "You don't have permission to create organizations. Please contact your administrator.";
-        } else if (error.message.includes("Forbidden")) {
-          errorMessage = "Access denied. You need Institute Admin permissions to create organizations.";
-        } else if (error.message.includes("already exists")) {
-          errorMessage = "An organization with this name already exists.";
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
-      }
-      
       toast({
-        title: "Cannot Create Organization",
-        description: errorMessage,
+        title: "Error",
+        description: "Failed to create organization",
         variant: "destructive",
       });
     } finally {
@@ -102,170 +84,151 @@ const CreateOrganizationForm = ({ onSuccess, onCancel, instituteId, instituteNam
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4 py-6">
-      <Card className="border-border/50 shadow-sm">
-        <CardHeader className="space-y-1 pb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-primary/10 rounded-lg">
-              <Building2 className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-xl">Organization Details</CardTitle>
-              <CardDescription className="text-sm">
-                Fill in the information below to create your organization
-              </CardDescription>
-            </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8">
+      <div className="max-w-2xl mx-auto">
+        <div className="flex items-center space-x-4 mb-8">
+          {onCancel && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCancel}
+              className="p-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          )}
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create Organization</h1>
+            <p className="text-gray-600 dark:text-gray-400">Set up a new organization</p>
           </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium">
-                Organization Name *
-              </Label>
-              <Input
-                id="name"
-                placeholder="Enter organization name"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                required
-                className="h-10"
-              />
-            </div>
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="type" className="text-sm font-medium">
-                Organization Type *
-              </Label>
-              <Select value={formData.type} onValueChange={(value: any) => handleInputChange('type', value)}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Select organization type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="INSTITUTE">Institute</SelectItem>
-                  <SelectItem value="GLOBAL">Global</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {instituteId ? (
-              <div className="space-y-2">
-                <Label htmlFor="instituteId" className="text-sm font-medium">
-                  Institute
-                </Label>
-                <Input
-                  id="instituteId"
-                  value={instituteName || instituteId}
-                  disabled
-                  className="bg-muted/50 cursor-not-allowed h-10"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Organization will be created for this institute
-                </p>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Building2 className="h-6 w-6 text-blue-600" />
               </div>
-            ) : (
+              <div>
+                <CardTitle>Organization Details</CardTitle>
+                <CardDescription>
+                  Fill in the information below to create your organization
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="instituteId" className="text-sm font-medium">
-                  Institute ID (Optional for GLOBAL type)
-                </Label>
+                <Label htmlFor="name">Organization Name *</Label>
+                <Input
+                  id="name"
+                  placeholder="Enter organization name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="type">Organization Type *</Label>
+                <Select value={formData.type} onValueChange={(value: any) => handleInputChange('type', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select organization type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="INSTITUTE">Institute</SelectItem>
+                    <SelectItem value="GLOBAL">Global</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="instituteId">Institute ID *</Label>
                 <Input
                   id="instituteId"
-                  placeholder="Enter institute ID (optional)"
+                  placeholder="Enter institute ID"
                   value={formData.instituteId}
                   onChange={(e) => handleInputChange('instituteId', e.target.value)}
-                  className="h-10"
+                  required
                 />
               </div>
-            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl" className="text-sm font-medium">
-                Image URL (Optional)
-              </Label>
-              <Input
-                id="imageUrl"
-                placeholder="Enter organization image URL"
-                value={formData.imageUrl}
-                onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-                className="h-10"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="imageUrl">Image URL (Optional)</Label>
+                <Input
+                  id="imageUrl"
+                  placeholder="Enter organization image URL"
+                  value={formData.imageUrl}
+                  onChange={(e) => handleInputChange('imageUrl', e.target.value)}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="enrollmentKey" className="text-sm font-medium">
-                Enrollment Key {formData.type === 'INSTITUTE' ? '*' : '(Optional)'}
-              </Label>
-              <Input
-                id="enrollmentKey"
-                placeholder={formData.type === 'INSTITUTE' 
-                  ? "Enter enrollment key..." 
-                  : "Enter enrollment key (optional)"
-                }
-                value={formData.enrollmentKey}
-                onChange={(e) => handleInputChange('enrollmentKey', e.target.value)}
-                required={formData.type === 'INSTITUTE'}
-                className="h-10"
-              />
-            </div>
-
-            <div className="space-y-4 pt-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="isPublic" className="text-sm font-medium cursor-pointer">
-                  Public Organization
+              <div className="space-y-2">
+                <Label htmlFor="enrollmentKey">
+                  Enrollment Key {formData.type === 'INSTITUTE' ? '(Required)' : '(Optional)'}
                 </Label>
+                <Input
+                  id="enrollmentKey"
+                  placeholder={formData.type === 'INSTITUTE' 
+                    ? "Enter enrollment key..." 
+                    : "Enter enrollment key (optional)"
+                  }
+                  value={formData.enrollmentKey}
+                  onChange={(e) => handleInputChange('enrollmentKey', e.target.value)}
+                  required={formData.type === 'INSTITUTE'}
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
                 <Switch
                   id="isPublic"
                   checked={formData.isPublic}
                   onCheckedChange={(checked) => handleInputChange('isPublic', checked)}
                 />
+                <Label htmlFor="isPublic">Public Organization</Label>
               </div>
 
-              <div className="flex items-center justify-between">
-                <Label htmlFor="needEnrollmentVerification" className="text-sm font-medium cursor-pointer">
-                  Require Enrollment Verification
-                </Label>
+              <div className="flex items-center space-x-2">
                 <Switch
                   id="needEnrollmentVerification"
                   checked={formData.needEnrollmentVerification}
                   onCheckedChange={(checked) => handleInputChange('needEnrollmentVerification', checked)}
                 />
+                <Label htmlFor="needEnrollmentVerification">Require Enrollment Verification</Label>
               </div>
 
-              <div className="flex items-center justify-between">
-                <Label htmlFor="enabledEnrollments" className="text-sm font-medium cursor-pointer">
-                  Enable Enrollments
-                </Label>
+              <div className="flex items-center space-x-2">
                 <Switch
                   id="enabledEnrollments"
                   checked={formData.enabledEnrollments}
                   onCheckedChange={(checked) => handleInputChange('enabledEnrollments', checked)}
                 />
+                <Label htmlFor="enabledEnrollments">Enable Enrollments</Label>
               </div>
-            </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              {onCancel && (
+              <div className="flex justify-end space-x-4">
+                {onCancel && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onCancel}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </Button>
+                )}
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onCancel}
+                  type="submit"
                   disabled={isLoading}
-                  className="min-w-[100px]"
                 >
-                  Cancel
+                  {isLoading ? "Creating..." : "Create Organization"}
                 </Button>
-              )}
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="min-w-[100px]"
-              >
-                {isLoading ? "Creating..." : "Create Organization"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -151,31 +151,29 @@ export default function SMSHistory() {
   }
 
   return (
-    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">SMS Management</h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">View all sent SMS messages</p>
+          <h1 className="text-3xl font-bold">SMS Management</h1>
+          <p className="text-muted-foreground mt-1">View all sent SMS messages</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2">
           <Button
             onClick={() => setShowFilters(!showFilters)}
             variant="outline"
             className="flex items-center gap-2"
-            size="sm"
           >
             <Filter className="h-4 w-4" />
-            <span className="hidden sm:inline">Filters</span>
+            Filters
           </Button>
           <Button
             onClick={refresh}
             disabled={loading}
             variant="outline"
             className="flex items-center gap-2"
-            size="sm"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">{loading ? 'Refreshing...' : 'Refresh'}</span>
+            {loading ? 'Refreshing...' : 'Refresh'}
           </Button>
         </div>
       </div>

@@ -164,12 +164,12 @@ const PaymentSubmissionsPage: React.FC = () => {
     minWidth: 150
   }];
   return <AppLayout>
-      <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="flex items-center gap-2" size="sm">
-            <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="text-sm sm:text-base">Back</span>
+          <Button variant="ghost" onClick={() => navigate(-1)} className="flex items-center space-x-2">
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back</span>
           </Button>
         </div>
 
@@ -191,22 +191,20 @@ const PaymentSubmissionsPage: React.FC = () => {
 
         {/* Payment Submissions Section */}
         <Card>
-          <CardHeader className="p-4 sm:p-6">
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
-                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                  <span className="truncate">Payment Submissions</span>
-                </CardTitle>
-                <Button onClick={handleRefresh} disabled={loading} variant="outline" size="sm" className="flex items-center gap-2 w-full sm:w-auto">
-                  <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${loading ? 'animate-spin' : ''}`} />
-                  <span className="text-sm">Refresh</span>
-                </Button>
-              </div>
-              {paymentId && <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  Payment ID: {paymentId}
-                </p>}
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center space-x-2">
+                <FileText className="h-5 w-5" />
+                <span>Payment Submissions</span>
+              </CardTitle>
+              <Button onClick={handleRefresh} disabled={loading} variant="outline" size="sm" className="flex items-center space-x-2">
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </Button>
             </div>
+            {paymentId && <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                Payment ID: {paymentId}
+              </p>}
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -233,15 +231,15 @@ const PaymentSubmissionsPage: React.FC = () => {
               </div>
 
               {/* Load Button or Table */}
-              {!loaded ? <div className="text-center py-8 sm:py-12">
-                  <Button onClick={() => loadSubmissions()} disabled={loading} className="flex items-center gap-2 w-full sm:w-auto text-sm sm:text-base">
-                    <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+              {!loaded ? <div className="text-center py-12">
+                  <Button onClick={() => loadSubmissions()} disabled={loading} className="flex items-center space-x-2">
+                    <Eye className="h-4 w-4" />
                     <span>{loading ? 'Loading...' : 'Load Submissions'}</span>
                   </Button>
                 </div> : <Paper sx={{
               width: '100%',
               overflow: 'hidden',
-              height: { xs: 'calc(100vh - 360px)', sm: 'calc(100vh - 320px)', md: 'calc(100vh - 280px)' }
+              height: 'calc(100vh - 280px)'
             }}>
                   <TableContainer sx={{
                 height: 'calc(100% - 52px)'
@@ -294,25 +292,25 @@ const PaymentSubmissionsPage: React.FC = () => {
                                       variant="outline" 
                                       size="sm" 
                                       onClick={() => window.open(submission.receiptUrl, '_blank')} 
-                                      className="flex items-center gap-1"
+                                      className="flex items-center space-x-1"
                                     >
                                       <Eye className="h-3 w-3" />
-                                      <span className="hidden sm:inline">View</span>
+                                      <span>View</span>
                                     </Button>
                                   ) : (
-                                    <span className="text-muted-foreground text-sm">N/A</span>
+                                    <span className="text-gray-400 text-sm">No receipt</span>
                                   )}
                                 </TableCell>
                                 <TableCell>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center space-x-2">
                                     {canVerifySubmissions && submission.status === 'PENDING' && (
                                       <Button 
                                         onClick={() => setVerifyingSubmission(submission)} 
-                                        className="flex items-center gap-1" 
+                                        className="flex items-center space-x-1" 
                                         size="sm"
                                       >
-                                        <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
-                                        <span className="hidden sm:inline">Verify</span>
+                                        <Shield className="h-4 w-4" />
+                                        <span>Verify</span>
                                       </Button>
                                     )}
                                   </div>

@@ -286,29 +286,29 @@ const SubjectSelector = () => {
         <p className="text-gray-600 dark:text-gray-400">Please select a class first.</p>
       </div>;
   }
-  return <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-        <div className="flex-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+  return <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div className="text-center sm:text-left flex-1">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Select Subject
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400">
             Choose a subject to manage lectures and attendance
           </p>
-          {selectedInstitute && <p className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 mt-2">
+          {selectedInstitute && <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
               Institute: {selectedInstitute.name}
             </p>}
-          {selectedClass && <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 mt-1">
+          {selectedClass && <p className="text-sm text-green-600 dark:text-green-400 mt-1">
               Class: {selectedClass.name}
             </p>}
         </div>
-        <Button onClick={() => fetchSubjectsByRole(currentPage, pageSize)} disabled={isLoading} variant="outline" size="sm" className="w-full sm:w-auto">
+        <Button onClick={() => fetchSubjectsByRole(currentPage, pageSize)} disabled={isLoading} variant="outline" size="sm">
           {isLoading ? <>
               <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              <span className="hidden sm:inline">Loading...</span>
+              Loading...
             </> : <>
               <RefreshCw className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Refresh</span>
+              Refresh
             </>}
         </Button>
       </div>
@@ -327,40 +327,40 @@ const SubjectSelector = () => {
               </>}
           </Button>
         </div> : <div className="max-h-[600px] overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-3 md:gap-4 lg:gap-6 p-2 md:p-3 lg:p-4">
-            {subjectsData.map(subject => <div key={subject.id} className="relative flex w-full flex-col rounded-xl bg-gradient-to-br from-white to-gray-50 bg-clip-border text-gray-700 shadow-md md:shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer" onClick={() => handleSelectSubject(subject)}>
-                <div className="relative mx-3 md:mx-4 -mt-4 md:-mt-6 h-28 md:h-32 lg:h-40 overflow-hidden rounded-xl bg-clip-border shadow-md md:shadow-lg group">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
+            {subjectsData.map(subject => <div key={subject.id} className="relative flex w-full flex-col rounded-xl bg-gradient-to-br from-white to-gray-50 bg-clip-border text-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer" onClick={() => handleSelectSubject(subject)}>
+                <div className="relative mx-4 -mt-6 h-40 overflow-hidden rounded-xl bg-clip-border shadow-lg group">
                   {subject.imgUrl ? <img src={subject.imgUrl} alt={subject.name} className="w-full h-full object-cover" /> : <>
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 opacity-90"></div>
                       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:20px_20px] animate-pulse"></div>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <BookOpen className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 text-white/90 transform transition-transform group-hover:scale-110 duration-300" />
+                        <BookOpen className="w-20 h-20 text-white/90 transform transition-transform group-hover:scale-110 duration-300" />
                       </div>
                     </>}
                 </div>
-                <div className="p-3 md:p-4 lg:p-6">
-                  <h5 className="mb-1 md:mb-2 block font-sans text-base md:text-lg lg:text-xl font-semibold leading-snug tracking-normal text-gray-900 antialiased group-hover:text-blue-600 transition-colors duration-300">
+                <div className="p-6">
+                  <h5 className="mb-2 block font-sans text-xl font-semibold leading-snug tracking-normal text-gray-900 antialiased group-hover:text-blue-600 transition-colors duration-300">
                     {subject.name}
                   </h5>
-                  <p className="block font-sans text-xs md:text-sm lg:text-base font-light leading-relaxed text-gray-700 antialiased mb-1 md:mb-2 line-clamp-2">
+                  <p className="block font-sans text-base font-light leading-relaxed text-gray-700 antialiased mb-2">
                     {subject.description}
                   </p>
-                  <div className="flex items-center justify-between text-xs md:text-sm text-gray-500 mb-1 md:mb-2">
-                    <span className="truncate">Code: {subject.code}</span>
-                    <Badge variant={subject.category === 'Core' ? 'default' : 'secondary'} className="text-xs">
+                  <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+                    <span>Code: {subject.code}</span>
+                    <Badge variant={subject.category === 'Core' ? 'default' : 'secondary'}>
                       {subject.category}
                     </Badge>
                   </div>
-                  <div className="flex items-center justify-between text-xs md:text-sm text-gray-500">
-                    <span className="truncate">Credits: {subject.creditHours}</span>
-                    <span className="truncate">{subject.subjectType}</span>
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <span>Credits: {subject.creditHours}</span>
+                    <span>{subject.subjectType}</span>
                   </div>
                 </div>
-                <div className="p-3 md:p-4 lg:p-6 pt-0">
-                  <button className="group relative w-full inline-flex items-center justify-center px-3 md:px-4 lg:px-6 py-2 md:py-2.5 lg:py-3 text-sm md:text-base font-bold text-white rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-md md:shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 transition-all duration-300 hover:-translate-y-0.5">
-                    <span className="relative flex items-center gap-1 md:gap-2">
+                <div className="p-6 pt-0">
+                  <button className="group relative w-full inline-flex items-center justify-center px-6 py-3 font-bold text-white rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 transition-all duration-300 hover:-translate-y-0.5">
+                    <span className="relative flex items-center gap-2">
                       Select Subject
-                      <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" className="w-4 h-4 md:w-5 md:h-5 transform transition-transform group-hover:translate-x-1">
+                      <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" className="w-5 h-5 transform transition-transform group-hover:translate-x-1">
                         <path d="M17 8l4 4m0 0l-4 4m4-4H3" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"></path>
                       </svg>
                     </span>

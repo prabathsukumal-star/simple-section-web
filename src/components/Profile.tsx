@@ -56,7 +56,6 @@ const Profile = () => {
     newPassword: false,
     confirmNewPassword: false
   });
-  const [activeProfileTab, setActiveProfileTab] = useState('details');
   const userPermissions = AccessControl.getPermissions((user?.role || 'Student') as UserRole);
 
   // Remove automatic loading - set default values instead
@@ -249,29 +248,11 @@ const Profile = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Personal Information - Centered */}
           <div className="lg:col-start-3 lg:col-span-8 space-y-6">
-            <Tabs value={activeProfileTab} onValueChange={setActiveProfileTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted/50">
-                <TabsTrigger 
-                  value="details" 
-                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium transition-all"
-                >
-                  <span className="hidden sm:inline">Details</span>
-                  <span className="sm:hidden">De</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="change-password" 
-                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium transition-all"
-                >
-                  <span className="hidden sm:inline">Change Password</span>
-                  <span className="sm:hidden">Change Pa</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="user-id" 
-                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium transition-all"
-                >
-                  <span className="hidden sm:inline">User ID</span>
-                  <span className="sm:hidden">Us</span>
-                </TabsTrigger>
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="change-password">Change Password</TabsTrigger>
+                <TabsTrigger value="user-id">User Id</TabsTrigger>
               </TabsList>
               
               <TabsContent value="details" className="space-y-6">
@@ -497,54 +478,54 @@ const Profile = () => {
               </TabsContent>
               
               <TabsContent value="user-id" className="space-y-6">
-                <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm">
+                <Card className="border-0 shadow-xl bg-gradient-to-br from-card/80 to-card/60 backdrop-blur-md">
                   <CardHeader className="pb-6">
                     <div className="flex items-center gap-3">
-                      <div className="p-3 rounded-xl bg-primary/10">
+                      <div className="p-2 rounded-lg bg-primary/10">
                         <CreditCard className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-2xl font-bold">User ID Management</CardTitle>
-                        <CardDescription className="text-sm mt-1">
-                          Manage identification documents and digital credentials
+                        <CardTitle className="text-2xl font-semibold">User ID Management</CardTitle>
+                        <CardDescription className="text-base mt-1">
+                          Manage your user identification documents and access digital credentials
                         </CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid gap-3">
-                      <Button variant="outline" className="h-auto w-full justify-start p-4 border hover:border-primary/30 hover:bg-accent/50 transition-all duration-200 group">
-                        <div className="flex items-center gap-3 w-full">
-                          <div className="p-2.5 rounded-lg bg-primary/10 group-hover:bg-primary/15 transition-colors">
-                            <Download className="h-5 w-5 text-primary" />
+                  <CardContent className="space-y-6">
+                    <div className="grid gap-4">
+                      <Button variant="outline" className="h-16 w-full justify-start p-6 border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 group">
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 rounded-lg bg-green-100 group-hover:bg-green-200 transition-colors">
+                            <Download className="h-5 w-5 text-green-600" />
                           </div>
-                          <div className="text-left flex-1">
-                            <div className="font-semibold text-sm">Download ID Card</div>
-                            <div className="text-xs text-muted-foreground">Get your official ID document</div>
-                          </div>
-                        </div>
-                      </Button>
-                      
-                      <Button variant="outline" className="h-auto w-full justify-start p-4 border hover:border-primary/30 hover:bg-accent/50 transition-all duration-200 group">
-                        <div className="flex items-center gap-3 w-full">
-                          <div className="p-2.5 rounded-lg bg-primary/10 group-hover:bg-primary/15 transition-colors">
-                            <FileText className="h-5 w-5 text-primary" />
-                          </div>
-                          <div className="text-left flex-1">
-                            <div className="font-semibold text-sm">Request Physical ID Card</div>
-                            <div className="text-xs text-muted-foreground">Apply for a new ID document</div>
+                          <div className="text-left">
+                            <div className="font-semibold text-base">Download ID Card</div>
+                            <div className="text-sm text-muted-foreground">Get your official ID document</div>
                           </div>
                         </div>
                       </Button>
                       
-                      <Button variant="outline" className="h-auto w-full justify-start p-4 border hover:border-primary/30 hover:bg-accent/50 transition-all duration-200 group">
-                        <div className="flex items-center gap-3 w-full">
-                          <div className="p-2.5 rounded-lg bg-primary/10 group-hover:bg-primary/15 transition-colors">
-                            <CreditCard className="h-5 w-5 text-primary" />
+                      <Button variant="outline" className="h-16 w-full justify-start p-6 border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 group">
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors">
+                            <FileText className="h-5 w-5 text-blue-600" />
                           </div>
-                          <div className="text-left flex-1">
-                            <div className="font-semibold text-sm">Virtual ID Card</div>
-                            <div className="text-xs text-muted-foreground">Access your digital ID card</div>
+                          <div className="text-left">
+                            <div className="font-semibold text-base">Request Physical ID Card</div>
+                            <div className="text-sm text-muted-foreground">Apply for a new ID document</div>
+                          </div>
+                        </div>
+                      </Button>
+                      
+                      <Button variant="outline" className="h-16 w-full justify-start p-6 border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 group">
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 rounded-lg bg-purple-100 group-hover:bg-purple-200 transition-colors">
+                            <CreditCard className="h-5 w-5 text-purple-600" />
+                          </div>
+                          <div className="text-left">
+                            <div className="font-semibold text-base">Virtual ID Card</div>
+                            <div className="text-sm text-muted-foreground">Access your digital ID card</div>
                           </div>
                         </div>
                       </Button>

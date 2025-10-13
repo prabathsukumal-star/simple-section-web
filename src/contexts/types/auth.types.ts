@@ -122,7 +122,6 @@ export interface AuthContextType {
   selectedSubject: Subject | null;
   selectedChild: Child | null;
   selectedOrganization: Organization | null;
-  selectedTransport: { id: string; vehicleNumber: string; bookhireId: string } | null;
   selectedInstituteType: string | null;
   selectedClassGrade: number | null;
   currentInstituteId: string | null;
@@ -130,7 +129,6 @@ export interface AuthContextType {
   currentSubjectId: string | null;
   currentChildId: string | null;
   currentOrganizationId: string | null;
-  currentTransportId: string | null;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
   setSelectedInstitute: (institute: Institute | null) => void;
@@ -138,7 +136,6 @@ export interface AuthContextType {
   setSelectedSubject: (subject: Subject | null) => void;
   setSelectedChild: (child: Child | null) => void;
   setSelectedOrganization: (organization: Organization | null) => void;
-  setSelectedTransport: (transport: { id: string; vehicleNumber: string; bookhireId: string } | null) => void;
   loadUserInstitutes: () => Promise<Institute[]>;
   refreshUserData?: (forceRefresh?: boolean) => Promise<void>;
   validateUserToken?: () => Promise<void>;

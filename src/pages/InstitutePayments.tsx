@@ -229,9 +229,9 @@ const InstitutePayments = () => {
     <AppLayout>
       <PageContainer className="h-full">
         {/* Header Section */}
-        <div className="flex flex-col space-y-3 sm:space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex flex-col space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
               <Button 
                 variant="ghost" 
                 onClick={() => {
@@ -243,17 +243,16 @@ const InstitutePayments = () => {
                   }
                 }} 
                 className="shrink-0"
-                size="sm"
               >
-                <ArrowLeft className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Back</span>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
               </Button>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+                <h1 className="text-2xl font-bold text-foreground">
                   Institute Payments
                 </h1>
                 {selectedInstitute && (
-                  <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+                  <p className="text-muted-foreground text-sm mt-1">
                     Institute: <span className="font-medium text-foreground">{selectedInstitute.name}</span>
                   </p>
                 )}
@@ -263,11 +262,9 @@ const InstitutePayments = () => {
               <Button 
                 onClick={() => setCreateDialogOpen(true)} 
                 className="shrink-0"
-                size="sm"
               >
-                <Plus className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Create Payment</span>
-                <span className="sm:hidden">Create</span>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Payment
               </Button>
             )}
           </div>
@@ -290,33 +287,32 @@ const InstitutePayments = () => {
 
         {/* Search and Actions */}
         <Card>
-          <CardContent className="pt-4 sm:pt-6">
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 min-w-0">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
                     placeholder="Search by payment type, amount, or priority..." 
-                    className="pl-10 w-full text-sm sm:text-base"
+                    className="pl-10 w-full"
                     value={searchQuery}
                     onChange={(e) => handleSearch(e.target.value)}
                   />
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2 shrink-0">
+              <div className="flex gap-2 shrink-0">
                 <Button 
                   variant="outline"
                   onClick={handleForceRefresh} 
                   disabled={tableData.state.loading}
                   size="sm"
                 >
-                  <RefreshCw className={`h-4 w-4 sm:mr-2 ${tableData.state.loading ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">{tableData.state.loading ? 'Refreshing...' : 'Force Refresh'}</span>
-                  <span className="sm:hidden">Refresh</span>
+                  <RefreshCw className={`h-4 w-4 mr-2 ${tableData.state.loading ? 'animate-spin' : ''}`} />
+                  {tableData.state.loading ? 'Refreshing...' : 'Force Refresh'}
                 </Button>
                 <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Export</span>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
                 </Button>
               </div>
             </div>

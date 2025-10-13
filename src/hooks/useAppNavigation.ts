@@ -1,10 +1,7 @@
 
 import { useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 
 export const useAppNavigation = () => {
-  const { currentChildId, selectedChild } = useAuth();
-
   // Router-agnostic navigation that works even before Router is ready
   const navigateToPage = useCallback((page: string) => {
     console.log('Navigating to page:', page);
@@ -56,6 +53,8 @@ export const useAppNavigation = () => {
       'verify-image': '/verify-image',
       'enroll-class': '/enroll-class',
       'enroll-subject': '/enroll-subject',
+      'child-attendance': '/child-attendance',
+      'child-results': '/child-results',
       'free-lectures': '/free-lectures',
       'institute-profile': '/institute-profile',
       'sms': '/sms',
@@ -63,26 +62,10 @@ export const useAppNavigation = () => {
       'system-payment': '/payments',
       'payments': '/payments',
       'transport': '/transport',
-      'transport-attendance': '/transport/:transportId/attendance',
-      'my-children': '/my-children',
-      // Child routes (support both legacy and new keys)
-      'child-dashboard': '/child/:childId/dashboard',
-      'child-results-page': '/child/:childId/results',
-      'child-attendance-page': '/child/:childId/attendance',
-      'child-transport': '/child/:childId/transport',
-      // Sidebar keys
-      'child-results': '/child/:childId/results',
-      'child-attendance': '/child/:childId/attendance'
+      'transport-attendance': '/transport/:transportId/attendance'
     };
     
-    let route = routeMap[page] || `/${page}`;
-
-    // Replace dynamic params
-    if (route.includes(':childId')) {
-      const cid = (currentChildId ?? selectedChild?.id) as string | undefined;
-      route = cid ? route.replace(':childId', String(cid)) : '/my-children';
-    }
-
+    const route = routeMap[page] || `/${page}`;
     try {
       // Prefer history API without reload
       window.history.pushState({}, '', route);
@@ -92,7 +75,7 @@ export const useAppNavigation = () => {
       // Fallback
       window.location.assign(route);
     }
-  }, [currentChildId, selectedChild?.id]);
+  }, []);
 
   const getPageFromPath = useCallback((pathname: string): string => {
     if (pathname === '/') return 'dashboard';

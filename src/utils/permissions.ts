@@ -236,14 +236,13 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     'create-result',
     'edit-result',
     'delete-result',
-'view-profile',
-  'edit-profile',
-  'view-institute-details',
-  'edit-institute-details',
-  'view-appearance',
-  'view-organizations',
-  'view-transport',
-  'manage-transport'
+    'view-profile',
+    'edit-profile',
+    'view-institute-details',
+    'edit-institute-details',
+    'view-appearance',
+    'view-transport',
+    'manage-transport'
   ],
   OrganizationManager: [
     'view-dashboard',

@@ -151,13 +151,6 @@ export interface TeacherClassesResponse {
   hasPrevious: boolean;
 }
 
-export interface EnrollmentCodeResponse {
-  classId: string;
-  enrollmentCode: string;
-  enrollmentEnabled: boolean;
-  requireTeacherVerification: boolean;
-}
-
 export const instituteClassesApi = {
   create: async (data: InstituteClassCreateData): Promise<InstituteClassResponse> => {
     const response = await apiClient.post('/institute-classes', data);
@@ -199,11 +192,6 @@ export const instituteClassesApi = {
 
   teacherAssignStudents: async (instituteId: string, classId: string, data: BulkAssignStudentsData): Promise<TeacherAssignResponse> => {
     const response = await apiClient.post(`/institutes/${instituteId}/classes/${classId}/students/teacher-assign`, data);
-    return response.data;
-  },
-
-  getEnrollmentCode: async (classId: string): Promise<EnrollmentCodeResponse> => {
-    const response = await apiClient.get(`/institute-classes/${classId}/enrollment-code`);
     return response.data;
   }
 };

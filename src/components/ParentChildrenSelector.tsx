@@ -75,17 +75,13 @@ const ParentChildrenSelector = () => {
 
   const handleChildSelect = (child: Child) => {
     console.log('Selected child:', child);
+    // For now, we'll create a simplified child object for setSelectedChild
     const childForAuth = {
       id: child.id,
       name: child.name,
       relationship: child.relationship
     };
     setSelectedChild(childForAuth as any);
-    
-    // Navigate to child dashboard with actual child ID
-    window.history.pushState({}, '', `/child/${child.id}/dashboard`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-    
     toast({
       title: "Child Selected",
       description: `Now viewing ${child.name}'s information`,

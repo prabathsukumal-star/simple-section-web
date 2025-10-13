@@ -95,19 +95,6 @@ export interface ParentsResponse {
   };
 }
 
-export interface ChildData {
-  id: string;
-  name: string;
-  phoneNumber: string;
-  relationship: string;
-}
-
-export interface ParentChildrenResponse {
-  parentId: string;
-  parentName: string;
-  children: ChildData[];
-}
-
 export const parentsApi = {
   create: async (data: ParentCreateData): Promise<Parent> => {
     const response = await apiClient.post('/parents', data);
@@ -123,11 +110,6 @@ export const parentsApi = {
     const response = await apiClient.get(url);
     console.log('Raw response from API client:', response);
     // Return the response directly since apiClient.handleResponse already parses the JSON
-    return response;
-  },
-
-  getChildren: async (parentId: string): Promise<ParentChildrenResponse> => {
-    const response = await apiClient.get(`/parents/${parentId}/children`);
     return response;
   },
   
