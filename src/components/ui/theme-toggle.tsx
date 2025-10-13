@@ -17,20 +17,6 @@ const ThemeToggle = () => {
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={toggleTheme}
-      className="p-2 hover:bg-accent"
-      aria-label="Toggle theme"
-    >
-      {theme === 'light' ? (
-        <Moon className="h-5 w-5" />
-      ) : (
-        <Sun className="h-5 w-5" />
-      )}
-    </Button>
-  );
+  return;
 };
 export default ThemeToggle;

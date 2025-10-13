@@ -13,7 +13,7 @@ interface AppLayoutProps {
 const AppLayout = ({ children, currentPage: propCurrentPage, onPageChange }: AppLayoutProps) => {
   const { user } = useAuth();
   const { navigateToPage, getPageFromPath } = useAppNavigation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default open on desktop
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Determine current page based on URL if not provided
   const getCurrentPage = () => {
