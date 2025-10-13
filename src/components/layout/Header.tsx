@@ -45,19 +45,19 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   };
 
   return (
-    <header className="lg:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-3 sm:px-4 py-3 sticky top-0 z-40">
+    <header className="bg-background border-b border-border px-4 py-3 sticky top-0 z-40">
       <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onMenuClick}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-          aria-label="Open menu"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-        
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onMenuClick}
+            className="p-2 hover:bg-accent"
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          
           {selectedInstitute?.logo && (
             <img 
               src={selectedInstitute.logo} 
@@ -68,12 +68,12 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               }}
             />
           )}
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">
+          <h1 className="text-lg font-semibold truncate">
             {selectedInstitute?.shortName || 'SurakshaLMS'}
           </h1>
         </div>
         
-        <div className="flex items-center space-x-1 sm:space-x-2">
+        <div className="flex items-center space-x-2">
           <ThemeToggle />
           
           <DropdownMenu>
@@ -81,7 +81,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="p-2 hover:bg-accent"
                 aria-label="User menu"
               >
                 <User className="h-5 w-5" />
@@ -89,22 +89,22 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent 
               align="end" 
-              className="w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+              className="w-48"
             >
               <DropdownMenuItem disabled className="cursor-default">
-                <span className="font-medium text-gray-900 dark:text-white truncate">
+                <span className="font-medium truncate">
                   {user?.name}
                 </span>
               </DropdownMenuItem>
               <DropdownMenuItem disabled className="cursor-default">
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <span className="text-sm text-muted-foreground">
                   {displayRole}
                 </span>
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
+              <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={handleLogout}
-                className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="cursor-pointer"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
