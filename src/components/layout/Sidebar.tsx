@@ -1904,10 +1904,9 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
               size="sm"
               onClick={onClose}
               className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700"
-              aria-label="Close Sidebar"
+              aria-label="Toggle Sidebar"
             >
-              <X className="h-4 w-4 lg:hidden" />
-              <Menu className="h-4 w-4 hidden lg:block" />
+              <Menu className="h-4 w-4" />
             </Button>
           </div>
         </div>
