@@ -79,7 +79,7 @@ export const loginUser = async (credentials: LoginCredentials): Promise<ApiRespo
     'Content-Type': 'application/json'
   };
 
-  const response = await fetch(`${baseUrl}/auth/login`, {
+  const response = await fetch(`${baseUrl}/v2/auth/login`, {
     method: 'POST',
     headers: loginHeaders,
     body: JSON.stringify(credentials)

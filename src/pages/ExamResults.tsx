@@ -176,7 +176,7 @@ const ExamResults = () => {
     <AppLayout>
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
           <div className="flex-1">
             <Button 
               variant="ghost" 
@@ -184,17 +184,17 @@ const ExamResults = () => {
               onClick={handleGoBack}
               className="mb-2 -ml-2"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {getContextBreadcrumb()}
+              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+              <span className="text-sm sm:text-base truncate">{getContextBreadcrumb()}</span>
             </Button>
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground break-words">
               Exam Results{examDetails.title ? `: ${examDetails.title}` : ''}
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">
               View and analyze exam results
             </p>
             {lastRefresh && (
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                 Last refreshed: {lastRefresh.toLocaleTimeString()}
               </p>
             )}
@@ -230,24 +230,26 @@ const ExamResults = () => {
         </Card>
 
         {/* Action Bar */}
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <h2 className="text-lg sm:text-xl font-semibold">
             All Results ({filteredResults.length})
           </h2>
           <Button
             variant="outline"
             onClick={() => loadExamResults(currentPage)}
             disabled={loading}
+            size="sm"
+            className="w-full sm:w-auto"
           >
             {loading ? (
               <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Loading...
+                <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-2 animate-spin" />
+                <span className="text-sm">Loading...</span>
               </>
             ) : (
               <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
+                <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                <span className="text-sm">Refresh</span>
               </>
             )}
           </Button>
@@ -267,7 +269,7 @@ const ExamResults = () => {
           <>
           {/* Summary Cards */}
           {examResults.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Results</CardTitle>
@@ -346,25 +348,25 @@ const ExamResults = () => {
 
             {/* Results Table */}
             <Card>
-              <CardHeader>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <CardHeader className="p-4 sm:p-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
                   <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      Student Results
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
+                      <Users className="h-4 w-4 sm:h-5 sm:w-5" />
+                      <span>Student Results</span>
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                       {totalResults} total result{totalResults !== 1 ? 's' : ''}
                     </p>
                   </div>
                   {/* Search Bar */}
-                  <div className="relative max-w-sm">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <div className="relative w-full md:max-w-sm">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4" />
                     <Input
                       placeholder="Search students, grade, remarks..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-8 sm:pl-10 text-sm"
                     />
                   </div>
                 </div>

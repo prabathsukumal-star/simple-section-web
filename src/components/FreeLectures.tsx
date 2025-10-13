@@ -225,8 +225,8 @@ const FreeLectures = () => {
       {/* Header */}
       <div className="space-y-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Free Lectures</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold">Free Lectures</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             {selectedInstitute?.name} • {selectedClass?.name} • {selectedSubject.name}
           </p>
         </div>
@@ -265,7 +265,7 @@ const FreeLectures = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">{subjectInfo.totalLectures}</div>
                 <div className="text-sm text-muted-foreground">Total Lectures</div>
@@ -344,7 +344,7 @@ const FreeLectures = () => {
                           <div key={lecture._id} className="border rounded-lg overflow-hidden">
                             {/* Cover Image */}
                             {lecture.coverImageUrl && (
-                              <div className="relative w-full h-48 bg-muted">
+                              <div className="relative w-full h-48 md:h-56 lg:h-48 bg-muted">
                                 <img
                                   src={lecture.coverImageUrl}
                                   alt={lecture.title}
@@ -353,7 +353,7 @@ const FreeLectures = () => {
                               </div>
                             )}
                             
-                            {/* Mobile View */}
+                            {/* Mobile View (< 768px) */}
                             <div className="md:hidden p-4 space-y-3">
                               <div className="flex items-start gap-3">
                                 <Badge variant="outline" className="shrink-0 mt-1">
@@ -477,8 +477,141 @@ const FreeLectures = () => {
                               )}
                             </div>
 
-                            {/* Desktop View */}
-                            <div className="hidden md:block p-4 space-y-4">
+                            {/* Tablet View (768px - 1023px) */}
+                            <div className="hidden md:block lg:hidden p-5 space-y-4">
+                              {/* Lecture Header */}
+                              <div className="flex flex-col gap-4">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <Badge variant="outline" className="shrink-0">
+                                      {index + 1}
+                                    </Badge>
+                                    <h4 className="font-semibold text-base truncate">{lecture.title}</h4>
+                                  </div>
+                                  <Badge variant={lecture.isActive ? "default" : "secondary"} className="shrink-0">
+                                    {lecture.isActive ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                </div>
+
+                                <p className="text-sm text-muted-foreground line-clamp-3">{lecture.description}</p>
+                                
+                                <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-1.5">
+                                    <User className="h-4 w-4" />
+                                    <span className="truncate">{lecture.provider}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <Calendar className="h-4 w-4" />
+                                    {format(new Date(lecture.createdAt), 'MMM dd, yyyy')}
+                                  </div>
+                                  {lecture.status && (
+                                    <Badge variant="outline">
+                                      {lecture.status}
+                                    </Badge>
+                                  )}
+                                </div>
+
+                                <div className="flex gap-3">
+                                  <Button
+                                    onClick={() => handleJoinLecture(lecture.lectureLink || lecture.meetingLink || '')}
+                                    disabled={!lecture.isActive}
+                                    className="flex-1"
+                                  >
+                                    <ExternalLink className="h-4 w-4 mr-2" />
+                                    Join Lecture
+                                  </Button>
+                                  
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => toggleLectureExpansion(lecture._id)}
+                                    className="flex-1"
+                                  >
+                                    {isExpanded ? (
+                                      <>
+                                        <ChevronUp className="h-4 w-4 mr-2" />
+                                        View Less
+                                      </>
+                                    ) : (
+                                      <>
+                                        <ChevronDown className="h-4 w-4 mr-2" />
+                                        View More
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* Expanded Content on Tablet */}
+                              {isExpanded && (
+                                <>
+                                  {/* YouTube Embed */}
+                                  {youtubeId && (
+                                    <>
+                                      <Separator />
+                                      <div className="space-y-3">
+                                        <h5 className="font-medium flex items-center gap-2">
+                                          <Play className="h-4 w-4" />
+                                          Lecture Video
+                                        </h5>
+                                        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                                          <iframe
+                                            className="absolute top-0 left-0 w-full h-full rounded-lg"
+                                            src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1`}
+                                            title={lecture.title}
+                                            frameBorder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowFullScreen
+                                          />
+                                        </div>
+                                      </div>
+                                    </>
+                                  )}
+
+                                  {/* Documents */}
+                                  {lecture.documents && lecture.documents.length > 0 && (
+                                    <>
+                                      <Separator />
+                                      <div className="space-y-3">
+                                        <h5 className="font-medium flex items-center gap-2">
+                                          <FileText className="h-4 w-4" />
+                                          Documents ({lecture.documents.length})
+                                        </h5>
+                                        <div className="grid grid-cols-1 gap-2">
+                                          {lecture.documents.map((doc) => (
+                                            <div
+                                              key={doc._id}
+                                              className="flex items-center justify-between p-3 border rounded bg-muted/50"
+                                            >
+                                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                <FileText className="h-4 w-4 shrink-0" />
+                                                <div className="min-w-0 flex-1">
+                                                  <span className="text-sm truncate block">{doc.documentName}</span>
+                                                  <span className="text-xs text-muted-foreground">
+                                                    {format(new Date(doc.uploadedAt), 'MMM dd, yyyy')}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleDownloadDocument(doc.documentUrl, doc.documentName)}
+                                                className="shrink-0 ml-3"
+                                              >
+                                                <Download className="h-4 w-4 mr-1" />
+                                                View
+                                              </Button>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </>
+                                  )}
+                                </>
+                              )}
+                            </div>
+
+                            {/* Desktop View (>= 1024px) */}
+                            <div className="hidden lg:block p-4 space-y-4">
                               {/* Lecture Header */}
                               <div className="flex items-start justify-between">
                                 <div className="space-y-2 flex-1">

@@ -206,6 +206,73 @@ class AttendanceApiClient {
     this.pendingRequests.clear();
     this.requestCooldown.clear();
   }
+
+  async post<T = any>(
+    endpoint: string, 
+    body?: any
+  ): Promise<T> {
+    // Refresh base URL in case it was updated
+    this.baseUrl = getAttendanceUrl();
+    
+    if (!this.baseUrl) {
+      throw new Error('Attendance backend URL not configured. Please set the attendance backend URL in Settings.');
+    }
+    
+    const url = `${this.baseUrl}${endpoint}`;
+    console.log('Making attendance POST request to:', url);
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          ...this.getHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      console.log('Attendance POST Response Status:', response.status);
+
+      const contentType = response.headers.get('Content-Type') || '';
+      
+      if (!response.ok) {
+        let errorText = '';
+        try {
+          if (contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorText = errorData.message || JSON.stringify(errorData);
+          } else {
+            errorText = await response.text();
+          }
+        } catch {
+          errorText = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        
+        console.error(`Attendance POST Error ${response.status}:`, errorText);
+        throw new Error(errorText || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      let data: T;
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = await response.json();
+        } catch (jsonError) {
+          console.error('Failed to parse JSON response:', jsonError);
+          throw new Error('Invalid JSON response from server');
+        }
+      } else {
+        data = {} as T;
+      }
+
+      console.log('Attendance POST request successful for:', endpoint);
+      return data;
+
+    } catch (error) {
+      console.error('Attendance POST request failed for:', endpoint, error);
+      throw error;
+    }
+  }
 }
 
 export const attendanceApiClient = new AttendanceApiClient();

@@ -305,8 +305,10 @@ const SMS = () => {
   console.log('🎨 Rendering SMS component, credentials:', credentials);
   console.log('🏢 Current Institute ID:', currentInstituteId);
   
+  const [activeTab, setActiveTab] = useState('bulk');
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
       {/* SMS Credits Display */}
       <Card>
         <CardHeader>
@@ -373,19 +375,25 @@ const SMS = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="bulk" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="bulk">
-                <Users className="h-4 w-4 mr-2" />
-                Bulk SMS
+              <TabsTrigger value="bulk" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
+                <Users className="h-4 w-4 shrink-0" />
+                <span className={activeTab === "bulk" ? "" : "hidden sm:inline"}>
+                  Bulk SMS
+                </span>
               </TabsTrigger>
-              <TabsTrigger value="specific">
-                <User className="h-4 w-4 mr-2" />
-                Specific Users SMS
+              <TabsTrigger value="specific" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
+                <User className="h-4 w-4 shrink-0" />
+                <span className={activeTab === "specific" ? "" : "hidden sm:inline"}>
+                  Specific Users SMS
+                </span>
               </TabsTrigger>
-              <TabsTrigger value="custom">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Custom SMS
+              <TabsTrigger value="custom" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
+                <MessageSquare className="h-4 w-4 shrink-0" />
+                <span className={activeTab === "custom" ? "" : "hidden sm:inline"}>
+                  Custom SMS
+                </span>
               </TabsTrigger>
             </TabsList>
 
