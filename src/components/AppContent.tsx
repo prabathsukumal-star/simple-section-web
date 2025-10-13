@@ -67,6 +67,12 @@ import StudentHomeworkSubmissions from '@/components/StudentHomeworkSubmissions'
 import FreeLectures from '@/components/FreeLectures';
 import SMS from '@/components/SMS';
 import SMSHistory from '@/pages/SMSHistory';
+import MyChildren from '@/pages/MyChildren';
+import ChildDashboard from '@/pages/ChildDashboard';
+import ChildResultsPage from '@/pages/ChildResultsPage';
+import ChildAttendancePage from '@/pages/ChildAttendancePage';
+import ChildTransportPage from '@/pages/ChildTransportPage';
+import InstituteOrganizations from '@/pages/InstituteOrganizations';
 
 interface AppContentProps {
   initialPage?: string;
@@ -98,6 +104,16 @@ const AppContent = ({ initialPage }: AppContentProps) => {
         if (parts[2] === 'users') return 'institute-users';
         if (parts[2] === 'classes') return 'classes';
         return 'institutes';
+      }
+
+      // Handle child routes - e.g., /child/123/dashboard
+      if (pathname.startsWith('/child/')) {
+        const parts = pathname.split('/');
+        if (parts.length >= 4) {
+          // Return pattern like 'child/:childId/dashboard'
+          return `child/:childId/${parts[3]}`;
+        }
+        return 'my-children';
       }
       
       // Remove leading slash and use as page name
@@ -587,6 +603,10 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <ChildAttendance />;
         case 'child-results':
           return <ChildResults />;
+        case 'child-transport':
+          return <ChildTransportPage />;
+        case 'my-children':
+          return <ParentChildrenSelector />;
         case 'parents':
           return <ParentChildrenSelector />;
         case 'appearance':
@@ -723,9 +743,19 @@ const AppContent = ({ initialPage }: AppContentProps) => {
     }
 
     // For InstituteAdmin and other roles - full access within their institute
-    // Transport pages don't require institute selection
-    const transportPages = ['transport', 'parent-transport', 'transport-selection', 'transport-attendance'];
-    if (!selectedInstitute && currentPage !== 'institutes' && currentPage !== 'select-institute' && !transportPages.includes(currentPage)) {
+    // Pages that don't require institute selection
+    const pagesWithoutInstituteRequirement = [
+      'transport', 
+      'parent-transport', 
+      'transport-selection', 
+      'transport-attendance',
+      'my-children',
+      'child/:childId/dashboard',
+      'child/:childId/results',
+      'child/:childId/attendance',
+      'child/:childId/transport'
+    ];
+    if (!selectedInstitute && currentPage !== 'institutes' && currentPage !== 'select-institute' && !pagesWithoutInstituteRequirement.includes(currentPage)) {
       return <InstituteSelector />;
     }
 
@@ -782,6 +812,8 @@ const AppContent = ({ initialPage }: AppContentProps) => {
         return <Subjects />;
       case 'institutes':
         return <Institutes />;
+      case 'institute-organizations':
+        return <InstituteOrganizations />;
       case 'select-institute':
         return <InstituteSelector />;
       case 'grading':
@@ -842,6 +874,16 @@ const AppContent = ({ initialPage }: AppContentProps) => {
         return <SMS />;
       case 'sms-history':
         return <SMSHistory />;
+      case 'my-children':
+        return <MyChildren />;
+      case 'child/:childId/dashboard':
+        return <ChildDashboard />;
+      case 'child/:childId/results':
+        return <ChildResultsPage />;
+      case 'child/:childId/attendance':
+        return <ChildAttendancePage />;
+      case 'child/:childId/transport':
+        return <ChildTransportPage />;
       default:
         return <Dashboard />;
     }

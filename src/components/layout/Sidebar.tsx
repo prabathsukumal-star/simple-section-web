@@ -44,20 +44,20 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) => {
-  const { user, selectedInstitute, selectedClass, selectedSubject, selectedChild, selectedOrganization, logout, setSelectedInstitute, setSelectedClass, setSelectedSubject, setSelectedChild, setSelectedOrganization } = useAuth();
+  const { user, selectedInstitute, selectedClass, selectedSubject, selectedChild, selectedOrganization, selectedTransport, logout, setSelectedInstitute, setSelectedClass, setSelectedSubject, setSelectedChild, setSelectedOrganization, setSelectedTransport } = useAuth();
   
   // Institute-specific role
   const userRole = useInstituteRole();
 
   // Get menu items based on current selection state
   const getMenuItems = () => {
-    // Special handling for transport attendance page - ONLY Attendance
-    if (currentPage === 'transport-attendance') {
+    // Special handling for child selection (Parent viewing child's data)
+    if (selectedChild) {
       return [
         {
-          id: 'transport-attendance',
-          label: 'Attendance',
-          icon: UserCheck,
+          id: 'child-attendance',
+          label: 'Transport Attendance',
+          icon: Truck,
           permission: 'view-dashboard',
           alwaysShow: true
         }
@@ -242,6 +242,8 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
           }
          ];
       }
+      // Return empty for any other Student states
+      return [];
     }
 
     // Special handling for Teacher role
@@ -389,6 +391,8 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
           }
         ];
       }
+      // Return empty for any other Teacher states
+      return [];
     }
 
     // Special handling for InstituteAdmin role
@@ -421,6 +425,13 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             icon: LayoutDashboard,
             permission: 'view-dashboard',
             alwaysShow: false
+          },
+          {
+            id: 'institute-organizations',
+            label: 'Organization',
+            icon: Building2,
+            permission: 'view-organizations',
+            alwaysShow: true
           },
           {
             id: 'institute-users',
@@ -485,6 +496,13 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             alwaysShow: false
           },
           {
+            id: 'institute-organizations',
+            label: 'Organization',
+            icon: Building2,
+            permission: 'view-organizations',
+            alwaysShow: true
+          },
+          {
             id: 'students',
             label: 'Students',
             icon: GraduationCap,
@@ -531,6 +549,13 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             icon: LayoutDashboard,
             permission: 'view-dashboard',
             alwaysShow: false
+          },
+          {
+            id: 'institute-organizations',
+            label: 'Organization',
+            icon: Building2,
+            permission: 'view-organizations',
+            alwaysShow: true
           },
           {
             id: 'students',
@@ -583,11 +608,56 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
           }
         ];
       }
+      // Return empty for any other InstituteAdmin states
+      return [];
     }
 
     // Special handling for Parent role
     if (userRole === 'Parent') {
-      // 1. Parent without child selected - show Dashboard and Select Child
+      // 1. Parent without institute - show My Children option before institute selection
+      if (!selectedInstitute) {
+        return [
+          {
+            id: 'my-children',
+            label: 'My Children',
+            icon: Users,
+            permission: 'view-parents',
+            alwaysShow: true
+          },
+          {
+            id: 'dashboard',
+            label: 'Select Institutes',
+            icon: LayoutDashboard,
+            permission: 'view-dashboard',
+            alwaysShow: false
+          },
+          {
+            id: 'transport',
+            label: 'Transport',
+            icon: Truck,
+            permission: 'view-transport',
+            alwaysShow: true,
+            subItems: [
+              {
+                id: 'transport',
+                label: 'My Transport',
+                icon: Truck,
+                permission: 'view-transport',
+                alwaysShow: false
+              },
+              {
+                id: 'transport-attendance',
+                label: 'Transport Attendance',
+                icon: UserCheck,
+                permission: 'view-transport',
+                alwaysShow: false
+              }
+            ]
+          }
+        ];
+      }
+
+      // 2. Parent without child selected - show Dashboard and Select Child
       if (!selectedChild) {
         return [
           {
@@ -635,23 +705,9 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
         return [
           {
             id: 'child-attendance',
-            label: 'Child Attendance',
-            icon: ClipboardList,
-            permission: 'view-attendance',
-            alwaysShow: false
-          },
-          {
-            id: 'child-results',
-            label: 'Child Results',
-            icon: Award,
-            permission: 'view-results',
-            alwaysShow: false
-          },
-          {
-            id: 'parent-transport',
-            label: 'Transport',
+            label: 'Transport Attendance',
             icon: Truck,
-            permission: 'view-transport',
+            permission: 'view-dashboard',
             alwaysShow: true
           }
         ];
@@ -729,7 +785,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
       return baseItems;
     }
 
-    // Base items that are always available for all other users
+    // Base items that are always available for all other users (User role, SystemAdmin, etc.)
     const baseItems = [
       {
         id: 'dashboard',
@@ -777,7 +833,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
       ];
     }
 
-    // If institute is selected, show full navigation for other roles
+    // For other roles (SystemAdmin, etc.) with institute selected, show full navigation
     return [
       ...baseItems,
       {
@@ -1152,6 +1208,59 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     return systemItems;
   };
 
+  const getMyChildrenItems = () => {
+    // Show "My Children" section when no institute is selected for Parent and User roles
+    const userType = user?.userType?.toLowerCase();
+    if (!selectedInstitute && (userType === 'parent' || userType === 'user')) {
+      return [
+        {
+          id: 'my-children',
+          label: 'My Children',
+          icon: Users,
+          permission: 'view-profile',
+          alwaysShow: true
+        }
+      ];
+    }
+    return [];
+  };
+
+  const getChildItems = () => {
+    // Show child-specific navigation when a child is selected
+    if (!selectedChild) {
+      return [];
+    }
+
+    const childId = selectedChild.id;
+    
+    return [
+      {
+        id: 'child/:childId/results',
+        label: 'Results',
+        icon: Award,
+        permission: 'view-profile',
+        alwaysShow: true,
+        path: `/child/${childId}/results`
+      },
+      {
+        id: 'child/:childId/attendance',
+        label: 'Attendance',
+        icon: UserCheck,
+        permission: 'view-profile',
+        alwaysShow: true,
+        path: `/child/${childId}/attendance`
+      },
+      {
+        id: 'child/:childId/transport',
+        label: 'Transport',
+        icon: Truck,
+        permission: 'view-profile',
+        alwaysShow: true,
+        path: `/child/${childId}/transport`
+      }
+    ];
+  };
+
   const getSystemPaymentItems = () => {
     // Show "System Payments" section when no institute is selected
     if (!selectedInstitute) {
@@ -1485,6 +1594,8 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
   const menuItems = getMenuItems();
   const attendanceItems = getAttendanceItems();
   const systemItems = getSystemItems();
+  const myChildrenItems = getMyChildrenItems();
+  const childItems = getChildItems();
   const systemPaymentItems = getSystemPaymentItems();
   const paymentItems = getPaymentItems();
   const smsItems = getSmsItems();
@@ -1494,6 +1605,8 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
   const menuItemsDisplay = [...menuItems];
   const attendanceItemsDisplay = [...attendanceItems];
   const systemItemsDisplay = [...systemItems];
+  const myChildrenItemsDisplay = [...myChildrenItems];
+  const childItemsDisplay = [...childItems];
   const systemPaymentItemsDisplay = [...systemPaymentItems];
   const paymentItemsDisplay = [...paymentItems];
   const smsItemsDisplay = [...(smsItems || [])];
@@ -1503,6 +1616,8 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     menuItemsDisplay,
     attendanceItemsDisplay,
     systemItemsDisplay,
+    myChildrenItemsDisplay,
+    childItemsDisplay,
     systemPaymentItemsDisplay,
     paymentItemsDisplay,
     smsItemsDisplay,
@@ -1516,6 +1631,14 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
     let target = menuItemsDisplay as any[];
     let icon: any = LayoutDashboard;
     let allowPush = true;
+
+    // Institute-specific pages that require institute selection
+    const instituteSpecificPages = /^(classes|subjects|students|teachers|users|parents|institutes|daily-attendance|qr-attendance|live-lectures|grading|exams|homework|results|lectures|free-lectures|institute-details|institute-users|verify-image|select-class|select-subject|unverified-students)$/i;
+    
+    // Don't show institute-specific pages in sidebar when no institute is selected
+    if (!selectedInstitute && instituteSpecificPages.test(currentPage)) {
+      allowPush = false;
+    }
 
     if (/payment/i.test(currentPage)) { target = paymentItemsDisplay; icon = CreditCard; }
     else if (/sms/i.test(currentPage)) {
@@ -1570,6 +1693,14 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
       onClose();
       return;
     }
+
+    // Handle Institute Organizations click
+    if (itemId === 'institute-organizations') {
+      navigateToRoute('/institute-organizations');
+      onPageChange('institute-organizations');
+      onClose();
+      return;
+    }
     
     // Handle Subject Payments click
     if (itemId === 'subject-payments') {
@@ -1618,6 +1749,35 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
       onClose();
       return;
     }
+
+    // Handle My Children click
+    if (itemId === 'my-children') {
+      // Clear child selection and go back to children selector
+      setSelectedChild(null);
+      navigateToRoute('/my-children');
+      onPageChange('my-children');
+      onClose();
+      return;
+    }
+
+    // Handle child-results, child-attendance, child-transport clicks (keep child selected)
+    if (itemId === 'child-results' || itemId === 'child-attendance' || itemId === 'child-transport') {
+      onPageChange(itemId);
+      onClose();
+      return;
+    }
+
+    // Handle child-specific navigation clicks
+    if (itemId.startsWith('child/:childId/')) {
+      // Find the item to get its path
+      const childItem = childItemsDisplay.find(item => item.id === itemId);
+      if (childItem && (childItem as any).path) {
+        navigateToRoute((childItem as any).path);
+        onPageChange(itemId);
+        onClose();
+        return;
+      }
+    }
     
     // Handle Enroll Class click (for Students only)
     if (itemId === 'enroll-class') {
@@ -1645,7 +1805,13 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
   };
 
   const handleBackNavigation = () => {
-    if (selectedOrganization) {
+    if (selectedTransport) {
+      // Go back from transport attendance to transport list
+      setSelectedTransport(null);
+      window.history.pushState({}, '', '/transport');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      onPageChange('transport');
+    } else if (selectedOrganization) {
       // Go back from organization level to organization selection
       setSelectedOrganization(null);
     } else if (selectedChild) {
@@ -1696,20 +1862,20 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Mobile & Tablet Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
           onClick={onClose}
         />
       )}
 
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 md:relative
-        w-72 sm:w-80 md:w-64 lg:w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700
-        transform transition-transform duration-300 ease-in-out md:transform-none
-        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        fixed inset-y-0 left-0 z-50 lg:relative
+        w-72 sm:w-80 lg:w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700
+        transform transition-transform duration-300 ease-in-out lg:transform-none
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         flex flex-col h-screen
         overflow-hidden
       `}>
@@ -1740,127 +1906,158 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
               className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label="Close Sidebar"
             >
-              <X className="h-4 w-4 md:hidden" />
-              <Menu className="h-4 w-4 hidden md:block" />
+              <X className="h-4 w-4 lg:hidden" />
+              <Menu className="h-4 w-4 hidden lg:block" />
             </Button>
           </div>
         </div>
 
-        {/* Context Info - Only show for non-SystemAdmin users */}
-        {user?.role !== 'SystemAdmin' && (selectedInstitute || selectedClass || selectedSubject || selectedChild || selectedOrganization) && (
+        {/* Context Info - Child-only on child routes, otherwise full context like before */}
+        {currentPage.startsWith('child/:childId/') && selectedChild ? (
           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                Current Selection
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBackNavigation}
-                className="h-6 w-6 p-0 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800"
-                aria-label="Go Back"
-              >
+              <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Current Selection</span>
+              <Button variant="ghost" size="sm" onClick={handleBackNavigation} className="h-6 w-6 p-0 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800" aria-label="Go Back">
                 <ArrowLeft className="h-3 w-3" />
               </Button>
             </div>
             <div className="space-y-1 text-xs">
-              {selectedOrganization && (
-                <div className="text-blue-600 dark:text-blue-400">
-                  <span className="font-medium">Organization:</span> 
-                  <span className="ml-1 truncate">{selectedOrganization.name}</span>
-                </div>
-              )}
-              {selectedInstitute && (
-                <div className="text-blue-600 dark:text-blue-400">
-                  <span className="font-medium">Institute:</span> 
-                  <span className="ml-1 truncate">{selectedInstitute.name}</span>
-                </div>
-              )}
-              {selectedClass && (
-                <div className="text-blue-600 dark:text-blue-400">
-                  <span className="font-medium">Class:</span> 
-                  <span className="ml-1 truncate">{selectedClass.name}</span>
-                </div>
-              )}
-              {selectedSubject && (
-                <div className="text-blue-600 dark:text-blue-400">
-                  <span className="font-medium">Subject:</span> 
-                  <span className="ml-1 truncate">{selectedSubject.name}</span>
-                </div>
-              )}
-              {selectedChild && (
-                <div className="text-blue-600 dark:text-blue-400">
-                  <span className="font-medium">Child:</span> 
-                  <span className="ml-1 truncate">
-                    {(selectedChild as any).name || (selectedChild.user ? `${selectedChild.user.firstName} ${selectedChild.user.lastName}` : 'Unknown Child')}
-                  </span>
-                </div>
-              )}
+              <div className="text-blue-600 dark:text-blue-400">
+                <span className="font-medium">Child:</span>
+                <span className="ml-1 truncate">{(selectedChild as any).name || (selectedChild?.user ? `${selectedChild.user.firstName} ${selectedChild.user.lastName}` : 'Unknown Child')}</span>
+              </div>
             </div>
           </div>
+        ) : (
+          user?.role !== 'SystemAdmin' && (selectedInstitute || selectedClass || selectedSubject || selectedChild || selectedOrganization || selectedTransport) && (
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Current Selection</span>
+                <Button variant="ghost" size="sm" onClick={handleBackNavigation} className="h-6 w-6 p-0 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800" aria-label="Go Back">
+                  <ArrowLeft className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="space-y-1 text-xs">
+                {selectedTransport && (
+                  <div className="text-blue-600 dark:text-blue-400"><span className="font-medium">Transport:</span> <span className="ml-1 truncate">{selectedTransport.vehicleNumber}</span></div>
+                )}
+                {selectedOrganization && (
+                  <div className="text-blue-600 dark:text-blue-400"><span className="font-medium">Organization:</span> <span className="ml-1 truncate">{selectedOrganization.name}</span></div>
+                )}
+                {selectedInstitute && (
+                  <div className="text-blue-600 dark:text-blue-400"><span className="font-medium">Institute:</span> <span className="ml-1 truncate">{selectedInstitute.name}</span></div>
+                )}
+                {selectedClass && (
+                  <div className="text-blue-600 dark:text-blue-400"><span className="font-medium">Class:</span> <span className="ml-1 truncate">{selectedClass.name}</span></div>
+                )}
+                {selectedSubject && (
+                  <div className="text-blue-600 dark:text-blue-400"><span className="font-medium">Subject:</span> <span className="ml-1 truncate">{selectedSubject.name}</span></div>
+                )}
+                {selectedChild && (
+                  <div className="text-blue-600 dark:text-blue-400"><span className="font-medium">Child:</span> <span className="ml-1 truncate">{(selectedChild as any).name || (selectedChild.user ? `${selectedChild.user.firstName} ${selectedChild.user.lastName}` : 'Unknown Child')}</span></div>
+                )}
+              </div>
+            </div>
+          )
         )}
 
         {/* Navigation */}
         <ScrollArea className="flex-1 px-2 sm:px-3 py-3 sm:py-4">
           <div className="space-y-2">
-            {/* Main navigation items */}
-            <SidebarSection title="Main" items={menuItemsDisplay.filter(item => !item.hasOwnProperty('section'))} />
-            
-            {/* Main's section for items with section property */}
-            {menuItemsDisplay.some(item => (item as any).section === "Main's") && (
-              <SidebarSection title="Main's" items={menuItemsDisplay.filter(item => (item as any).section === "Main's")} />
+            {selectedChild ? (
+              <SidebarSection title="Child Sections" items={childItemsDisplay} />
+            ) : currentPage === 'transport-attendance' ? (
+              /* Show ONLY attendance section for transport attendance page */
+              <SidebarSection title="Attendance" items={[
+                {
+                  id: 'transport-attendance',
+                  label: 'Attendance',
+                  icon: UserCheck,
+                  permission: 'view-dashboard',
+                  alwaysShow: true
+                }
+              ]} />
+            ) : (
+              <>
+                {/* Show Main navigation items ONLY when institute is selected */}
+                {selectedInstitute && (
+                  <>
+                    <SidebarSection title="Main" items={menuItemsDisplay.filter(item => !item.hasOwnProperty('section'))} />
+                    
+                    {/* Main's section for items with section property */}
+                    {menuItemsDisplay.some(item => (item as any).section === "Main's") && (
+                      <SidebarSection title="Main's" items={menuItemsDisplay.filter(item => (item as any).section === "Main's")} />
+                    )}
+                  </>
+                )}
+                
+                {/* Show sections without "Main" label when no institute selected */}
+                {!selectedInstitute && menuItemsDisplay.length > 0 && (
+                  <SidebarSection title="Select Institute" items={menuItemsDisplay.filter(item => !item.hasOwnProperty('section'))} />
+                )}
+                
+                {/* Show attendance section for Teacher based on selection state */}
+                {userRole === 'Teacher' && attendanceItemsDisplay.length > 0 && (
+                  <SidebarSection title="Attendance" items={attendanceItemsDisplay} />
+                )}
+                
+                {/* Show attendance section when institute is selected for InstituteAdmin */}
+                {userRole === 'InstituteAdmin' && selectedInstitute && (
+                  <SidebarSection title="Attendance" items={attendanceItemsDisplay} />
+                )}
+                
+                {/* For AttendanceMarker role, only show QR Attendance when institute is selected */}
+                {userRole === 'AttendanceMarker' && selectedInstitute && (
+                  <SidebarSection title="Attendance" items={attendanceItemsDisplay} />
+                )}
+                
+                {/* For other roles, show attendance navigation based on role */}
+                {userRole !== 'AttendanceMarker' && userRole !== 'InstituteAdmin' && userRole !== 'Teacher' && userRole !== 'Student' && selectedInstitute && (
+                  <SidebarSection title="Attendance" items={attendanceItemsDisplay} />
+                )}
+                
+                {/* Show academic items for Teacher only when institute, class and subject are all selected */}
+                {userRole === 'Teacher' && systemItemsDisplay.length > 0 && (
+                  <SidebarSection title="Academic" items={systemItemsDisplay} />
+                )}
+                
+                {/* Show academic items for InstituteAdmin only when institute, class and subject are all selected */}
+                {userRole === 'InstituteAdmin' && selectedInstitute && selectedClass && selectedSubject && (
+                  <SidebarSection title="Academic" items={systemItemsDisplay} />
+                )}
+                
+                {/* Show full academic section for other roles (excluding Student) */}
+                {selectedInstitute && userRole !== 'AttendanceMarker' && userRole !== 'InstituteAdmin' && userRole !== 'Teacher' && userRole !== 'Student' && (
+                  <SidebarSection title="Academic" items={systemItemsDisplay} />
+                )}
+                
+                {/* Show My Children section before institute selection for Parents */}
+                {myChildrenItemsDisplay.length > 0 && (
+                  <SidebarSection title="My Children" items={myChildrenItemsDisplay} />
+                )}
+                
+                {/* Show Child specific navigation when child is selected */}
+                {childItemsDisplay.length > 0 && (
+                  <SidebarSection title="Child Sections" items={childItemsDisplay} />
+                )}
+                
+                {/* Show System Payments section before institute selection */}
+                {systemPaymentItemsDisplay.length > 0 && (
+                  <SidebarSection title="System Payments" items={systemPaymentItemsDisplay} />
+                )}
+                
+                {/* Show Payment section for specific user types based on new rules */}
+                {paymentItemsDisplay.length > 0 && (
+                  <SidebarSection title="Payments" items={paymentItemsDisplay} />
+                )}
+                
+                {smsItemsDisplay.length > 0 && (
+                  <SidebarSection title="SMS" items={smsItemsDisplay} />
+                )}
+                
+                <SidebarSection title="Settings" items={settingsItemsDisplay} />
+              </>
             )}
-            
-            {/* Show attendance section for Teacher based on selection state */}
-            {userRole === 'Teacher' && attendanceItemsDisplay.length > 0 && (
-              <SidebarSection title="Attendance" items={attendanceItemsDisplay} />
-            )}
-            
-            {/* Show attendance section when institute is selected for InstituteAdmin */}
-            {userRole === 'InstituteAdmin' && selectedInstitute && (
-              <SidebarSection title="Attendance" items={attendanceItemsDisplay} />
-            )}
-            
-            {/* For AttendanceMarker role, only show QR Attendance when institute is selected */}
-            {userRole === 'AttendanceMarker' && selectedInstitute && (
-              <SidebarSection title="Attendance" items={attendanceItemsDisplay} />
-            )}
-            
-            {/* For other roles, show attendance navigation based on role */}
-            {userRole !== 'AttendanceMarker' && userRole !== 'InstituteAdmin' && userRole !== 'Teacher' && userRole !== 'Student' && selectedInstitute && (
-              <SidebarSection title="Attendance" items={attendanceItemsDisplay} />
-            )}
-            
-            {/* Show academic items for Teacher only when institute, class and subject are all selected */}
-            {userRole === 'Teacher' && systemItemsDisplay.length > 0 && (
-              <SidebarSection title="Academic" items={systemItemsDisplay} />
-            )}
-            
-            {/* Show academic items for InstituteAdmin only when institute, class and subject are all selected */}
-            {userRole === 'InstituteAdmin' && selectedInstitute && selectedClass && selectedSubject && (
-              <SidebarSection title="Academic" items={systemItemsDisplay} />
-            )}
-            
-            {/* Show full academic section for other roles (excluding Student) */}
-            {selectedInstitute && userRole !== 'AttendanceMarker' && userRole !== 'InstituteAdmin' && userRole !== 'Teacher' && userRole !== 'Student' && (
-              <SidebarSection title="Academic" items={systemItemsDisplay} />
-            )}
-            
-            {/* Show System Payments section before institute selection */}
-            {systemPaymentItemsDisplay.length > 0 && (
-              <SidebarSection title="System Payments" items={systemPaymentItemsDisplay} />
-            )}
-            
-            {/* Show Payment section for specific user types based on new rules */}
-            {paymentItemsDisplay.length > 0 && (
-              <SidebarSection title="Payments" items={paymentItemsDisplay} />
-            )}
-            
-            {smsItemsDisplay.length > 0 && (
-              <SidebarSection title="SMS" items={smsItemsDisplay} />
-            )}
-            
-            <SidebarSection title="Settings" items={settingsItemsDisplay} />
           </div>
         </ScrollArea>
 

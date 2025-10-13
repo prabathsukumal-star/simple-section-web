@@ -179,248 +179,91 @@ export interface LectureResponse {
 }
 
 class OrganizationApiClient {
-  private baseUrl = '/organization/api/v1';
-
-  private checkBaseUrl2(): string {
-    const baseUrl2 = getBaseUrl2();
-    if (!baseUrl2) {
-      throw new Error('Organization API Base URL not configured. Please set the base URL in Advanced Settings.');
-    }
-    return baseUrl2;
-  }
+  // Organization endpoints are on the main API, not a separate service
+  private baseUrl = '';
 
   async loginToOrganization(credentials: OrganizationLoginCredentials): Promise<OrganizationLoginResponse> {
-    try {
-      // Check if baseUrl2 is configured
-      const baseUrl2 = this.checkBaseUrl2();
-      console.log('Using organization API base URL:', baseUrl2);
-      
-      // Switch to baseUrl2 for organization API calls
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.post<OrganizationLoginResponse>(`${this.baseUrl}/auth/login`, credentials);
-      return response;
-    } catch (error) {
-      console.error('Organization login failed:', error);
-      
-      // Provide more specific error messages
-      if (error instanceof Error) {
-        if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
-          throw new Error('Cannot connect to organization API. Please verify the server is running and the base URL is correct.');
-        }
-      }
-      
-      throw error;
-    } finally {
-      // Always switch back to baseUrl1 after organization calls
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.post<OrganizationLoginResponse>('/auth/login', credentials);
+    return response;
   }
 
   async getUserEnrolledOrganizations(params?: OrganizationQueryParams): Promise<OrganizationResponse> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.get<OrganizationResponse>(`${this.baseUrl}/organizations/user/enrolled`, params);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.get<OrganizationResponse>('/organizations/user/enrolled', params);
+    return response;
   }
 
   async getOrganizations(params?: OrganizationQueryParams): Promise<OrganizationResponse> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.get<OrganizationResponse>(`${this.baseUrl}/organizations`, params);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.get<OrganizationResponse>('/organizations', params);
+    return response;
   }
 
   async getInstituteOrganizations(instituteId: string, params?: OrganizationQueryParams): Promise<OrganizationResponse> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.get<OrganizationResponse>(`${this.baseUrl}/organizations/institute/${instituteId}`, params);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.get<OrganizationResponse>(`/organizations/institute/${instituteId}`, params);
+    return response;
   }
 
   async getCourses(params?: OrganizationQueryParams): Promise<CourseResponse> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.get<CourseResponse>(`${this.baseUrl}/causes`, params);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.get<CourseResponse>('/causes', params);
+    return response;
   }
 
   async getOrganizationCourses(organizationId: string, params?: OrganizationQueryParams): Promise<CourseResponse> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.get<CourseResponse>(`${this.baseUrl}/organizations/${organizationId}/causes`, params);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.get<CourseResponse>(`/organizations/${organizationId}/causes`, params);
+    return response;
   }
 
   async getLectures(params?: OrganizationQueryParams): Promise<LectureResponse> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.get<LectureResponse>(`${this.baseUrl}/lectures`, params);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.get<LectureResponse>('/lectures', params);
+    return response;
   }
 
   async createOrganization(data: OrganizationCreateData): Promise<Organization> {
-    try {
-      // Ensure base URL 2 is configured (organization service)
-      this.checkBaseUrl2();
-      const baseUrl2 = getBaseUrl2();
-      const url = `${baseUrl2}${this.baseUrl}/organizations`;
-
-      // IMPORTANT: Use MAIN login token (access_token) for creating organizations
-      const headers = getApiHeaders();
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: `HTTP Error: ${response.status}` }));
-        throw new Error(errorData.message || `HTTP Error: ${response.status}`);
-      }
-
-      return await response.json();
-    } finally {
-      // No toggle of apiClient base since we used direct fetch
-    }
+    const response = await apiClient.post<Organization>('/organizations', data);
+    return response;
   }
 
   async createCourse(data: CourseCreateData): Promise<Course> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.post<Course>(`${this.baseUrl}/causes/with-image`, data);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.post<Course>('/causes/with-image', data);
+    return response;
   }
 
   async getOrganizationById(id: string): Promise<Organization> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.get<Organization>(`${this.baseUrl}/organizations/${id}`);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.get<Organization>(`/organizations/${id}`);
+    return response;
   }
 
   async updateOrganization(id: string, data: Partial<OrganizationCreateData>): Promise<Organization> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.put<Organization>(`${this.baseUrl}/organizations/${id}`, data);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.put<Organization>(`/organizations/${id}`, data);
+    return response;
   }
 
   async deleteOrganization(id: string): Promise<void> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      await apiClient.delete(`${this.baseUrl}/organizations/${id}/management`);
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    await apiClient.delete(`/organizations/${id}/management`);
   }
 
   async enrollInOrganization(data: { organizationId: string; enrollmentKey?: string }): Promise<any> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.post(`${this.baseUrl}/organizations/enroll`, data);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.post('/organizations/enroll', data);
+    return response;
   }
 
   async transferPresidency(organizationId: string, data: { newPresidentUserId: string }): Promise<any> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.put(`${this.baseUrl}/organizations/${organizationId}/management/transfer-presidency`, data);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.put(`/organizations/${organizationId}/management/transfer-presidency`, data);
+    return response;
   }
 
   async updateOrganizationManagement(organizationId: string, data: OrganizationUpdateData): Promise<Organization> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.patch(`${this.baseUrl}/organizations/${organizationId}/management`, data);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.patch(`/organizations/${organizationId}/management`, data);
+    return response;
   }
 
   async getUnverifiedMembers(organizationId: string): Promise<any> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.get(`${this.baseUrl}/organizations/${organizationId}/members/unverified`);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.get(`/organizations/${organizationId}/members/unverified`);
+    return response;
   }
 
   async verifyMember(organizationId: string, data: { userId: string; isVerified: boolean }): Promise<any> {
-    try {
-      this.checkBaseUrl2();
-      apiClient.setUseBaseUrl2(true);
-      
-      const response = await apiClient.put(`${this.baseUrl}/organizations/${organizationId}/verify`, data);
-      return response;
-    } finally {
-      apiClient.setUseBaseUrl2(false);
-    }
+    const response = await apiClient.put(`/organizations/${organizationId}/verify`, data);
+    return response;
   }
 }
 

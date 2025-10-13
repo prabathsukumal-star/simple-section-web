@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { DataCardView } from '@/components/ui/data-card-view';
+
 import { RefreshCw, Filter, Eye, Edit, Trash2, Plus } from 'lucide-react';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
@@ -247,34 +247,31 @@ const Subjects = () => {
             </p>
           </div>
 
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+            <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-2">
                 <Filter className="h-4 w-4" />
-                Filters
+                <span className="hidden sm:inline">Filters</span>
               </Button>
               
               {canCreate && <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2" size="sm">
                    <Plus className="h-4 w-4" />
-                   Create Subject
+                   <span className="hidden sm:inline">Create Subject</span>
+                   <span className="sm:hidden">Create</span>
                  </Button>}
                 
                 {(userRole === 'InstituteAdmin' || (canAssignSubjects && dataLoaded && subjectsData.length > 0)) && (
                   <Button onClick={() => setIsAssignDialogOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2" size="sm">
                     <Plus className="h-4 w-4" />
-                    Assign Subject
+                    <span className="hidden sm:inline">Assign Subject</span>
+                    <span className="sm:hidden">Assign</span>
                   </Button>
                 )}
             </div>
             
             <Button onClick={handleLoadData} disabled={isLoading} variant="outline" size="sm">
-              {isLoading ? <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Refreshing...
-                </> : <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh Data
-                </>}
+              <RefreshCw className={`h-4 w-4 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{isLoading ? 'Refreshing...' : 'Refresh Data'}</span>
             </Button>
           </div>
 
@@ -321,19 +318,29 @@ const Subjects = () => {
               </div>
             </div>}
 
-          {/* Mobile View Content - Always Card View */}
-          <div className="md:hidden">
-            <DataCardView data={subjectsData || []} columns={subjectsColumns} customActions={customActions} allowEdit={false} allowDelete={false} />
-          </div>
-
-          {/* Desktop MUI Table View */}
-          <div className="hidden md:block">
-            <MUITable title="Subjects" data={subjectsData || []} columns={subjectsColumns.map(col => ({
-          id: col.key,
-          label: col.header,
-          minWidth: 170,
-          format: col.render
-        }))} onEdit={!isInstituteAdmin && canEdit ? handleEditSubject : undefined} onDelete={!isInstituteAdmin && canDelete ? handleDeleteSubject : undefined} onView={!isInstituteAdmin ? handleViewSubject : undefined} page={pagination.page} rowsPerPage={pagination.limit} totalCount={pagination.totalCount} onPageChange={(newPage: number) => actions.setPage(newPage)} onRowsPerPageChange={(newLimit: number) => actions.setLimit(newLimit)} sectionType="subjects" allowEdit={!isInstituteAdmin && canEdit} allowDelete={!isInstituteAdmin && canDelete} />
+          {/* Unified Table View for all devices */}
+          <div className="w-full overflow-x-auto">
+            <MUITable
+              title="Subjects"
+              data={subjectsData || []}
+              columns={subjectsColumns.map(col => ({
+                id: col.key,
+                label: col.header,
+                minWidth: 170,
+                format: col.render
+              }))}
+              onEdit={!isInstituteAdmin && canEdit ? handleEditSubject : undefined}
+              onDelete={!isInstituteAdmin && canDelete ? handleDeleteSubject : undefined}
+              onView={!isInstituteAdmin ? handleViewSubject : undefined}
+              page={pagination.page}
+              rowsPerPage={pagination.limit}
+              totalCount={pagination.totalCount}
+              onPageChange={(newPage: number) => actions.setPage(newPage)}
+              onRowsPerPageChange={(newLimit: number) => actions.setLimit(newLimit)}
+              sectionType="subjects"
+              allowEdit={!isInstituteAdmin && canEdit}
+              allowDelete={!isInstituteAdmin && canDelete}
+            />
           </div>
         </>}
 

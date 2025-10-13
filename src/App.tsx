@@ -4,7 +4,7 @@ import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import Index from "./pages/Index";
 import QRAttendance from '@/components/QRAttendance';
 import RFIDAttendance from '@/pages/RFIDAttendance';
@@ -29,6 +29,12 @@ import ExamResults from '@/pages/ExamResults';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import Transport from '@/pages/Transport';
 import TransportAttendance from '@/pages/TransportAttendance';
+import MyChildren from '@/pages/MyChildren';
+import ChildDashboard from '@/pages/ChildDashboard';
+import ChildResultsPage from '@/pages/ChildResultsPage';
+import ChildAttendancePage from '@/pages/ChildAttendancePage';
+import ChildTransportPage from '@/pages/ChildTransportPage';
+import AppLayout from '@/components/layout/AppLayout';
 
 const queryClient = new QueryClient();
 
@@ -59,6 +65,7 @@ const App = () => {
               
               {/* Organization Routes */}
               <Route path="/organizations" element={<Index />} />
+              <Route path="/institute-organizations" element={<Index />} />
               
               {/* User Management Routes */}
               <Route path="/users" element={<Index />} />
@@ -127,7 +134,17 @@ const App = () => {
               
               {/* Transport Routes */}
               <Route path="/transport" element={<Transport />} />
+              <Route path="/transport-attendance" element={<TransportAttendance />} />
               <Route path="/transport/:transportId/attendance" element={<TransportAttendance />} />
+              
+              {/* My Children Routes */}
+              <Route element={<AppLayout><Outlet /></AppLayout>}>
+                <Route path="/my-children" element={<MyChildren />} />
+                <Route path="/child/:childId/dashboard" element={<ChildDashboard />} />
+                <Route path="/child/:childId/results" element={<ChildResultsPage />} />
+                <Route path="/child/:childId/attendance" element={<ChildAttendancePage />} />
+                <Route path="/child/:childId/transport" element={<ChildTransportPage />} />
+              </Route>
               
               {/* Demo Routes */}
               <Route path="/card-demo" element={<CardDemo />} />

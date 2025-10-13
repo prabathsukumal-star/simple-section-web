@@ -366,19 +366,20 @@ const InstituteUsers = () => {
   const IconComponent = getUserTypeIcon(activeTab);
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="container mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Institute Users</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">Institute Users</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             Manage users in your institute
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 flex-1 sm:flex-none"
+            size="sm"
           >
             <Filter className="h-4 w-4" />
             Filters
@@ -386,14 +387,16 @@ const InstituteUsers = () => {
           <Button 
             onClick={() => setShowAssignMethodsDialog(true)}
             variant="outline"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 flex-1 sm:flex-none"
+            size="sm"
           >
             <UserPlus className="h-4 w-4" />
             Assign User
           </Button>
           <Button 
             onClick={() => setShowCreateUserDialog(true)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 flex-1 sm:flex-none"
+            size="sm"
           >
             <Plus className="h-4 w-4" />
             Create User
@@ -403,57 +406,74 @@ const InstituteUsers = () => {
 
       {/* Tabs for different user types */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as UserType)}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="STUDENT" className="flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 gap-2 p-2 h-auto bg-muted/50">
+          <TabsTrigger 
+            value="STUDENT" 
+            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
             <GraduationCap className="h-4 w-4" />
-            Students
+            <span>Students</span>
           </TabsTrigger>
-          <TabsTrigger value="TEACHER" className="flex items-center gap-2">
+          <TabsTrigger 
+            value="TEACHER" 
+            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
             <Users className="h-4 w-4" />
-            Teachers
+            <span>Teachers</span>
           </TabsTrigger>
-          <TabsTrigger value="ATTENDANCE_MARKER" className="flex items-center gap-2">
+          <TabsTrigger 
+            value="ATTENDANCE_MARKER" 
+            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
             <UserCheck className="h-4 w-4" />
-            Attendance Markers
+            <span className="hidden sm:inline">Markers</span>
+            <span className="sm:hidden">Markers</span>
           </TabsTrigger>
-          <TabsTrigger value="INSTITUTE_ADMIN" className="flex items-center gap-2">
+          <TabsTrigger 
+            value="INSTITUTE_ADMIN" 
+            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
             <Shield className="h-4 w-4" />
-            Institute Admins
+            <span className="hidden sm:inline">Admins</span>
+            <span className="sm:hidden">Admins</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="STUDENT" className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="flex items-center gap-1">
                 <GraduationCap className="h-4 w-4" />
                 {studentsTable.pagination.totalCount} Students
               </Badge>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <Button 
                 onClick={() => setShowCreateStudentDialog(true)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full sm:w-auto"
                 size="sm"
               >
                 <Plus className="h-4 w-4" />
-                Create Student
+                <span className="hidden sm:inline">Create Student</span>
+                <span className="sm:hidden">Create</span>
               </Button>
               <Button 
                 onClick={() => studentsTable.actions.refresh()} 
                 disabled={studentsTable.state.loading}
                 variant="outline"
                 size="sm"
+                className="w-full sm:w-auto"
               >
                 {studentsTable.state.loading ? (
                   <>
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Loading...
+                    <span className="hidden sm:inline">Loading...</span>
                   </>
                 ) : (
                   <>
                     <RefreshCw className="h-4 w-4 mr-2" />
-                    Load Students
+                    <span className="hidden sm:inline">Load Students</span>
+                    <span className="sm:hidden">Load</span>
                   </>
                 )}
               </Button>

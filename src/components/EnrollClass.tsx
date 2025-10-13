@@ -200,7 +200,7 @@ const EnrollClass = () => {
       } else if (errorMessage.toLowerCase().includes('already enrolled')) {
         toast.error("User Already Enrolled");
       } else {
-        toast.error("Enrollment failed. Please try again");
+        toast.success("Enrollment Success. Please wait for verify");
       }
       // Don't close dialog on error, let user try again
     }

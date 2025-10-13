@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import PageContainer from '@/components/layout/PageContainer';
+import EnrollTransportDialog from '@/components/forms/EnrollTransportDialog';
 
 const Transport: React.FC = () => {
   const { user } = useAuth();
@@ -37,10 +38,20 @@ const Transport: React.FC = () => {
     }
   };
 
+  const handleEnrollmentSuccess = () => {
+    loadEnrollments();
+  };
+
   const handleSelectTransport = (enrollment: TransportEnrollment) => {
-    // Store selected transport in location state and navigate
-    navigate(`/transport/${enrollment.id}/attendance`, {
-      state: { transport: enrollment }
+    // Navigate to transport attendance page with state
+    navigate(`/transport-attendance`, {
+      state: { 
+        transport: {
+          id: enrollment.id,
+          vehicleNumber: enrollment.cardId || `Bookhire-${enrollment.bookhireId}`,
+          bookhireId: enrollment.bookhireId
+        }
+      }
     });
   };
 
@@ -62,11 +73,17 @@ const Transport: React.FC = () => {
       <AppLayout currentPage="transport">
         <PageContainer>
           <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">My Transport</h1>
-              <p className="text-muted-foreground">
-                View and manage your transport enrollments
-              </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">My Transport</h1>
+                <p className="text-muted-foreground">
+                  View and manage your transport enrollments
+                </p>
+              </div>
+              <EnrollTransportDialog 
+                studentId={user?.id?.toString() || ''} 
+                onEnrollmentSuccess={handleEnrollmentSuccess}
+              />
             </div>
             
             <Button onClick={loadEnrollments} disabled={loading}>
@@ -109,11 +126,17 @@ const Transport: React.FC = () => {
     <AppLayout currentPage="transport">
       <PageContainer>
         <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">My Transport</h1>
-            <p className="text-muted-foreground">
-              View and manage your transport enrollments
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">My Transport</h1>
+              <p className="text-muted-foreground">
+                View and manage your transport enrollments
+              </p>
+            </div>
+            <EnrollTransportDialog 
+              studentId={user?.id?.toString() || ''} 
+              onEnrollmentSuccess={handleEnrollmentSuccess}
+            />
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -126,11 +149,23 @@ const Transport: React.FC = () => {
                       {enrollment.status}
                     </Badge>
                   </div>
+                  {enrollment.imageUrl && (
+                    <div className="w-full h-32 mb-3 rounded-md overflow-hidden bg-muted">
+                      <img 
+                        src={enrollment.imageUrl} 
+                        alt={enrollment.bookhireTitle || 'Transport vehicle'}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
                   <CardTitle className="text-xl">
-                    Transport Service
+                    {enrollment.bookhireTitle || 'Transport Service'}
                   </CardTitle>
                   <CardDescription>
-                    Bookhire ID: {enrollment.bookhireId}
+                    {enrollment.vehicleNumber}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
