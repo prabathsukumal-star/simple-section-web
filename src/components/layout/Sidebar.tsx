@@ -1874,8 +1874,8 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
       <div className={`
         fixed inset-y-0 left-0 z-50 lg:relative
         w-72 sm:w-80 lg:w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700
-        transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        transform transition-transform duration-300 ease-in-out lg:transform-none
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         flex flex-col h-screen
         overflow-hidden
       `}>
@@ -1906,7 +1906,8 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
               className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label="Close Sidebar"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 lg:hidden" />
+              <Menu className="h-4 w-4 hidden lg:block" />
             </Button>
           </div>
         </div>

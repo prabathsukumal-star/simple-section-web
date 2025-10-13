@@ -3,7 +3,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import DesktopHeader from './DesktopHeader';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -46,43 +45,28 @@ const AppLayout = ({ children, currentPage: propCurrentPage, onPageChange }: App
     setIsSidebarOpen(false);
   };
 
-  const handleProfileClick = () => {
-    handlePageChange('profile');
-  };
-
   if (!user) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
-      {/* Desktop Header - shown when sidebar is closed on desktop */}
-      {!isSidebarOpen && (
-        <DesktopHeader 
-          onMenuClick={handleMenuClick} 
-          onProfileClick={handleProfileClick}
+    <div className="h-screen bg-background flex overflow-hidden">
+      <div className="flex-shrink-0">
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={handleSidebarClose}
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
         />
-      )}
-
-      <div className="flex flex-1 overflow-hidden">
+      </div>
+      
+      <div className="flex-1 flex flex-col min-w-0 h-full">
         <div className="flex-shrink-0">
-          <Sidebar
-            isOpen={isSidebarOpen}
-            onClose={handleSidebarClose}
-            currentPage={currentPage}
-            onPageChange={handlePageChange}
-          />
+          <Header onMenuClick={handleMenuClick} />
         </div>
-        
-        <div className="flex-1 flex flex-col min-w-0 h-full">
-          {/* Mobile Header - only shown on mobile/tablet */}
-          <div className="flex-shrink-0 lg:hidden">
-            <Header onMenuClick={handleMenuClick} />
-          </div>
-          <main className="flex-1 overflow-auto">
-            {children}
-          </main>
-        </div>
+        <main className="flex-1 overflow-auto">
+          {children}
+        </main>
       </div>
     </div>
   );
