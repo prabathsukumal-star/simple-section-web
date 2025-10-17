@@ -57,6 +57,7 @@ export interface MarkAttendanceByCardRequest {
   address: string;
   markingMethod: 'qr' | 'barcode' | 'rfid/nfc';
   status: 'present' | 'absent' | 'late';
+  date?: string;
 }
 
 export interface MarkAttendanceByCardResponse {
@@ -68,6 +69,7 @@ export interface MarkAttendanceByCardResponse {
 
 export interface MarkAttendanceRequest {
   studentId: string;
+  studentName?: string;
   instituteId: string;
   instituteName: string;
   classId?: string;
@@ -77,6 +79,7 @@ export interface MarkAttendanceRequest {
   address: string;
   markingMethod: 'manual';
   status: 'present' | 'absent' | 'late';
+  date?: string;
 }
 
 export interface MarkAttendanceResponse {
@@ -147,7 +150,8 @@ class ChildAttendanceApi {
       instituteName: request.instituteName,
       address: request.address,
       markingMethod: request.markingMethod,
-      status: request.status
+      status: request.status,
+      date: request.date || new Date().toISOString()
     };
 
     // Only include class data if provided
@@ -246,11 +250,13 @@ class ChildAttendanceApi {
     // Build dynamic request body based on what's selected
     const requestBody: any = {
       studentId: request.studentId,
+      studentName: request.studentName || `Student ${request.studentId}`,
       instituteId: request.instituteId,
       instituteName: request.instituteName,
       address: request.address,
       markingMethod: request.markingMethod,
-      status: request.status
+      status: request.status,
+      date: request.date || new Date().toISOString()
     };
 
     // Only include class data if provided
