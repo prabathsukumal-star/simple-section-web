@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { AccessControl } from '@/utils/permissions';
 import { Building, Users, Phone, Mail, MapPin, Calendar, Edit, Settings } from 'lucide-react';
 const InstituteDetails = () => {
@@ -10,12 +11,14 @@ const InstituteDetails = () => {
     user,
     selectedInstitute
   } = useAuth();
+  const userRole = useInstituteRole();
+  
   if (!selectedInstitute) {
     return <div className="text-center py-12">
         <p className="text-gray-500 dark:text-gray-400">No institute selected</p>
       </div>;
   }
-  const userRole = (user?.role || 'Student') as UserRole;
+  
   const canEdit = AccessControl.hasPermission(userRole, 'edit-institute');
   const handleEdit = () => {
     console.log('Edit institute:', selectedInstitute);

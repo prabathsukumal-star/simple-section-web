@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
 import { toast } from 'sonner';
 
@@ -42,8 +43,8 @@ const CreateSubjectForm = ({ onSubmit, onCancel, initialData }: CreateSubjectFor
   const { selectedInstitute, currentInstituteId, user } = useAuth();
   
   // Check if user has permission (only SuperAdmin and InstituteAdmin)
-  const userRole = user?.role;
-  const hasPermission = userRole === 'SystemAdmin' || userRole === 'InstituteAdmin';
+  const userRole = useInstituteRole();
+  const hasPermission = user?.role === 'SystemAdmin' || userRole === 'InstituteAdmin';
   
   const form = useForm<SubjectFormData>({
     resolver: zodResolver(subjectSchema),

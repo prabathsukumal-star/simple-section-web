@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { enhancedCachedClient } from './enhancedCachedClient';
 
 // Request/Response Types
 export interface SelfEnrollRequest {
@@ -68,66 +69,104 @@ export class ApiError extends Error {
   }
 }
 
+export interface EnrollmentQueryParams {
+  userId?: string;
+  role?: string;
+  instituteId?: string;
+  classId?: string;
+  subjectId?: string;
+}
+
 export const enrollmentApi = {
-  // Student self-enrollment
-  async selfEnroll(enrollmentKey: string): Promise<SelfEnrollResponse> {
+  // Student self-enrollment with auto-invalidation
+  async selfEnroll(enrollmentKey: string, params?: EnrollmentQueryParams): Promise<SelfEnrollResponse> {
     try {
-      const response = await apiClient.post('/institute-class-subject-students/self-enroll', {
+      return await enhancedCachedClient.post('/institute-class-subject-students/self-enroll', {
         enrollmentKey
+      }, {
+        userId: params?.userId,
+        instituteId: params?.instituteId,
+        classId: params?.classId,
+        subjectId: params?.subjectId
       });
-      return response;
     } catch (error: any) {
       throw new ApiError(error.status || 500, error.response || error);
     }
   },
 
-  // Teacher assigns students
+  // Teacher assigns students with auto-invalidation
   async teacherAssignStudents(
     instituteId: string,
     classId: string,
     subjectId: string,
-    studentIds: string[]
+    studentIds: string[],
+    params?: EnrollmentQueryParams
   ): Promise<TeacherAssignResponse> {
     try {
-      const response = await apiClient.post(
+      return await enhancedCachedClient.post(
         `/institute-class-subject-students/teacher-assign/${instituteId}/${classId}/${subjectId}`,
-        { studentIds }
+        { studentIds },
+        {
+          userId: params?.userId,
+          instituteId,
+          classId,
+          subjectId,
+          role: params?.role
+        }
       );
-      return response;
     } catch (error: any) {
       throw new ApiError(error.status || 500, error.response || error);
     }
   },
 
-  // Update enrollment settings
+  // Update enrollment settings with auto-invalidation
   async updateEnrollmentSettings(
     instituteId: string,
     classId: string,
     subjectId: string,
-    enrollmentEnabled: boolean
+    enrollmentEnabled: boolean,
+    params?: EnrollmentQueryParams
   ): Promise<EnrollmentSettingsResponse> {
     try {
-      const response = await apiClient.patch(
+      return await enhancedCachedClient.patch(
         `/institute-class-subject-students/enrollment-settings/${instituteId}/${classId}/${subjectId}`,
-        { enrollmentEnabled }
+        { enrollmentEnabled },
+        {
+          userId: params?.userId,
+          instituteId,
+          classId,
+          subjectId,
+          role: params?.role
+        }
       );
-      return response;
     } catch (error: any) {
       throw new ApiError(error.status || 500, error.response || error);
     }
   },
 
-  // Get enrollment settings
+  // Get enrollment settings with enhanced caching
   async getEnrollmentSettings(
     instituteId: string,
     classId: string,
-    subjectId: string
+    subjectId: string,
+    params?: EnrollmentQueryParams,
+    forceRefresh = false
   ): Promise<EnrollmentSettingsResponse> {
     try {
-      const response = await apiClient.get(
-        `/institute-class-subject-students/enrollment-settings/${instituteId}/${classId}/${subjectId}`
+      return await enhancedCachedClient.get(
+        `/institute-class-subject-students/enrollment-settings/${instituteId}/${classId}/${subjectId}`,
+        undefined,
+        {
+          forceRefresh,
+          ttl: 20,
+          useStaleWhileRevalidate: true,
+          userId: params?.userId,
+          instituteId,
+          classId,
+          subjectId,
+          role: params?.role
+        }
       );
-      return response;
     } catch (error: any) {
       throw new ApiError(error.status || 500, error.response || error);
     }

@@ -285,57 +285,57 @@ const PaymentSubmissions = () => {
     });
   };
   return <AppLayout>
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-6 px-2 sm:px-0">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => navigate(-1)} className="flex items-center space-x-2">
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Payments</span>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Button variant="ghost" onClick={() => navigate(-1)} className="flex items-center gap-1 sm:gap-2 px-2" size="sm">
+              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm">Back</span>
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold">Payment Submissions</h1>
-              <p className="text-muted-foreground mt-1">
-                Payment ID: {paymentId}
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-2xl font-bold truncate">Payment Submissions</h1>
+              <p className="text-muted-foreground text-xs sm:text-sm truncate">Payment ID: {paymentId}</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button onClick={() => refresh()} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? 'Loading...' : 'Refresh'}
+          <div className="flex items-center">
+            <Button onClick={() => refresh()} disabled={loading} size="sm" variant="outline" className="gap-2">
+              <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${loading ? 'animate-spin' : ''}`} />
+              <span className="text-xs sm:text-sm">{loading ? 'Loading...' : 'Refresh'}</span>
             </Button>
           </div>
         </div>
 
         {/* Search Bar */}
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-4">
-              <div className="flex-1">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+              <div className="flex-1 order-2 sm:order-1">
                 <Input
                   placeholder={`Search by ${searchType === 'submissionId' ? 'submission ID' : searchType === 'studentName' ? 'student name' : searchType === 'userId' ? 'user ID' : 'amount'}...`}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full"
+                  className="w-full h-9 sm:h-10 text-xs sm:text-sm"
                 />
               </div>
-              <Select value={searchType} onValueChange={setSearchType}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="submissionId">Submission ID</SelectItem>
-                  <SelectItem value="studentName">Student Name</SelectItem>
-                  <SelectItem value="userId">User ID</SelectItem>
-                  <SelectItem value="amount">Amount</SelectItem>
-                </SelectContent>
-              </Select>
-              {searchValue && (
-                <Button variant="outline" size="sm" onClick={clearSearch}>
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
+              <div className="order-1 sm:order-2 flex items-center gap-2">
+                <Select value={searchType} onValueChange={setSearchType}>
+                  <SelectTrigger className="w-full sm:w-48 h-9 sm:h-10 text-xs sm:text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="submissionId">Submission ID</SelectItem>
+                    <SelectItem value="studentName">Student Name</SelectItem>
+                    <SelectItem value="userId">User ID</SelectItem>
+                    <SelectItem value="amount">Amount</SelectItem>
+                  </SelectContent>
+                </Select>
+                {searchValue && (
+                  <Button variant="outline" size="sm" onClick={clearSearch} className="h-9 px-3">
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -378,26 +378,30 @@ const PaymentSubmissions = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {error ? <div className="text-center py-12">
-                <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-                <p className="text-destructive text-lg mb-2">Error loading submissions</p>
-                <p className="text-muted-foreground">{error}</p>
+            {error ? <div className="text-center py-10 sm:py-12">
+                <AlertCircle className="h-8 w-8 sm:h-12 sm:w-12 text-destructive mx-auto mb-3 sm:mb-4" />
+                <p className="text-destructive text-base sm:text-lg mb-1 sm:mb-2">Error loading submissions</p>
+                <p className="text-muted-foreground text-xs sm:text-sm">{error}</p>
               </div> : <Paper sx={{
             width: '100%',
             overflow: 'hidden'
           }}>
                 <TableContainer sx={{
-              height: 'calc(100vh - 400px)',
-              minHeight: 400
+              height: { xs: 'calc(100vh - 420px)', sm: 'calc(100vh - 400px)' },
+              minHeight: 300,
+              overflowX: 'auto'
             }}>
-                  <Table stickyHeader aria-label="payment submissions table">
+                  <Table stickyHeader aria-label="payment submissions table" sx={{
+                    minWidth: { xs: 800, sm: 900 }
+                  }}>
                     <TableHead>
                       <TableRow>
-                        {columns.map(column => <TableCell key={column.id} align={column.align} style={{
-                      minWidth: column.minWidth
-                    }} sx={{
-                      fontWeight: 'bold',
-                      backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                        {columns.map(column => <TableCell key={column.id} align={column.align} sx={{
+                      minWidth: column.minWidth,
+                      fontWeight: 600,
+                      bgcolor: 'rgba(0,0,0,0.04)',
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      p: { xs: 1, sm: 2 }
                     }}>
                             {column.label}
                           </TableCell>)}
@@ -406,31 +410,53 @@ const PaymentSubmissions = () => {
                     <TableBody>
                       {loading ? <TableRow>
                           <TableCell colSpan={columns.length} align="center">
-                            <div className="py-12 text-center">
-                              <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-                              <p className="text-muted-foreground">Loading submissions...</p>
+                            <div className="py-8 sm:py-12 text-center">
+                              <RefreshCw className="h-6 w-6 sm:h-8 sm:w-8 animate-spin mx-auto mb-3 sm:mb-4 text-muted-foreground" />
+                              <p className="text-muted-foreground text-sm sm:text-base">Loading submissions...</p>
                             </div>
                           </TableCell>
                         </TableRow> : filteredSubmissions.length === 0 ? <TableRow>
                           <TableCell colSpan={columns.length} align="center">
-                            <div className="py-12 text-center">
-                              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                              <p className="text-muted-foreground text-lg mb-2">No submissions found</p>
-                              <p className="text-muted-foreground">No payment submissions have been made for this payment.</p>
+                            <div className="py-8 sm:py-12 text-center px-4">
+                              <FileText className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+                              <p className="text-muted-foreground text-sm sm:text-lg mb-1 sm:mb-2">No submissions found</p>
+                              <p className="text-muted-foreground text-xs sm:text-sm">No payment submissions have been made for this payment.</p>
                             </div>
                           </TableCell>
                         </TableRow> : filteredSubmissions.map((row, index) => <TableRow hover role="checkbox" tabIndex={-1} key={row.id || index}>
                             {columns.map(column => {
-                      const value = row[column.id as keyof PaymentSubmission];
-                      return <TableCell key={column.id} align={column.align}>
-                                  {column.format ? column.format(value, row) : value || '-'}
-                                </TableCell>;
-                    })}
+                    const value = (row as any)[column.id as keyof typeof row];
+                    return <TableCell key={column.id} align={column.align} sx={{
+                              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                              p: { xs: 1, sm: 2 }
+                            }}>
+                                {column.format ? column.format(value, row) : (value ?? '-')}
+                              </TableCell>;
+                  })}
                           </TableRow>)}
                     </TableBody>
                   </Table>
                 </TableContainer>
-                <TablePagination rowsPerPageOptions={[25, 50, 100]} component="div" count={totalCount} rowsPerPage={limit} page={page} onPageChange={handlePageChange} onRowsPerPageChange={handleRowsPerPageChange} labelRowsPerPage="Submissions per page:" />
+                <TablePagination 
+                  rowsPerPageOptions={[25, 50, 100]} 
+                  component="div" 
+                  count={totalCount} 
+                  rowsPerPage={limit} 
+                  page={page} 
+                  onPageChange={handlePageChange} 
+                  onRowsPerPageChange={handleRowsPerPageChange} 
+                  labelRowsPerPage="Submissions per page:" 
+                  sx={{
+                    '.MuiTablePagination-toolbar': {
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      minHeight: { xs: '44px', sm: '52px' },
+                      px: { xs: 1, sm: 2 }
+                    },
+                    '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                    }
+                  }}
+                />
               </Paper>}
           </CardContent>
         </Card>

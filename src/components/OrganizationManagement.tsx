@@ -7,6 +7,7 @@ import { Building2, Search, Filter, Eye, EyeOff, Users, BookOpen, Plus, UserPlus
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { organizationApi, Organization, OrganizationQueryParams } from '@/api/organization.api';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import OrganizationDetails from './OrganizationDetails';
 import CreateOrganizationForm from './forms/CreateOrganizationForm';
@@ -39,6 +40,7 @@ const OrganizationManagement = ({ userRole, userPermissions, currentInstituteId 
   const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
   const [selectedEnrollOrganization, setSelectedEnrollOrganization] = useState<Organization | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchOrganizations = async () => {
     try {
@@ -46,10 +48,12 @@ const OrganizationManagement = ({ userRole, userPermissions, currentInstituteId 
       
       const params: OrganizationQueryParams = {
         page: currentPage,
-        limit: 12,
+        limit: 10,
         ...(searchTerm && { search: searchTerm }),
         ...(typeFilter !== 'all' && { type: typeFilter as 'INSTITUTE' | 'GLOBAL' }),
-        ...(publicFilter !== 'all' && { isPublic: publicFilter === 'public' })
+        ...(publicFilter !== 'all' && { isPublic: publicFilter === 'public' }),
+        userId: user?.id,
+        role: userRole || 'User'
       };
 
       let response;
@@ -129,7 +133,9 @@ const OrganizationManagement = ({ userRole, userPermissions, currentInstituteId 
       const params: OrganizationQueryParams = {
         page: enrollmentCurrentPage,
         limit: 10,
-        ...(enrollmentSearchTerm && { search: enrollmentSearchTerm })
+        ...(enrollmentSearchTerm && { search: enrollmentSearchTerm }),
+        userId: user?.id,
+        role: userRole || 'User'
       };
 
       const response = await organizationApi.getOrganizations(params);

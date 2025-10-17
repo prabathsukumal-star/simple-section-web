@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { Building, Users, CheckCircle, RefreshCw, MapPin, Mail, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getBaseUrl } from '@/contexts/utils/auth.api';
+import { cachedApiClient } from '@/api/cachedClient';
 
 interface InstituteApiResponse {
   id: string;
@@ -31,6 +32,7 @@ const InstituteSelector = ({ useChildId = false }: InstituteSelectorProps) => {
   const { user, setSelectedInstitute, selectedChild } = useAuth();
   const { toast } = useToast();
   const [institutes, setInstitutes] = useState<InstituteApiResponse[]>([]);
+  const userRole = useInstituteRole();
 
   const handleLoadInstitutes = async () => {
     // For Parent role, use the selected child's ID instead of the parent's ID
@@ -47,7 +49,6 @@ const InstituteSelector = ({ useChildId = false }: InstituteSelectorProps) => {
 
     try {
       console.log('Loading institutes for user ID:', userId, useChildId ? '(child)' : '(user)');
-      const baseUrl = getBaseUrl();
 
       // Try multiple possible endpoints to support different backends
       const endpoints = useChildId
@@ -60,38 +61,28 @@ const InstituteSelector = ({ useChildId = false }: InstituteSelectorProps) => {
       for (const ep of endpoints) {
         try {
           console.log('Trying endpoint:', ep);
-          const query = '?page=1&limit=10';
-          const res = await fetch(`${baseUrl}${ep}${query}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          
+          // Use cachedApiClient instead of direct fetch
+          const data = await cachedApiClient.get(
+            ep,
+            { page: 1, limit: 10 },
+            {
+              ttl: 30, // Cache for 30 minutes
+              forceRefresh: false,
+              userId: userId,
+              role: userRole || 'User'
             }
-          });
+          );
 
-          if (!res.ok) {
-            console.warn(`Endpoint ${ep} returned ${res.status}`);
-            lastErr = new Error(`HTTP error! status: ${res.status}`);
-            continue;
-          }
-
-          const contentType = res.headers.get('content-type') || '';
-          if (!contentType.includes('application/json')) {
-            const textResponse = await res.text();
-            console.warn(`Endpoint ${ep} non-JSON response:`, textResponse);
-            lastErr = new Error('Server returned non-JSON response');
-            continue;
-          }
-
-          const data = await res.json();
+          // Handle response - data might be array or wrapped in data property
           if (Array.isArray(data)) {
             result = data;
-            console.log('Successful endpoint:', ep);
+            console.log('✅ Successful endpoint (cached):', ep);
             break;
           }
           if (data?.data && Array.isArray(data.data)) {
             result = data.data;
-            console.log('Successful endpoint (wrapped):', ep);
+            console.log('✅ Successful endpoint (wrapped, cached):', ep);
             break;
           }
 

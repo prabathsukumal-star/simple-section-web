@@ -145,7 +145,7 @@ export default function MUITable({
                           </Button>}
                         
                         {/* Student Actions */}
-                        {instituteRole === 'Student' && sectionType === 'homework' && onEdit && <Button variant="outline" size="sm" onClick={() => onEdit(row)} title="Submit" className="h-8 px-3 text-xs">
+                        {instituteRole === 'Student' && sectionType === 'homework' && onEdit && <Button variant="default" size="sm" onClick={() => onEdit(row)} title="Submit" className="h-8 px-3 text-xs bg-primary hover:bg-primary/90 text-primary-foreground">
                             <Plus className="h-3 w-3 mr-1" />
                             Submit
                           </Button>}

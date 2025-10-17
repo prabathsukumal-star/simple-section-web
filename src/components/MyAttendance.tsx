@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Calendar, Clock, MapPin, User, RefreshCw, AlertTriangle, TrendingUp, UserCheck, UserX, Filter } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useRefreshWithCooldown } from '@/hooks/useRefreshWithCooldown';
 import { studentAttendanceApi, type StudentAttendanceRecord, type StudentAttendanceResponse } from '@/api/studentAttendance.api';
 import { useApiRequest } from '@/hooks/useApiRequest';
 
@@ -21,8 +22,9 @@ const MyAttendance = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   const { execute: fetchAttendance, loading } = useApiRequest(studentAttendanceApi.getStudentAttendance);
+  const { refresh, isRefreshing, canRefresh, cooldownRemaining } = useRefreshWithCooldown(10);
 
-  const loadStudentAttendance = async () => {
+  const loadStudentAttendance = async (forceRefresh = false) => {
     if (!user?.id) {
       toast({
         title: "Authentication Error",
@@ -39,8 +41,10 @@ const MyAttendance = () => {
         startDate,
         endDate,
         page: currentPage,
-        limit
-      });
+        limit,
+        userId: user.id,
+        role: 'Student'
+      }, forceRefresh);
       
       console.log('Student attendance API response:', response);
       setAttendanceData(response);
@@ -143,7 +147,7 @@ const MyAttendance = () => {
             Filters
           </Button>
           <Button 
-            onClick={loadStudentAttendance} 
+            onClick={() => loadStudentAttendance(false)} 
             disabled={loading}
             variant="outline"
             size="sm"
@@ -198,7 +202,7 @@ const MyAttendance = () => {
                   <option value={50}>50</option>
                 </select>
               </div>
-              <Button onClick={loadStudentAttendance} disabled={loading} className="md:col-span-2">
+              <Button onClick={() => loadStudentAttendance(false)} disabled={loading} className="md:col-span-2">
                 Apply Filters
               </Button>
             </div>

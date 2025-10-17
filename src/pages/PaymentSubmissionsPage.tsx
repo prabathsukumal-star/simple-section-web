@@ -164,25 +164,25 @@ const PaymentSubmissionsPage: React.FC = () => {
     minWidth: 150
   }];
   return <AppLayout>
-      <div className="space-y-4 sm:space-y-6 p-3 sm:p-0">
+      <div className="space-y-3 sm:space-y-4 px-2 sm:px-4 py-3 sm:py-4">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="flex items-center gap-2" size="sm">
+          <Button variant="ghost" onClick={() => navigate(-1)} className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4" size="sm">
             <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="text-sm sm:text-base">Back</span>
+            <span className="text-xs sm:text-sm">Back</span>
           </Button>
         </div>
 
         {/* Subject Info */}
         {selectedSubject && (
           <Card className="border-border">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-foreground">
-                <BookOpen className="h-5 w-5 text-primary" />
-                {selectedSubject.name}
+            <CardHeader className="p-3 sm:p-4">
+              <CardTitle className="flex items-center gap-2 text-sm sm:text-base text-foreground">
+                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                <span className="truncate">{selectedSubject.name}</span>
               </CardTitle>
-              <p className="text-muted-foreground text-sm">
-                Class: {selectedClass?.name} | Institute: {selectedInstitute?.name}
+              <p className="text-muted-foreground text-xs sm:text-sm truncate">
+                {selectedClass?.name} • {selectedInstitute?.name}
               </p>
             </CardHeader>
           </Card>
@@ -191,66 +191,70 @@ const PaymentSubmissionsPage: React.FC = () => {
 
         {/* Payment Submissions Section */}
         <Card>
-          <CardHeader className="p-4 sm:p-6">
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
-                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                  <span className="truncate">Payment Submissions</span>
-                </CardTitle>
-                <Button onClick={handleRefresh} disabled={loading} variant="outline" size="sm" className="flex items-center gap-2 w-full sm:w-auto">
+          <CardHeader className="p-3 sm:p-4 md:p-6">
+            <div className="flex flex-col gap-2 sm:gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
+                <div className="flex-1 min-w-0">
+                  <CardTitle className="flex items-center gap-2 text-sm sm:text-base md:text-lg">
+                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    <span className="truncate">Payment Submissions</span>
+                  </CardTitle>
+                  {paymentId && <p className="text-xs sm:text-sm text-muted-foreground truncate mt-1">
+                      Payment ID: {paymentId}
+                    </p>}
+                </div>
+                <Button onClick={handleRefresh} disabled={loading} variant="outline" size="sm" className="flex items-center justify-center gap-2 shrink-0 text-xs sm:text-sm px-3 py-2">
                   <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${loading ? 'animate-spin' : ''}`} />
-                  <span className="text-sm">Refresh</span>
+                  <span>Refresh</span>
                 </Button>
               </div>
-              {paymentId && <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  Payment ID: {paymentId}
-                </p>}
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="space-y-3 sm:space-y-4">
               {/* Search Input */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input placeholder="Search by student name, amount, or transaction ID..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
+                <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4" />
+                <Input 
+                  placeholder="Search student, amount, or transaction..." 
+                  value={searchTerm} 
+                  onChange={e => setSearchTerm(e.target.value)} 
+                  className="pl-8 sm:pl-10 text-xs sm:text-sm h-9 sm:h-10" 
+                />
               </div>
 
-              {/* Student Name and Institute Info */}
-              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  
-                  <div>
-                    <div className="space-y-1">
-                      
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium text-gray-600 dark:text-gray-400">Payment Submissions</span>
-                        <Badge variant="secondary">{totalCount} total</Badge>
-                      </div>
-                    </div>
-                  </div>
+              {/* Submissions Count */}
+              <div className="bg-muted/50 rounded-lg p-2 sm:p-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground">Total Submissions</span>
+                  <Badge variant="secondary" className="text-xs sm:text-sm">{totalCount}</Badge>
                 </div>
               </div>
 
               {/* Load Button or Table */}
-              {!loaded ? <div className="text-center py-8 sm:py-12">
-                  <Button onClick={() => loadSubmissions()} disabled={loading} className="flex items-center gap-2 w-full sm:w-auto text-sm sm:text-base">
+              {!loaded ? <div className="text-center py-6 sm:py-8">
+                  <Button onClick={() => loadSubmissions()} disabled={loading} className="flex items-center justify-center gap-2 w-full sm:w-auto text-xs sm:text-sm px-4 py-2">
                     <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span>{loading ? 'Loading...' : 'Load Submissions'}</span>
                   </Button>
                 </div> : <Paper sx={{
               width: '100%',
               overflow: 'hidden',
-              height: { xs: 'calc(100vh - 360px)', sm: 'calc(100vh - 320px)', md: 'calc(100vh - 280px)' }
+              height: { xs: 'calc(100vh - 400px)', sm: 'calc(100vh - 360px)', md: 'calc(100vh - 320px)' }
             }}>
                   <TableContainer sx={{
-                height: 'calc(100% - 52px)'
+                height: 'calc(100% - 52px)',
+                overflowX: 'auto'
               }}>
-                    <Table stickyHeader aria-label="payment submissions table">
+                    <Table stickyHeader aria-label="payment submissions table" sx={{
+                  minWidth: { xs: 800, sm: 900 }
+                }}>
                       <TableHead>
                         <TableRow>
-                          {columns.map(column => <TableCell key={column.id} align={column.align} style={{
-                        minWidth: column.minWidth
+                          {columns.map(column => <TableCell key={column.id} align={column.align} sx={{
+                        minWidth: column.minWidth,
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        padding: { xs: '8px', sm: '16px' }
                       }}>
                               {column.label}
                             </TableCell>)}
@@ -259,59 +263,83 @@ const PaymentSubmissionsPage: React.FC = () => {
                       <TableBody>
                         {filteredSubmissions.length === 0 ? <TableRow>
                             <TableCell colSpan={columns.length} align="center" sx={{
-                        py: 8
+                        py: { xs: 4, sm: 8 }
                       }}>
-                              <div className="text-center">
-                                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">
+                              <div className="text-center px-4">
+                                <FileText className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                                <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base mb-1 sm:mb-2">
                                   {searchTerm ? 'No matching submissions found' : 'No submissions found'}
                                 </p>
-                                <p className="text-gray-400 dark:text-gray-500">
+                                <p className="text-gray-400 dark:text-gray-500 text-xs sm:text-sm">
                                   {searchTerm ? 'Try adjusting your search criteria.' : 'Payment submissions will appear here when students submit payments.'}
                                 </p>
                               </div>
                             </TableCell>
                           </TableRow> : filteredSubmissions.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(submission => <TableRow hover role="checkbox" tabIndex={-1} key={submission.id}>
-                                <TableCell>{submission.username || 'Unknown User'}</TableCell>
-                                <TableCell align="right">
+                                <TableCell sx={{
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          padding: { xs: '8px', sm: '16px' }
+                        }}>{submission.username || 'Unknown User'}</TableCell>
+                                <TableCell align="right" sx={{
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          padding: { xs: '8px', sm: '16px' }
+                        }}>
                                   Rs {parseFloat(submission.submittedAmount || '0').toLocaleString()}
                                 </TableCell>
-                                <TableCell>{submission.transactionId}</TableCell>
-                                <TableCell>
+                                <TableCell sx={{
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          padding: { xs: '8px', sm: '16px' }
+                        }}>{submission.transactionId}</TableCell>
+                                <TableCell sx={{
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          padding: { xs: '8px', sm: '16px' }
+                        }}>
                                   {new Date(submission.paymentDate).toLocaleDateString()}
                                 </TableCell>
-                                <TableCell>
-                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(submission.status)}`}>
+                                <TableCell sx={{
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          padding: { xs: '8px', sm: '16px' }
+                        }}>
+                                  <span className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium border ${getStatusColor(submission.status)}`}>
                                     {submission.status}
                                   </span>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell sx={{
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          padding: { xs: '8px', sm: '16px' }
+                        }}>
                                   {new Date(submission.uploadedAt).toLocaleDateString()}
                                 </TableCell>
-                                <TableCell>
+                                <TableCell sx={{
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          padding: { xs: '8px', sm: '16px' }
+                        }}>
                                   {submission.receiptUrl ? (
                                     <Button 
                                       variant="outline" 
                                       size="sm" 
                                       onClick={() => window.open(submission.receiptUrl, '_blank')} 
-                                      className="flex items-center gap-1"
+                                      className="flex items-center gap-1 text-xs px-2 py-1"
                                     >
                                       <Eye className="h-3 w-3" />
                                       <span className="hidden sm:inline">View</span>
                                     </Button>
                                   ) : (
-                                    <span className="text-muted-foreground text-sm">N/A</span>
+                                    <span className="text-muted-foreground text-xs sm:text-sm">N/A</span>
                                   )}
                                 </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center gap-2">
+                                <TableCell sx={{
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          padding: { xs: '8px', sm: '16px' }
+                        }}>
+                                  <div className="flex items-center gap-1 sm:gap-2">
                                     {canVerifySubmissions && submission.status === 'PENDING' && (
                                       <Button 
                                         onClick={() => setVerifyingSubmission(submission)} 
-                                        className="flex items-center gap-1" 
+                                        className="flex items-center gap-1 text-xs px-2 py-1" 
                                         size="sm"
                                       >
-                                        <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
+                                        <Shield className="h-3 w-3" />
                                         <span className="hidden sm:inline">Verify</span>
                                       </Button>
                                     )}
@@ -321,7 +349,24 @@ const PaymentSubmissionsPage: React.FC = () => {
                       </TableBody>
                     </Table>
                   </TableContainer>
-                  <TablePagination rowsPerPageOptions={[25, 50, 100]} component="div" count={searchTerm ? filteredSubmissions.length : totalCount} rowsPerPage={rowsPerPage} page={page} onPageChange={handleChangePage} onRowsPerPageChange={handleChangeRowsPerPage} />
+                  <TablePagination 
+                    rowsPerPageOptions={[25, 50, 100]} 
+                    component="div" 
+                    count={searchTerm ? filteredSubmissions.length : totalCount} 
+                    rowsPerPage={rowsPerPage} 
+                    page={page} 
+                    onPageChange={handleChangePage} 
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                    sx={{
+                      '.MuiTablePagination-toolbar': {
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        minHeight: { xs: '48px', sm: '52px' }
+                      },
+                      '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                      }
+                    }}
+                  />
                 </Paper>}
             </div>
           </CardContent>

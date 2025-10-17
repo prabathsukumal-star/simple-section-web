@@ -47,7 +47,6 @@ const HomeworkSubmissions = () => {
       currentClassId, 
       currentSubjectId, 
       page,
-      userRole: user?.role,
       userId: user?.id
     });
 

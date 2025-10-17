@@ -1,15 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTableData } from '@/hooks/useTableData';
-import MUITable from '@/components/ui/mui-table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TablePagination from '@mui/material/TablePagination';
+import TableRow from '@mui/material/TableRow';
 import { format } from 'date-fns';
-import { RefreshCw, Filter, X } from 'lucide-react';
+import { RefreshCw, Filter, X, Eye, Plus, FileText } from 'lucide-react';
 import { apiClient } from '@/api/client';
+import { toast } from '@/hooks/use-toast';
 
 interface SMSMessage {
   id: string;
@@ -49,13 +59,23 @@ export default function SMSHistory() {
   const [recipientFilter, setRecipientFilter] = useState<string>('');
   const [messageTypeFilter, setMessageTypeFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [newPaymentOpen, setNewPaymentOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({
+    requestedCredits: '',
+    paymentAmount: '',
+    paymentMethod: 'Bank Transfer',
+    paymentReference: '',
+    submissionNotes: '',
+    paymentSlip: null as File | null
+  });
 
   const {
     state: { data: messages, loading },
     pagination: { page, limit, totalCount },
     actions: { setPage, setLimit, refresh, updateFilters }
   } = useTableData<SMSMessage>({
-    endpoint: selectedInstitute ? `/enhanced-sms/message-history/${selectedInstitute.id}` : '',
+    endpoint: selectedInstitute ? `/sms/message-history/${selectedInstitute.id}` : '',
     autoLoad: !!selectedInstitute,
     defaultParams: {
       recipientFilterType: recipientFilter || undefined,
@@ -104,42 +124,97 @@ export default function SMSHistory() {
     );
   };
 
-  const columns = [
-    {
-      id: 'id',
-      label: 'ID',
-      minWidth: 80,
-      format: (value: string) => `#${value}`
-    },
-    {
-      id: 'sentBy',
-      label: 'Sent By',
-      minWidth: 100
-    },
-    {
-      id: 'messageType',
-      label: 'Message Type',
-      minWidth: 150,
-      format: (value: string) => value.replace(/_/g, ' ')
-    },
-    {
-      id: 'recipientFilterType',
-      label: 'Recipient Filter',
-      minWidth: 150,
-      format: (value: string) => value.replace(/_/g, ' ')
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      minWidth: 120,
-      format: (value: string) => getStatusBadge(value)
-    },
-    {
-      id: 'scheduledAt',
-      label: 'Scheduled At',
-      minWidth: 180,
-      format: (value: string) => (value ? format(new Date(value), 'PPpp') : '-')
+  const [currentPage, setCurrentPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setCurrentPage(newPage);
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(+event.target.value);
+    setLimit(+event.target.value);
+    setCurrentPage(0);
+    setPage(0);
+  };
+
+  const handlePaymentSubmit = async () => {
+    if (!selectedInstitute) return;
+    
+    if (!paymentForm.requestedCredits || !paymentForm.paymentAmount || !paymentForm.paymentReference || !paymentForm.paymentSlip) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields and upload payment slip",
+        variant: "destructive"
+      });
+      return;
     }
+
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append('requestedCredits', paymentForm.requestedCredits);
+      formData.append('paymentAmount', paymentForm.paymentAmount);
+      formData.append('paymentMethod', paymentForm.paymentMethod);
+      formData.append('paymentReference', paymentForm.paymentReference);
+      formData.append('submissionNotes', paymentForm.submissionNotes);
+      formData.append('paymentSlip', paymentForm.paymentSlip);
+
+      const response = await apiClient.post(`/sms/payment/submit?instituteId=${selectedInstitute.id}`, formData);
+
+      toast({
+        title: "Success",
+        description: response.data.message || "Payment submission created successfully"
+      });
+
+      setNewPaymentOpen(false);
+      setPaymentForm({
+        requestedCredits: '',
+        paymentAmount: '',
+        paymentMethod: 'Bank Transfer',
+        paymentReference: '',
+        submissionNotes: '',
+        paymentSlip: null
+      });
+      refresh();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to submit payment",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleViewSlip = (filename: string | null) => {
+    if (!filename) {
+      toast({
+        title: "No slip available",
+        description: "This payment has no slip uploaded",
+        variant: "destructive"
+      });
+      return;
+    }
+    // Open the slip - adjust this URL based on your backend
+    const baseUrl = localStorage.getItem('api_base_url') || 'http://localhost:3000';
+    const slipUrl = `${baseUrl}/sms/payment-slip/${filename}`;
+    window.open(slipUrl, '_blank');
+  };
+
+  const columns = [
+    { id: 'id', label: 'ID', minWidth: 80 },
+    { id: 'messageType', label: 'Message Type', minWidth: 150 },
+    { id: 'recipientFilterType', label: 'Recipient Filter', minWidth: 150 },
+    { id: 'status', label: 'Status', minWidth: 120 },
+    { id: 'maskIdUsed', label: 'Mask ID', minWidth: 150 },
+    { id: 'totalRecipients', label: 'Total Recipients', minWidth: 120 },
+    { id: 'successfulSends', label: 'Successful', minWidth: 100 },
+    { id: 'failedSends', label: 'Failed', minWidth: 100 },
+    { id: 'slip', label: 'Slip', minWidth: 100 },
+    { id: 'actions', label: 'Actions', minWidth: 100 }
   ];
 
   if (!selectedInstitute) {
@@ -158,6 +233,14 @@ export default function SMSHistory() {
           <p className="text-sm sm:text-base text-muted-foreground mt-1">View all sent SMS messages</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => setNewPaymentOpen(true)}
+            className="flex items-center gap-2"
+            size="sm"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">New Payment</span>
+          </Button>
           <Button
             onClick={() => setShowFilters(!showFilters)}
             variant="outline"
@@ -244,21 +327,72 @@ export default function SMSHistory() {
         </div>
       )}
 
-      <MUITable
-        title="SMS Messages"
-        columns={columns}
-        data={messages}
-        page={page}
-        rowsPerPage={limit}
-        totalCount={totalCount}
-        onPageChange={setPage}
-        onRowsPerPageChange={setLimit}
-        rowsPerPageOptions={[10, 25, 50, 100]}
-        onView={handleView}
-        allowAdd={false}
-        allowEdit={false}
-        allowDelete={false}
-      />
+      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+        <TableContainer sx={{ maxHeight: 600 }}>
+          <Table stickyHeader aria-label="sms messages table">
+            <TableHead>
+              <TableRow>
+                {columns.map((column) => (
+                  <TableCell
+                    key={column.id}
+                    style={{ minWidth: column.minWidth }}
+                  >
+                    {column.label}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {messages.map((message) => (
+                <TableRow hover role="checkbox" tabIndex={-1} key={message.id}>
+                  <TableCell>#{message.id}</TableCell>
+                  <TableCell>{message.messageType.replace(/_/g, ' ')}</TableCell>
+                  <TableCell>{message.recipientFilterType.replace(/_/g, ' ')}</TableCell>
+                  <TableCell>{getStatusBadge(message.status)}</TableCell>
+                  <TableCell>{message.maskIdUsed || '-'}</TableCell>
+                  <TableCell>{message.totalRecipients}</TableCell>
+                  <TableCell>
+                    <span className="text-green-600 font-medium">{message.successfulSends}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-red-600 font-medium">{message.failedSends}</span>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleViewSlip((message as any).paymentSlipFilename)}
+                      disabled={!(message as any).paymentSlipFilename}
+                    >
+                      <FileText className="h-4 w-4 mr-1" />
+                      View
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleView(message)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      View
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[10, 25, 50, 100]}
+          component="div"
+          count={totalCount}
+          rowsPerPage={rowsPerPage}
+          page={currentPage}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+      </Paper>
 
       {/* View Details Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
@@ -345,25 +479,25 @@ export default function SMSHistory() {
               )}
 
               <div className="grid grid-cols-2 gap-4">
-                {selectedMessage.scheduledAt && (
+                {selectedMessage.scheduledAt && new Date(selectedMessage.scheduledAt).toString() !== 'Invalid Date' && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Scheduled At</label>
                     <p className="text-base">{format(new Date(selectedMessage.scheduledAt), 'PPpp')}</p>
                   </div>
                 )}
-                {selectedMessage.sentAt && (
+                {selectedMessage.sentAt && new Date(selectedMessage.sentAt).toString() !== 'Invalid Date' && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Sent At</label>
                     <p className="text-base">{format(new Date(selectedMessage.sentAt), 'PPpp')}</p>
                   </div>
                 )}
-                {selectedMessage.approvedAt && (
+                {selectedMessage.approvedAt && new Date(selectedMessage.approvedAt).toString() !== 'Invalid Date' && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Approved At</label>
                     <p className="text-base">{format(new Date(selectedMessage.approvedAt), 'PPpp')}</p>
                   </div>
                 )}
-                {selectedMessage.completedAt && (
+                {selectedMessage.completedAt && new Date(selectedMessage.completedAt).toString() !== 'Invalid Date' && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Completed At</label>
                     <p className="text-base">{format(new Date(selectedMessage.completedAt), 'PPpp')}</p>
@@ -388,15 +522,124 @@ export default function SMSHistory() {
               <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
                 <div>
                   <label className="font-medium">Created At</label>
-                  <p>{format(new Date(selectedMessage.createdAt), 'PPpp')}</p>
+                  <p>{selectedMessage.createdAt ? format(new Date(selectedMessage.createdAt), 'PPpp') : 'N/A'}</p>
                 </div>
                 <div>
                   <label className="font-medium">Updated At</label>
-                  <p>{format(new Date(selectedMessage.updatedAt), 'PPpp')}</p>
+                  <p>{selectedMessage.updatedAt ? format(new Date(selectedMessage.updatedAt), 'PPpp') : 'N/A'}</p>
                 </div>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* New Payment Dialog */}
+      <Dialog open={newPaymentOpen} onOpenChange={setNewPaymentOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Submit Payment for SMS Credits</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="requestedCredits">Requested Credits *</Label>
+                <Input
+                  id="requestedCredits"
+                  type="number"
+                  placeholder="1000"
+                  value={paymentForm.requestedCredits}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, requestedCredits: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="paymentAmount">Payment Amount *</Label>
+                <Input
+                  id="paymentAmount"
+                  type="number"
+                  step="0.01"
+                  placeholder="1000.00"
+                  value={paymentForm.paymentAmount}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, paymentAmount: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="paymentMethod">Payment Method *</Label>
+              <Select 
+                value={paymentForm.paymentMethod} 
+                onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentMethod: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="Cash">Cash</SelectItem>
+                  <SelectItem value="Credit Card">Credit Card</SelectItem>
+                  <SelectItem value="Online Payment">Online Payment</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="paymentReference">Payment Reference *</Label>
+              <Input
+                id="paymentReference"
+                placeholder="TXN12345"
+                value={paymentForm.paymentReference}
+                onChange={(e) => setPaymentForm({ ...paymentForm, paymentReference: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="submissionNotes">Submission Notes</Label>
+              <Textarea
+                id="submissionNotes"
+                placeholder="Payment made on 2024-10-07 via online banking"
+                value={paymentForm.submissionNotes}
+                onChange={(e) => setPaymentForm({ ...paymentForm, submissionNotes: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="paymentSlip">Payment Slip *</Label>
+              <Input
+                id="paymentSlip"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setPaymentForm({ ...paymentForm, paymentSlip: file });
+                  }
+                }}
+              />
+              {paymentForm.paymentSlip && (
+                <p className="text-sm text-muted-foreground">
+                  Selected: {paymentForm.paymentSlip.name}
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setNewPaymentOpen(false)}
+                disabled={submitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handlePaymentSubmit}
+                disabled={submitting}
+              >
+                {submitting ? 'Submitting...' : 'Submit Payment'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

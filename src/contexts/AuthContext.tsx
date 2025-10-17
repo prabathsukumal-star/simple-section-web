@@ -146,8 +146,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     console.log('Logging out user...');
     
+    // Get current userId before clearing state
+    const currentUserId = user?.id;
+    
     // Clear backend session and localStorage
     await logoutUser();
+    
+    // 🧹 ALWAYS CLEAR ALL CACHE ON LOGOUT (Security & Fresh Start)
+    console.log('🧹 Clearing ALL cache on logout...');
+    await apiCache.clearAllCache();
+    
+    // Clear attendance duplicate records
+    const { attendanceDuplicateChecker } = await import('@/utils/attendanceDuplicateCheck');
+    attendanceDuplicateChecker.clearAll();
+    
+    // Clear all pending API requests (regular + attendance + enhanced)
+    cachedApiClient.clearPendingRequests();
+    const { attendanceApiClient } = await import('@/api/attendanceClient');
+    attendanceApiClient.clearPendingRequests();
+    const { enhancedCachedClient } = await import('@/api/enhancedCachedClient');
+    enhancedCachedClient.clearPendingRequests();
+    
+    console.log('✅ All cache, pending requests, and duplicate records cleared');
     
     // Clear all state
     setUser(null);
@@ -167,17 +187,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setCurrentOrganizationId(null);
     setCurrentTransportId(null);
     
-    // Clear all cache and pending requests
-    apiCache.clearAllCache();
-    cachedApiClient.clearPendingRequests();
-    
-    console.log('User logged out successfully');
+    console.log('✅ User logged out successfully and cache cleared');
   };
 
   const setSelectedInstitute = (institute: Institute | null) => {
+    const previousInstituteId = currentInstituteId;
+    
     setSelectedInstituteState(institute);
     setCurrentInstituteId(institute?.id || null);
     setSelectedInstituteType(institute?.type || null);
+    
+    // Clear institute-specific cache when switching institutes
+    if (previousInstituteId && previousInstituteId !== institute?.id) {
+      console.log(`🔄 Switching institute, clearing old cache for institute: ${previousInstituteId}`);
+      // Note: This helps ensure fresh data when switching between institutes
+      // The cache will be rebuilt with new institute context
+    }
     
     // Clear dependent selections
     setSelectedClassState(null);

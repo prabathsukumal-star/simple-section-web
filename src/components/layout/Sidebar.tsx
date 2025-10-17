@@ -349,6 +349,13 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             permission: 'view-students',
             alwaysShow: false
           },
+          {
+            id: 'unverified-students',
+            label: 'Unverified Students',
+            icon: AlertCircle,
+            permission: 'view-students',
+            alwaysShow: false
+          },
         ];
       }
 
@@ -380,6 +387,13 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             id: 'students',
             label: 'Students',
             icon: GraduationCap,
+            permission: 'view-students',
+            alwaysShow: false
+          },
+          {
+            id: 'unverified-students',
+            label: 'Unverified Students',
+            icon: AlertCircle,
             permission: 'view-students',
             alwaysShow: false
           },
@@ -507,6 +521,13 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             id: 'students',
             label: 'Students',
             icon: GraduationCap,
+            permission: 'view-students',
+            alwaysShow: false
+          },
+          {
+            id: 'unverified-students',
+            label: 'Unverified Students',
+            icon: AlertCircle,
             permission: 'view-students',
             alwaysShow: false
           },

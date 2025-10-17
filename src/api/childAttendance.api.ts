@@ -1,5 +1,6 @@
 import { attendanceApiClient } from './attendanceClient';
 import { getAttendanceUrl, getApiHeaders, getBaseUrl } from '@/contexts/utils/auth.api';
+import { attendanceDuplicateChecker } from '@/utils/attendanceDuplicateCheck';
 
 export interface ChildAttendanceRecord {
   attendanceId: string;
@@ -41,6 +42,8 @@ export interface ChildAttendanceParams {
   endDate?: string;
   page?: number;
   limit?: number;
+  userId?: string;
+  role?: string;
 }
 
 export interface MarkAttendanceByCardRequest {
@@ -109,6 +112,25 @@ class ChildAttendanceApi {
   }
 
   async markAttendanceByCard(request: MarkAttendanceByCardRequest): Promise<MarkAttendanceByCardResponse> {
+    // Get current user ID from localStorage
+    const userId = localStorage.getItem('userId') || 'unknown';
+
+    // 🛡️ CHECK FOR DUPLICATE ATTENDANCE
+    const isDuplicate = attendanceDuplicateChecker.isDuplicate({
+      userId,
+      studentCardId: request.studentCardId,
+      instituteId: request.instituteId,
+      classId: request.classId,
+      subjectId: request.subjectId,
+      status: request.status,
+      method: request.markingMethod
+    });
+
+    if (isDuplicate) {
+      console.warn('⚠️ DUPLICATE ATTENDANCE PREVENTED - Already marked recently');
+      throw new Error('This attendance was already marked recently. Please wait a few minutes before marking again.');
+    }
+
     let attendanceBaseUrl = getAttendanceUrl();
     if (!attendanceBaseUrl) {
       // Use main API URL as fallback
@@ -177,10 +199,41 @@ class ChildAttendanceApi {
     console.log('Response Body:', JSON.stringify(result, null, 2));
     console.log('Original Request:', JSON.stringify(requestBody, null, 2));
     console.log('===============================');
+    
+    // ✅ RECORD ATTENDANCE LOCALLY TO PREVENT DUPLICATES
+    attendanceDuplicateChecker.recordAttendance({
+      userId,
+      studentCardId: request.studentCardId,
+      instituteId: request.instituteId,
+      classId: request.classId,
+      subjectId: request.subjectId,
+      status: request.status,
+      method: request.markingMethod
+    });
+    
     return result;
   }
 
   async markAttendance(request: MarkAttendanceRequest): Promise<MarkAttendanceResponse> {
+    // Get current user ID from localStorage
+    const userId = localStorage.getItem('userId') || 'unknown';
+
+    // 🛡️ CHECK FOR DUPLICATE ATTENDANCE
+    const isDuplicate = attendanceDuplicateChecker.isDuplicate({
+      userId,
+      studentId: request.studentId,
+      instituteId: request.instituteId,
+      classId: request.classId,
+      subjectId: request.subjectId,
+      status: request.status,
+      method: request.markingMethod
+    });
+
+    if (isDuplicate) {
+      console.warn('⚠️ DUPLICATE ATTENDANCE PREVENTED - Already marked recently');
+      throw new Error('This attendance was already marked recently. Please wait a few minutes before marking again.');
+    }
+
     let attendanceBaseUrl = getAttendanceUrl();
     if (!attendanceBaseUrl) {
       // Use main API URL as fallback
@@ -260,6 +313,18 @@ class ChildAttendanceApi {
     console.log('Response Body:', JSON.stringify(result, null, 2));
     console.log('Original Request:', JSON.stringify(requestBody, null, 2));
     console.log('===============================');
+    
+    // ✅ RECORD ATTENDANCE LOCALLY TO PREVENT DUPLICATES
+    attendanceDuplicateChecker.recordAttendance({
+      userId,
+      studentId: request.studentId,
+      instituteId: request.instituteId,
+      classId: request.classId,
+      subjectId: request.subjectId,
+      status: request.status,
+      method: request.markingMethod
+    });
+    
     return result;
   }
 }

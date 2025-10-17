@@ -1,3 +1,4 @@
+import { CACHE_TTL, getTTLForEndpoint } from '@/config/cacheTTL';
 
 interface CacheEntry<T = any> {
   data: T;
@@ -8,13 +9,18 @@ interface CacheEntry<T = any> {
 interface CacheOptions {
   ttl?: number; // Time to live in minutes
   forceRefresh?: boolean;
+  userId?: string;
+  role?: string;
+  instituteId?: string;
+  classId?: string;
+  subjectId?: string;
 }
 
 type StorageType = 'indexeddb' | 'localstorage' | 'memory';
 
 class ApiCacheManager {
   private static instance: ApiCacheManager;
-  private readonly DEFAULT_TTL = 30; // 30 minutes default cache
+  private readonly DEFAULT_TTL = CACHE_TTL.DEFAULT; // 60 minutes default cache (1 hour)
   private readonly CACHE_PREFIX = 'api_cache_';
   private readonly DB_NAME = 'ApiCacheDB';
   private readonly DB_VERSION = 1;
@@ -102,9 +108,24 @@ class ApiCacheManager {
     });
   }
 
-  private generateCacheKey(endpoint: string, params?: Record<string, any>): string {
+  private generateCacheKey(endpoint: string, params?: Record<string, any>, options?: CacheOptions): string {
     const paramString = params ? JSON.stringify(params) : '';
-    return `${this.CACHE_PREFIX}${endpoint}_${paramString}`;
+    // Include user context for proper cache isolation
+    const contextString = options ? JSON.stringify({
+      userId: options.userId,
+      role: options.role,
+      instituteId: options.instituteId,
+      classId: options.classId,
+      subjectId: options.subjectId
+    }) : '';
+    const cacheKey = `${this.CACHE_PREFIX}${endpoint}_${paramString}_${contextString}`;
+    console.log('🔑 Generated cache key:', { 
+      endpoint, 
+      params, 
+      context: options, 
+      cacheKey 
+    });
+    return cacheKey;
   }
 
   private isExpired(entry: CacheEntry, ttlMinutes: number): boolean {
@@ -119,11 +140,15 @@ class ApiCacheManager {
     }
   }
 
-  async setCache<T>(endpoint: string, data: T, params?: Record<string, any>, ttlMinutes?: number): Promise<void> {
+  async setCache<T>(endpoint: string, data: T, params?: Record<string, any>, ttlMinutes?: number, options?: CacheOptions): Promise<void> {
     await this.waitForInit();
     
     try {
-      const cacheKey = this.generateCacheKey(endpoint, params);
+      // Auto-detect TTL based on endpoint if not provided
+      const autoTTL = getTTLForEndpoint(endpoint);
+      const effectiveTTL = ttlMinutes || autoTTL;
+      
+      const cacheKey = this.generateCacheKey(endpoint, params, options);
       const entry: CacheEntry<T> = {
         data,
         timestamp: Date.now(),
@@ -142,7 +167,14 @@ class ApiCacheManager {
           break;
       }
       
-      console.log(`Cache set for ${endpoint}:`, { cacheKey, dataLength: Array.isArray(data) ? data.length : 1, storageType: this.storageType });
+      console.log(`✅ Cache SET for ${endpoint}:`, { 
+        userId: options?.userId, 
+        role: options?.role,
+        dataLength: Array.isArray(data) ? data.length : 1, 
+        storageType: this.storageType,
+        ttl: `${effectiveTTL} minutes`,
+        expiresAt: new Date(Date.now() + effectiveTTL * 60 * 1000).toLocaleTimeString()
+      });
     } catch (error) {
       console.warn('Failed to set cache:', error);
     }
@@ -152,14 +184,25 @@ class ApiCacheManager {
     await this.waitForInit();
     
     try {
-      const { ttl = this.DEFAULT_TTL, forceRefresh = false } = options;
+      // Auto-detect TTL based on endpoint if not provided
+      const autoTTL = getTTLForEndpoint(endpoint);
+      const { ttl = autoTTL, forceRefresh = false } = options;
       
       if (forceRefresh) {
-        console.log(`Force refresh requested for ${endpoint}`);
+        console.log(`⚠️ Force refresh requested for ${endpoint}`);
         return null;
       }
 
-      const cacheKey = this.generateCacheKey(endpoint, params);
+      const cacheKey = this.generateCacheKey(endpoint, params, options);
+      console.log(`🔍 ApiCache.getCache() called:`, { 
+        endpoint, 
+        cacheKey, 
+        storageType: this.storageType,
+        userId: options?.userId,
+        role: options?.role,
+        ttl: `${ttl} minutes`
+      });
+      
       let entry: CacheEntry<T> | null = null;
 
       switch (this.storageType) {
@@ -175,17 +218,32 @@ class ApiCacheManager {
       }
       
       if (!entry) {
-        console.log(`No cache found for ${endpoint}`);
+        console.log(`❌ ApiCache: No cache entry found for ${endpoint}`, {
+          cacheKey,
+          userId: options?.userId,
+          role: options?.role,
+          storageType: this.storageType
+        });
         return null;
       }
       
       if (this.isExpired(entry, ttl)) {
-        console.log(`Cache expired for ${endpoint}`);
+        console.log(`⏰ ApiCache: Cache expired for ${endpoint}`, {
+          age: (Date.now() - entry.timestamp) / 1000 / 60,
+          ttl
+        });
         await this.clearCache(endpoint, params);
         return null;
       }
 
-      console.log(`Cache hit for ${endpoint}:`, { cacheKey, dataLength: Array.isArray(entry.data) ? entry.data.length : 1, storageType: this.storageType });
+      console.log(`✅ ApiCache: Cache HIT for ${endpoint}:`, { 
+        cacheKey, 
+        dataLength: Array.isArray(entry.data) ? entry.data.length : 1, 
+        storageType: this.storageType,
+        age: `${((Date.now() - entry.timestamp) / 1000 / 60).toFixed(1)} minutes`,
+        ttl: `${ttl} minutes`,
+        expiresIn: `${(ttl - ((Date.now() - entry.timestamp) / 1000 / 60)).toFixed(1)} minutes`
+      });
       return entry.data;
     } catch (error) {
       console.warn('Failed to get cache:', error);
@@ -280,7 +338,8 @@ class ApiCacheManager {
         case 'localstorage':
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && key.startsWith(this.CACHE_PREFIX) && key.includes(`/users/${userId}/`)) {
+            // Match any cache entry that contains the userId in the context
+            if (key && key.startsWith(this.CACHE_PREFIX) && key.includes(`"userId":"${userId}"`)) {
               keysToRemove.push(key);
             }
           }
@@ -288,7 +347,8 @@ class ApiCacheManager {
           break;
         case 'memory':
           for (const [key] of this.memoryCache) {
-            if (key.startsWith(this.CACHE_PREFIX) && key.includes(`/users/${userId}/`)) {
+            // Match any cache entry that contains the userId in the context
+            if (key.startsWith(this.CACHE_PREFIX) && key.includes(`"userId":"${userId}"`)) {
               keysToRemove.push(key);
             }
           }
@@ -296,7 +356,7 @@ class ApiCacheManager {
           break;
       }
 
-      console.log(`Cleared ${keysToRemove.length} cache entries for user ${userId}`);
+      console.log(`🔒 Cleared ${keysToRemove.length} cache entries for user ${userId}`);
     } catch (error) {
       console.warn('Failed to clear user cache:', error);
     }
@@ -309,16 +369,20 @@ class ApiCacheManager {
       const transaction = this.db!.transaction([this.STORE_NAME], 'readwrite');
       const store = transaction.objectStore(this.STORE_NAME);
       const request = store.openCursor();
+      let deletedCount = 0;
       
       request.onsuccess = (event) => {
         const cursor = (event.target as IDBRequest).result;
         if (cursor) {
           const key = cursor.value.key;
-          if (key.startsWith(this.CACHE_PREFIX) && key.includes(`/users/${userId}/`)) {
+          // Match any cache entry that contains the userId in the context
+          if (key.startsWith(this.CACHE_PREFIX) && key.includes(`"userId":"${userId}"`)) {
             cursor.delete();
+            deletedCount++;
           }
           cursor.continue();
         } else {
+          console.log(`🔒 Deleted ${deletedCount} IndexedDB entries for user ${userId}`);
           resolve();
         }
       };
@@ -444,6 +508,126 @@ class ApiCacheManager {
       request.onerror = () => reject(request.error);
     });
   }
+
+  /**
+   * Clear all expired cache entries across all storage types
+   * This helps maintain cache hygiene and free up storage space
+   */
+  async clearExpiredEntries(): Promise<number> {
+    await this.waitForInit();
+    
+    let clearedCount = 0;
+    
+    try {
+      switch (this.storageType) {
+        case 'indexeddb':
+          clearedCount = await this.clearExpiredIndexedDBEntries();
+          break;
+        case 'localstorage':
+          clearedCount = this.clearExpiredLocalStorageEntries();
+          break;
+        case 'memory':
+          clearedCount = this.clearExpiredMemoryEntries();
+          break;
+      }
+      
+      console.log(`🧹 Cleared ${clearedCount} expired cache entries`);
+    } catch (error) {
+      console.warn('Failed to clear expired entries:', error);
+    }
+    
+    return clearedCount;
+  }
+
+  private async clearExpiredIndexedDBEntries(): Promise<number> {
+    if (!this.db) return 0;
+    
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([this.STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(this.STORE_NAME);
+      const request = store.openCursor();
+      let deletedCount = 0;
+      
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest).result;
+        if (cursor) {
+          const entry: CacheEntry = cursor.value;
+          // Use default TTL for expired check
+          if (this.isExpired(entry, this.DEFAULT_TTL)) {
+            cursor.delete();
+            deletedCount++;
+          }
+          cursor.continue();
+        } else {
+          resolve(deletedCount);
+        }
+      };
+      
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  private clearExpiredLocalStorageEntries(): number {
+    const keysToRemove: string[] = [];
+    
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(this.CACHE_PREFIX)) {
+        try {
+          const cachedItem = localStorage.getItem(key);
+          if (cachedItem) {
+            const entry: CacheEntry = JSON.parse(cachedItem);
+            if (this.isExpired(entry, this.DEFAULT_TTL)) {
+              keysToRemove.push(key);
+            }
+          }
+        } catch (error) {
+          // If parsing fails, remove the corrupted entry
+          keysToRemove.push(key);
+        }
+      }
+    }
+    
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    return keysToRemove.length;
+  }
+
+  private clearExpiredMemoryEntries(): number {
+    const keysToRemove: string[] = [];
+    
+    for (const [key, entry] of this.memoryCache) {
+      if (this.isExpired(entry, this.DEFAULT_TTL)) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    keysToRemove.forEach(key => this.memoryCache.delete(key));
+    return keysToRemove.length;
+  }
+
+  /**
+   * Initialize periodic cache maintenance
+   * Clears expired entries every 5 minutes
+   */
+  startPeriodicMaintenance(): void {
+    // Clear expired entries every 5 minutes
+    setInterval(async () => {
+      const clearedCount = await this.clearExpiredEntries();
+      if (clearedCount > 0) {
+        console.log(`🧹 Periodic maintenance: Removed ${clearedCount} expired cache entries`);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    console.log('🔧 Periodic cache maintenance started (runs every 5 minutes)');
+  }
 }
 
 export const apiCache = ApiCacheManager.getInstance();
+
+// Start periodic cache maintenance automatically
+if (typeof window !== 'undefined') {
+  // Start maintenance after a short delay to allow initialization
+  setTimeout(() => {
+    apiCache.startPeriodicMaintenance();
+  }, 10000); // Start after 10 seconds
+}

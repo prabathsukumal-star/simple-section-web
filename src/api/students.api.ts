@@ -1,5 +1,6 @@
 
 import { apiClient } from './client';
+import { enhancedCachedClient } from './enhancedCachedClient';
 
 export interface StudentCreateData {
   user: {
@@ -72,14 +73,67 @@ export interface AssignParentResponse {
   timestamp: string;
 }
 
+export interface GetStudentParams {
+  userId?: string;
+  role?: string;
+  instituteId?: string;
+  classId?: string;
+}
+
 export const studentsApi = {
-  create: async (data: StudentCreateData): Promise<Student> => {
-    const response = await apiClient.post('/students', data);
-    return response.data;
+  // Get single student by userId with enhanced caching
+  getById: async (userId: string, params?: GetStudentParams, forceRefresh = false): Promise<Student> => {
+    return enhancedCachedClient.get(`/students/${userId}`, undefined, {
+      forceRefresh,
+      ttl: 15,
+      useStaleWhileRevalidate: true,
+      userId: params?.userId,
+      instituteId: params?.instituteId,
+      classId: params?.classId,
+      role: params?.role
+    });
+  },
+
+  // Create student with auto-invalidation
+  create: async (data: StudentCreateData, instituteId?: string): Promise<Student> => {
+    return enhancedCachedClient.post('/students', data, {
+      instituteId
+    });
   },
   
-  assignParent: async (studentId: string, data: AssignParentData): Promise<AssignParentResponse> => {
-    const response = await apiClient.patch(`/students/${studentId}/assign-parent`, data);
-    return response.data;
+  // Assign parent with auto-invalidation
+  assignParent: async (studentId: string, data: AssignParentData, instituteId?: string): Promise<AssignParentResponse> => {
+    return enhancedCachedClient.patch(`/students/${studentId}/assign-parent`, data, {
+      instituteId
+    });
+  },
+
+  // Utility methods
+  hasStudentCached: async (userId: string, params?: GetStudentParams): Promise<boolean> => {
+    return enhancedCachedClient.hasCache(`/students/${userId}`, undefined, {
+      userId: params?.userId,
+      instituteId: params?.instituteId,
+      classId: params?.classId,
+      role: params?.role
+    });
+  },
+
+  getCachedStudent: async (userId: string, params?: GetStudentParams): Promise<Student | null> => {
+    return enhancedCachedClient.getCachedOnly<Student>(`/students/${userId}`, undefined, {
+      userId: params?.userId,
+      instituteId: params?.instituteId,
+      classId: params?.classId,
+      role: params?.role
+    });
+  },
+
+  preloadStudent: async (userId: string, params?: GetStudentParams): Promise<void> => {
+    await enhancedCachedClient.get<Student>(`/students/${userId}`, undefined, {
+      ttl: 15,
+      userId: params?.userId,
+      instituteId: params?.instituteId,
+      classId: params?.classId,
+      role: params?.role
+    });
   }
 };

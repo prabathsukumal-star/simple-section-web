@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
+import { useContextUrlSync } from '@/utils/pageNavigation';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Building2, BookOpen, GraduationCap, User, Palette, Menu, X, ArrowLeft } from 'lucide-react';
@@ -125,6 +126,9 @@ const AppContent = ({ initialPage }: AppContentProps) => {
       return 'dashboard';
     }
   });
+  
+  // 🔗 Sync URL with context automatically
+  useContextUrlSync(currentPage);
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [organizationLoginData, setOrganizationLoginData] = useState<any>(null);

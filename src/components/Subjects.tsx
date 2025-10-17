@@ -52,6 +52,7 @@ const Subjects = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const userRole = useInstituteRole();
 
   // Enhanced pagination with useTableData hook - DISABLE AUTO-LOADING
   const tableData = useTableData<SubjectData>({
@@ -60,6 +61,12 @@ const Subjects = () => {
       ...(selectedInstituteType && {
         instituteType: selectedInstituteType
       })
+    },
+    cacheOptions: {
+      ttl: 15, // Cache for 15 minutes
+      userId: user?.id,
+      role: userRole || 'User',
+      instituteId: currentInstituteId || undefined
     },
     dependencies: [], // Remove dependencies to prevent auto-reloading
     pagination: {
@@ -77,7 +84,6 @@ const Subjects = () => {
     actions
   } = tableData;
   const dataLoaded = subjectsData.length > 0;
-  const userRole = useInstituteRole();
   const isInstituteAdmin = userRole === 'InstituteAdmin';
   const canEdit = AccessControl.hasPermission(userRole, 'edit-subject') && !isInstituteAdmin;
   const canDelete = AccessControl.hasPermission(userRole, 'delete-subject') && !isInstituteAdmin;

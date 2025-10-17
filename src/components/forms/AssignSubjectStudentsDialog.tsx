@@ -129,7 +129,6 @@ const AssignSubjectStudentsDialog: React.FC<AssignSubjectStudentsDialogProps> = 
         subjectName: selectedSubject.name,
         className: selectedClass.name,
         studentIds: selectedStudentIds,
-        userRole: user?.role,
         timestamp: new Date().toISOString()
       });
       

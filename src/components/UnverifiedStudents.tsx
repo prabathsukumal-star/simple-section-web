@@ -73,7 +73,7 @@ const UnverifiedStudents = () => {
   const [limit, setLimit] = useState(50);
   const [rowsPerPageOptions] = useState([25, 50, 100]);
 
-  const fetchUnverifiedStudents = async (page: number = 1) => {
+  const fetchUnverifiedStudents = async (page: number = 0) => {
     if (!selectedInstitute || !selectedClass) return;
     
     setLoading(true);
@@ -382,7 +382,7 @@ const UnverifiedStudents = () => {
           </p>
         </div>
         <Button 
-          onClick={() => fetchUnverifiedStudents(1)}
+          onClick={() => fetchUnverifiedStudents(0)}
           disabled={loading}
           className="flex items-center gap-2"
         >
@@ -501,13 +501,13 @@ const UnverifiedStudents = () => {
             rowsPerPage={limit}
             page={currentPage}
             onPageChange={(event: unknown, newPage: number) => {
-              fetchUnverifiedStudents(newPage + 1); // Convert back to 1-based for API
+              fetchUnverifiedStudents(newPage); // MUI uses 0-based, API uses 1-based (converted in function)
             }}
             onRowsPerPageChange={(event: React.ChangeEvent<HTMLInputElement>) => {
               const newLimit = parseInt(event.target.value, 10);
               setLimit(newLimit);
               setCurrentPage(0);
-              fetchUnverifiedStudents(1);
+              fetchUnverifiedStudents(0);
             }}
           />
         </Paper>

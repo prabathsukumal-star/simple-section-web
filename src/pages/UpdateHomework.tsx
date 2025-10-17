@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { getBaseUrl, getApiHeaders } from '@/contexts/utils/auth.api';
 import AppLayout from '@/components/layout/AppLayout';
 
@@ -16,11 +17,12 @@ const UpdateHomework = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const userRole = useInstituteRole();
   const [loading, setLoading] = useState(false);
   const [homework, setHomework] = useState<any>(null);
   
   // Check if user has permission to update homework - Teachers only
-  const canUpdate = user?.role === 'Teacher';
+  const canUpdate = userRole === 'Teacher';
   
   const [formData, setFormData] = useState({
     title: '',
