@@ -17,7 +17,6 @@ import UpdateClassForm from '@/components/forms/UpdateClassForm';
 import { AccessControl } from '@/utils/permissions';
 import { UserRole } from '@/contexts/types/auth.types';
 import { useTableData } from '@/hooks/useTableData';
-import { cachedApiClient } from '@/api/cachedClient';
 
 interface ClassData {
   id: string;
@@ -104,7 +103,7 @@ const Classes = () => {
     };
   };
 
-  const fetchClasses = async (forceRefresh = false) => {
+  const fetchClasses = async () => {
     if (!selectedInstitute?.id) {
       toast({
         title: "Missing Information",
@@ -116,49 +115,47 @@ const Classes = () => {
 
     setLoading(true);
     try {
-      const params = {
-        page: page + 1, // API expects 1-based pagination
-        limit: rowsPerPage,
+      const params = new URLSearchParams({
+        page: (page + 1).toString(), // API expects 1-based pagination
+        limit: rowsPerPage.toString(),
         instituteId: selectedInstitute.id,
-      };
-
-      const data = await cachedApiClient.get(
-        '/institute-classes',
-        params,
-        {
-          ttl: 15, // Cache for 15 minutes
-          forceRefresh,
-          userId: user?.id,
-          role: userRole || 'User',
-          instituteId: selectedInstitute.id
-        }
-      );
-      
-      let classesArray = [];
-      let totalCount = 0;
-      
-      // Handle different response structures
-      if (Array.isArray(data)) {
-        // Direct array response
-        classesArray = data;
-        totalCount = data.length;
-      } else if (data.data && Array.isArray(data.data)) {
-        // Paginated response with meta
-        classesArray = data.data;
-        totalCount = data.meta?.total || data.data.length;
-      } else {
-        // Fallback
-        classesArray = [];
-        totalCount = 0;
-      }
-      
-      setClasses(classesArray);
-      setTotalCount(totalCount);
-      
-      toast({
-        title: "Classes Loaded",
-        description: `Successfully loaded ${classesArray.length} classes.`
       });
+
+      const response = await fetch(
+        `${getBaseUrl()}/institute-classes?${params}`,
+        { headers: getApiHeaders() }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        let classesArray = [];
+        let totalCount = 0;
+        
+        // Handle different response structures
+        if (Array.isArray(data)) {
+          // Direct array response
+          classesArray = data;
+          totalCount = data.length;
+        } else if (data.data && Array.isArray(data.data)) {
+          // Paginated response with meta
+          classesArray = data.data;
+          totalCount = data.meta?.total || data.data.length;
+        } else {
+          // Fallback
+          classesArray = [];
+          totalCount = 0;
+        }
+        
+        setClasses(classesArray);
+        setTotalCount(totalCount);
+        
+        toast({
+          title: "Classes Loaded",
+          description: `Successfully loaded ${classesArray.length} classes.`
+        });
+      } else {
+        throw new Error('Failed to fetch classes');
+      }
     } catch (error) {
       console.error('Error fetching classes:', error);
       toast({
@@ -217,11 +214,7 @@ const Classes = () => {
 
   const handleLoadData = () => {
     setHasAttemptedLoad(true);
-    fetchClasses(false); // Normal load with cache
-  };
-  
-  const handleRefresh = () => {
-    fetchClasses(true); // Force refresh, bypass cache
+    fetchClasses();
   };
 
   const handleClearFilters = () => {
@@ -233,20 +226,18 @@ const Classes = () => {
   const handleViewCode = async (classId: string) => {
     setLoadingCode(true);
     try {
-      const data = await cachedApiClient.get(
-        `/institute-classes/${classId}/enrollment-code`,
-        {},
-        {
-          ttl: 10, // Cache for 10 minutes (enrollment codes don't change often)
-          forceRefresh: false,
-          userId: user?.id,
-          role: userRole || 'User',
-          instituteId: selectedInstitute?.id
-        }
+      const response = await fetch(
+        `${getBaseUrl()}/institute-classes/${classId}/enrollment-code`,
+        { headers: getApiHeaders() }
       );
-      
-      setEnrollmentCodeData(data);
-      setIsViewCodeDialogOpen(true);
+
+      if (response.ok) {
+        const data = await response.json();
+        setEnrollmentCodeData(data);
+        setIsViewCodeDialogOpen(true);
+      } else {
+        throw new Error('Failed to fetch enrollment code');
+      }
     } catch (error) {
       console.error('Error fetching enrollment code:', error);
       toast({
@@ -419,7 +410,7 @@ const Classes = () => {
             <span className="hidden sm:inline">Filters</span>
           </Button>
           
-          <Button onClick={handleRefresh} disabled={loading} variant="outline" size="sm">
+          <Button onClick={handleLoadData} disabled={loading} variant="outline" size="sm">
             <RefreshCw className={`h-4 w-4 sm:mr-2 ${loading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">{loading ? 'Loading...' : 'Refresh'}</span>
           </Button>

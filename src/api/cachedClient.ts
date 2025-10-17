@@ -6,11 +6,6 @@ export interface CachedRequestOptions {
   ttl?: number;
   forceRefresh?: boolean;
   useStaleWhileRevalidate?: boolean;
-  userId?: string;
-  role?: string;
-  instituteId?: string;
-  classId?: string;
-  subjectId?: string;
 }
 
 class CachedApiClient {
@@ -25,16 +20,8 @@ class CachedApiClient {
     this.baseUrl = getBaseUrl();
   }
 
-  private generateRequestKey(endpoint: string, params?: Record<string, any>, options?: CachedRequestOptions): string {
-    // Include user context in the cache key for proper isolation
-    const contextKey = {
-      userId: options?.userId,
-      role: options?.role,
-      instituteId: options?.instituteId,
-      classId: options?.classId,
-      subjectId: options?.subjectId
-    };
-    return `${endpoint}_${JSON.stringify(params || {})}_${JSON.stringify(contextKey)}`;
+  private generateRequestKey(endpoint: string, params?: Record<string, any>): string {
+    return `${endpoint}_${JSON.stringify(params || {})}`;
   }
 
   private isInCooldown(requestKey: string): boolean {
@@ -79,65 +66,35 @@ class CachedApiClient {
       useStaleWhileRevalidate = true 
     } = options;
 
-    const requestKey = this.generateRequestKey(endpoint, params, options);
+    const requestKey = this.generateRequestKey(endpoint, params);
     
-    console.log('🔍 CachedClient.get() called:', { 
-      endpoint, 
-      params, 
-      requestKey,
-      userId: options.userId,
-      role: options.role,
-      forceRefresh 
-    });
-    
+    // Check cooldown period to prevent spam
+    if (this.isInCooldown(requestKey) && !forceRefresh) {
+      console.log('Request is in cooldown period, skipping:', requestKey);
+      throw new Error('Request in cooldown period');
+    }
+
     // Try to get from cache first (unless forcing refresh)
     if (!forceRefresh) {
       try {
-        const cachedData = await apiCache.getCache<T>(endpoint, params, { ttl, forceRefresh, ...options });
+        const cachedData = await apiCache.getCache<T>(endpoint, params, { ttl, forceRefresh });
         if (cachedData !== null) {
-          console.log('✅ Cache HIT for:', endpoint, 'User:', options.userId);
+          console.log('Cache hit for:', endpoint);
           return cachedData;
         }
-        console.log('❌ Cache MISS for:', endpoint, 'User:', options.userId);
       } catch (error) {
         console.warn('Cache retrieval failed:', error);
       }
-    } else {
-      console.log('⚠️ Force refresh enabled, skipping cache for:', endpoint);
-    }
-    
-    // Check cooldown period to prevent spam (AFTER checking cache)
-    if (this.isInCooldown(requestKey) && !forceRefresh) {
-      console.log('⏱️ Request in cooldown, returning cached data or waiting:', requestKey);
-      // Return cached data if available (even if expired)
-      try {
-        const staleCachedData = await apiCache.getCache<T>(endpoint, params, { 
-          ttl: 999999, // Accept any cached data
-          forceRefresh: false, 
-          ...options 
-        });
-        if (staleCachedData !== null) {
-          console.log('✅ Returning stale cache during cooldown:', endpoint);
-          return staleCachedData;
-        }
-      } catch (error) {
-        console.warn('No cached data available during cooldown');
-      }
-      // If there's already a pending request, wait for it
-      if (this.pendingRequests.has(requestKey)) {
-        console.log('♻️ Reusing pending request for:', requestKey);
-        return this.pendingRequests.get(requestKey)!;
-      }
     }
 
-    // Check if there's already a pending request for the same data (not in cooldown check)
-    if (!this.isInCooldown(requestKey) && this.pendingRequests.has(requestKey)) {
-      console.log('♻️ Reusing pending request for:', requestKey);
+    // Check if there's already a pending request for the same data
+    if (this.pendingRequests.has(requestKey)) {
+      console.log('Reusing pending request for:', requestKey);
       return this.pendingRequests.get(requestKey)!;
     }
 
     // Create new request
-    const requestPromise = this.executeRequest<T>(endpoint, params, ttl, options);
+    const requestPromise = this.executeRequest<T>(endpoint, params, ttl);
     
     // Store the pending request
     this.pendingRequests.set(requestKey, requestPromise);
@@ -160,8 +117,7 @@ class CachedApiClient {
   private async executeRequest<T>(
     endpoint: string, 
     params?: Record<string, any>, 
-    ttl: number = 30,
-    options?: CachedRequestOptions
+    ttl: number = 30
   ): Promise<T> {
     // Refresh base URL in case it was updated
     this.baseUrl = this.useBaseUrl2 ? getBaseUrl2() : getBaseUrl();
@@ -180,11 +136,7 @@ class CachedApiClient {
       });
     }
 
-    console.log('🌐 API REQUEST (Cache Miss) to:', url.toString(), {
-      userId: options?.userId,
-      role: options?.role,
-      instituteId: options?.instituteId
-    });
+    console.log('Making API request to:', url.toString());
 
     try {
       const response = await fetch(url.toString(), {
@@ -216,14 +168,14 @@ class CachedApiClient {
         data = {} as T;
       }
 
-      // Cache the successful response with user context
+      // Cache the successful response
       try {
-        await apiCache.setCache(endpoint, data, params, ttl, options);
+        await apiCache.setCache(endpoint, data, params, ttl);
       } catch (error) {
         console.warn('Failed to cache response:', error);
       }
 
-      console.log('✅ API request successful, data cached for:', endpoint);
+      console.log('API request successful for:', endpoint);
       return data;
 
     } catch (error) {

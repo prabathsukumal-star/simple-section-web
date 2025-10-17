@@ -37,6 +37,7 @@ const EnrollClass = () => {
 
   console.log('EnrollClass component rendered', { 
     selectedInstitute, 
+    user: user?.role, 
     classes: classes?.length,
     hasData,
     classesArray: classes
@@ -96,12 +97,7 @@ const EnrollClass = () => {
 
     try {
       console.log('🚀 About to call API with institute ID:', selectedInstitute.id, 'page:', currentPage, 'limit:', limit);
-      const data = await loadClasses(selectedInstitute.id, { 
-        page: currentPage, 
-        limit: limit,
-        userId: user?.id,
-        role: effectiveRole || 'User'
-      });
+      const data = await loadClasses(selectedInstitute.id, currentPage, limit);
       console.log('🔍 RECEIVED DATA:', data);
       
       if (!data) {

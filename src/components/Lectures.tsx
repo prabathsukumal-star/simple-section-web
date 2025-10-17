@@ -251,6 +251,7 @@ const Lectures = ({ apiLevel = 'institute' }: LecturesProps) => {
     selectedInstitute,
     'selectedInstitute.userRole': selectedInstitute?.userRole,
     'selectedInstitute.instituteUserType': (selectedInstitute as any)?.instituteUserType,
+    'user.role': user?.role,
     canEdit,
     canDelete,
     canAdd

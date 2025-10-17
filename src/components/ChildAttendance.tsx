@@ -14,13 +14,11 @@ import { Input } from '@/components/ui/input';
 import { Calendar, Clock, MapPin, User, RefreshCw, AlertTriangle, TrendingUp, UserCheck, UserX } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { childAttendanceApi, type ChildAttendanceRecord, type ChildAttendanceResponse } from '@/api/childAttendance.api';
 import { useApiRequest } from '@/hooks/useApiRequest';
 
 const ChildAttendance = () => {
   const { selectedChild, user } = useAuth();
-  const userRole = useInstituteRole();
   const { toast } = useToast();
   const [attendanceData, setAttendanceData] = useState<ChildAttendanceResponse | null>(null);
   const [startDate, setStartDate] = useState('2025-09-01');
@@ -48,9 +46,7 @@ const ChildAttendance = () => {
         startDate,
         endDate,
         page: currentPage + 1, // API expects 1-based pagination
-        limit,
-        userId: user?.id,
-        role: userRole || 'User'
+        limit
       });
       
       console.log('Child attendance API response:', response);
@@ -134,7 +130,7 @@ const ChildAttendance = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 min-h-screen flex flex-col space-y-6">
+    <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
@@ -275,7 +271,7 @@ const ChildAttendance = () => {
       )}
 
       {/* Attendance Records MUI Table */}
-      <Card className="flex-1 min-h-0 flex flex-col">
+      <Card>
         <CardHeader>
           <CardTitle>Attendance Records</CardTitle>
           {attendanceData?.pagination && (
@@ -285,15 +281,15 @@ const ChildAttendance = () => {
             </p>
           )}
         </CardHeader>
-        <CardContent className="p-0 flex-1 min-h-0">
+        <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center items-center py-8">
               <RefreshCw className="h-6 w-6 animate-spin mr-2" />
               <span>Loading attendance...</span>
             </div>
           ) : attendanceData?.data && attendanceData.data.length > 0 ? (
-            <Paper sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <TableContainer sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+              <TableContainer sx={{ height: 'calc(100vh - 400px)' }}>
                 <Table stickyHeader aria-label="attendance table">
                   <TableHead>
                     <TableRow>

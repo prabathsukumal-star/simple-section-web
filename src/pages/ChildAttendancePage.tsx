@@ -3,18 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, RefreshCw, UserCheck, UserX, Clock } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Calendar, RefreshCw, UserCheck, UserX, Clock, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { childAttendanceApi, type ChildAttendanceResponse } from '@/api/childAttendance.api';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
 
 const ChildAttendancePage = () => {
   const { selectedChild } = useAuth();
@@ -23,8 +16,6 @@ const ChildAttendancePage = () => {
   const [attendanceData, setAttendanceData] = useState<ChildAttendanceResponse | null>(null);
   const [startDate, setStartDate] = useState('2025-01-12');
   const [endDate, setEndDate] = useState('2025-12-13');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const loadAttendance = async () => {
     if (!selectedChild?.id) {
@@ -66,13 +57,13 @@ const ChildAttendancePage = () => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'present':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/10 text-success border-success/20';
       case 'absent':
-        return 'bg-red-100 text-red-800';
+        return 'bg-destructive/10 text-destructive border-destructive/20';
       case 'late':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning/10 text-warning border-warning/20';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -89,17 +80,8 @@ const ChildAttendancePage = () => {
     }
   };
 
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
-
   return (
-    <div className="h-screen flex flex-col space-y-4 p-4 overflow-hidden">
+    <div className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -191,64 +173,56 @@ const ChildAttendancePage = () => {
       )}
 
       {attendanceData && (
-          <Card className="flex-1 overflow-hidden flex flex-col">
-          <CardHeader className="flex-shrink-0">
+        <Card>
+          <CardHeader>
             <CardTitle>Records ({attendanceData.pagination.totalRecords})</CardTitle>
           </CardHeader>
-          <CardContent className="p-0 flex-1 overflow-hidden flex flex-col">
+          <CardContent>
             {attendanceData.data && attendanceData.data.length > 0 ? (
-                <Paper sx={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
-                    <Table stickyHeader aria-label="attendance records table">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Date</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell>Institute</TableCell>
-                        <TableCell>Class</TableCell>
-                        <TableCell>Subject</TableCell>
-                        <TableCell>Location</TableCell>
-                        <TableCell>Method</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {attendanceData.data
-                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                        .map((record) => (
-                          <TableRow hover key={record.attendanceId}>
-                            <TableCell>{new Date(record.markedAt).toLocaleDateString()}</TableCell>
-                            <TableCell>
-                              <Badge className={getStatusColor(record.status)}>
-                                <div className="flex items-center gap-1">
-                                  {getStatusIcon(record.status)}
-                                  {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                                </div>
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{record.instituteName}</TableCell>
-                            <TableCell>{record.className}</TableCell>
-                            <TableCell>{record.subjectName}</TableCell>
-                            <TableCell>{record.address}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="text-xs">
-                                {record.markingMethod}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-                <TablePagination
-                  rowsPerPageOptions={[5, 10, 25, 50]}
-                  component="div"
-                  count={attendanceData.data.length}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  onPageChange={handleChangePage}
-                  onRowsPerPageChange={handleChangeRowsPerPage}
-                />
-              </Paper>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Institute</TableHead>
+                    <TableHead>Class</TableHead>
+                    <TableHead>Subject</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Method</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {attendanceData.data.map((record) => (
+                    <TableRow key={record.attendanceId}>
+                      <TableCell>{new Date(record.markedAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={getStatusColor(record.status)}>
+                          <div className="flex items-center gap-1">
+                            {getStatusIcon(record.status)}
+                            {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                          </div>
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{record.instituteName}</TableCell>
+                      <TableCell>{record.className}</TableCell>
+                      <TableCell>{record.subjectName}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 text-sm">
+                          <MapPin className="h-3 w-3" />
+                          <span className="max-w-[150px] truncate" title={record.address}>
+                            {record.address}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {record.markingMethod}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             ) : (
               <p className="text-center text-muted-foreground py-8">
                 No attendance records found for the selected date range.

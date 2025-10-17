@@ -34,9 +34,7 @@ const InstituteLectures = () => {
       const response = await lectureApi.getInstituteLectures({
         instituteId: selectedInstitute.id,
         page: pageNum,
-        limit: 10,
-        userId: user?.id,
-        role: effectiveRole
+        limit: 10
       });
 
       console.log('Institute lectures response:', response);

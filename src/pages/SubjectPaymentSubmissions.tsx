@@ -8,7 +8,6 @@ import { FileText, CheckCircle, AlertCircle, Calendar, DollarSign, Clock, XCircl
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -135,7 +134,6 @@ const columns: readonly Column[] = [
 
 const SubjectPaymentSubmissions = () => {
   const { user, selectedInstitute, selectedClass, selectedSubject } = useAuth();
-  const instituteRole = useInstituteRole();
   const { toast } = useToast();
   const [submissionsData, setSubmissionsData] = useState<SubmissionsResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -143,7 +141,7 @@ const SubjectPaymentSubmissions = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
 
-  // Check if user is logged in
+  // Check if user is Student and has required selections
   if (!user) {
     return (
       <AppLayout>
@@ -157,25 +155,7 @@ const SubjectPaymentSubmissions = () => {
     );
   }
 
-  // Check if institute is selected first before checking role
-  if (!selectedInstitute) {
-    return (
-      <AppLayout>
-        <div className="text-center py-12">
-          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground text-lg mb-4">
-            Please select an Institute first
-          </p>
-          <p className="text-sm text-muted-foreground">
-            You need to select an institute to access this page
-          </p>
-        </div>
-      </AppLayout>
-    );
-  }
-
-  // Now check if user is Student (using instituteUserType)
-  const isStudent = instituteRole === 'Student';
+  const isStudent = (user.role?.toLowerCase?.() === 'student') || (user.userType?.toString?.().toUpperCase?.() === 'STUDENT');
 
   if (!isStudent) {
     return (
@@ -185,15 +165,12 @@ const SubjectPaymentSubmissions = () => {
           <p className="text-muted-foreground text-lg">
             This page is only accessible to Students
           </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Your role in {selectedInstitute.name}: {instituteRole}
-          </p>
         </div>
       </AppLayout>
     );
   }
 
-  if (!selectedClass || !selectedSubject) {
+  if (!selectedInstitute || !selectedClass || !selectedSubject) {
     return (
       <AppLayout>
         <div className="text-center py-12">

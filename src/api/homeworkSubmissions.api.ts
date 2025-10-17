@@ -1,4 +1,4 @@
-import { enhancedCachedClient } from './enhancedCachedClient';
+import { cachedApiClient } from './cachedClient';
 import { apiClient } from './client';
 import { ApiResponse } from './client';
 
@@ -43,11 +43,6 @@ export interface HomeworkSubmissionQueryParams {
   studentId?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
-  userId?: string;
-  role?: string;
-  instituteId?: string;
-  classId?: string;
-  subjectId?: string;
 }
 
 class HomeworkSubmissionsApi {
@@ -89,28 +84,17 @@ class HomeworkSubmissionsApi {
     }
   }
 
-  async createSubmission(data: HomeworkSubmissionCreateData, params?: HomeworkSubmissionQueryParams): Promise<HomeworkSubmission> {
+  async createSubmission(data: HomeworkSubmissionCreateData): Promise<HomeworkSubmission> {
     console.log('Creating homework submission:', data);
-    return enhancedCachedClient.post<HomeworkSubmission>('/institute-class-subject-homeworks-submissions', data, {
-      userId: params?.userId,
-      instituteId: params?.instituteId,
-      classId: params?.classId,
-      subjectId: params?.subjectId,
-      role: params?.role
-    });
+    return cachedApiClient.post<HomeworkSubmission>('/institute-class-subject-homeworks-submissions', data);
   }
 
   async getSubmissions(params?: HomeworkSubmissionQueryParams, forceRefresh = false): Promise<ApiResponse<HomeworkSubmission[]>> {
     console.log('Fetching homework submissions:', params, { forceRefresh });
-    return enhancedCachedClient.get<ApiResponse<HomeworkSubmission[]>>('/institute-class-subject-homeworks-submissions', params, {
+    return cachedApiClient.get<ApiResponse<HomeworkSubmission[]>>('/institute-class-subject-homeworks-submissions', params, {
       forceRefresh,
-      ttl: 10,
-      useStaleWhileRevalidate: true,
-      userId: params?.userId,
-      instituteId: params?.instituteId,
-      classId: params?.classId,
-      subjectId: params?.subjectId,
-      role: params?.role
+      ttl: 10, // Cache submissions for 10 minutes
+      useStaleWhileRevalidate: true
     });
   }
 
@@ -119,7 +103,7 @@ class HomeworkSubmissionsApi {
     classId: string, 
     subjectId: string, 
     studentId: string, 
-    params?: { page?: number; limit?: number; sortBy?: string; sortOrder?: 'ASC' | 'DESC'; userId?: string; role?: string },
+    params?: { page?: number; limit?: number; sortBy?: string; sortOrder?: 'ASC' | 'DESC' },
     forceRefresh = false
   ): Promise<{ data: HomeworkSubmission[]; meta: any }> {
     console.log('Fetching student homework submissions:', { instituteId, classId, subjectId, studentId, params, forceRefresh });
@@ -130,51 +114,29 @@ class HomeworkSubmissionsApi {
       studentId,
       ...params
     };
-    return enhancedCachedClient.get<{ data: HomeworkSubmission[]; meta: any }>('/institute-class-subject-homeworks-submissions', queryParams, {
+    return cachedApiClient.get<{ data: HomeworkSubmission[]; meta: any }>('/institute-class-subject-homeworks-submissions', queryParams, {
       forceRefresh,
       ttl: 10,
-      useStaleWhileRevalidate: true,
-      userId: params?.userId || studentId,
-      instituteId,
-      classId,
-      subjectId,
-      role: params?.role
+      useStaleWhileRevalidate: true
     });
   }
 
-  async getSubmissionById(id: string, params?: HomeworkSubmissionQueryParams, forceRefresh = false): Promise<HomeworkSubmission> {
+  async getSubmissionById(id: string, forceRefresh = false): Promise<HomeworkSubmission> {
     console.log('Fetching homework submission by ID:', id, { forceRefresh });
-    return enhancedCachedClient.get<HomeworkSubmission>(`/institute-class-subject-homeworks-submissions/${id}`, undefined, {
+    return cachedApiClient.get<HomeworkSubmission>(`/institute-class-subject-homeworks-submissions/${id}`, undefined, {
       forceRefresh,
-      ttl: 10,
-      userId: params?.userId,
-      instituteId: params?.instituteId,
-      classId: params?.classId,
-      subjectId: params?.subjectId,
-      role: params?.role
+      ttl: 10
     });
   }
 
-  async updateSubmission(id: string, data: Partial<HomeworkSubmissionCreateData>, params?: HomeworkSubmissionQueryParams): Promise<HomeworkSubmission> {
+  async updateSubmission(id: string, data: Partial<HomeworkSubmissionCreateData>): Promise<HomeworkSubmission> {
     console.log('Updating homework submission:', id, data);
-    return enhancedCachedClient.patch<HomeworkSubmission>(`/institute-class-subject-homeworks-submissions/${id}`, data, {
-      userId: params?.userId,
-      instituteId: params?.instituteId,
-      classId: params?.classId,
-      subjectId: params?.subjectId,
-      role: params?.role
-    });
+    return cachedApiClient.patch<HomeworkSubmission>(`/institute-class-subject-homeworks-submissions/${id}`, data);
   }
 
-  async deleteSubmission(id: string, params?: HomeworkSubmissionQueryParams): Promise<void> {
+  async deleteSubmission(id: string): Promise<void> {
     console.log('Deleting homework submission:', id);
-    return enhancedCachedClient.delete<void>(`/institute-class-subject-homeworks-submissions/${id}`, {
-      userId: params?.userId,
-      instituteId: params?.instituteId,
-      classId: params?.classId,
-      subjectId: params?.subjectId,
-      role: params?.role
-    });
+    return cachedApiClient.delete<void>(`/institute-class-subject-homeworks-submissions/${id}`);
   }
 }
 

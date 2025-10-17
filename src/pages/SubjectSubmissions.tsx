@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, ArrowLeft, Search, BookOpen, CheckCircle, Clock, XCircle, Download, Upload } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +12,6 @@ import { subjectPaymentsApi, SubjectSubmissionsResponse } from '@/api/subjectPay
 
 const SubjectSubmissions = () => {
   const { user, selectedInstitute, selectedClass, selectedSubject } = useAuth();
-  const userRole = useInstituteRole();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [submissionsData, setSubmissionsData] = useState<SubjectSubmissionsResponse | null>(null);
@@ -30,7 +28,7 @@ const SubjectSubmissions = () => {
       return;
     }
 
-    if (userRole !== 'Student') {
+    if (user?.role !== 'Student') {
       toast({
         title: "Access Denied",
         description: "Only students can view their submissions.",
@@ -90,7 +88,7 @@ const SubjectSubmissions = () => {
   };
 
   // Only show this page for students
-  if (userRole !== 'Student') {
+  if (user?.role !== 'Student') {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">

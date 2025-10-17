@@ -7,7 +7,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { RefreshCw, Users, Award, Calendar, FileText, Search } from 'lucide-react';
 import { examResultsApi, type ExamResult, type ExamResultsResponse } from '@/api/examResults.api';
 
@@ -24,8 +23,7 @@ interface ExamResultsDialogProps {
 }
 
 export const ExamResultsDialog = ({ isOpen, onClose, exam }: ExamResultsDialogProps) => {
-  const { user, currentInstituteId, currentClassId, currentSubjectId, selectedInstitute, selectedClass, selectedSubject } = useAuth();
-  const userRole = useInstituteRole();
+  const { currentInstituteId, currentClassId, currentSubjectId, selectedInstitute, selectedClass, selectedSubject } = useAuth();
   const { toast } = useToast();
   
   const [results, setResults] = useState<ExamResult[]>([]);
@@ -53,9 +51,7 @@ export const ExamResultsDialog = ({ isOpen, onClose, exam }: ExamResultsDialogPr
         instituteId: currentInstituteId,
         classId: currentClassId,
         subjectId: currentSubjectId,
-        examId: exam.id,
-        userId: user?.id,
-        role: userRole
+        examId: exam.id
       };
 
       const response = await examResultsApi.getExamResults(params, true);

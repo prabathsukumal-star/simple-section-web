@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { AccessControl, UserRole } from '@/utils/permissions';
 import { homeworkSubmissionsApi, type HomeworkSubmission } from '@/api/homeworkSubmissions.api';
 import { FileText, Calendar, User, ExternalLink, RefreshCw, Lock } from 'lucide-react';
@@ -23,7 +22,6 @@ interface HomeworkSubmissionsDialogProps {
 const HomeworkSubmissionsDialog = ({ homework, isOpen, onClose }: HomeworkSubmissionsDialogProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const userRole = useInstituteRole();
   const [submissions, setSubmissions] = useState<HomeworkSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -36,11 +34,6 @@ const HomeworkSubmissionsDialog = ({ homework, isOpen, onClose }: HomeworkSubmis
         homeworkId: homework.id,
         page: 1,
         limit: 50,
-        userId: user?.id,
-        role: userRole,
-        instituteId: homework.instituteId,
-        classId: homework.classId,
-        subjectId: homework.subjectId
       }, true);
 
       const submissionsList = Array.isArray(response) ? response : response.data || [];
@@ -74,7 +67,7 @@ const HomeworkSubmissionsDialog = ({ homework, isOpen, onClose }: HomeworkSubmis
   };
 
   // Check if user has permission to view homework submissions
-  if (!AccessControl.hasPermission(userRole, 'view-homework-submissions')) {
+  if (!user?.role || !AccessControl.hasPermission(user.role as UserRole, 'view-homework-submissions')) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md">

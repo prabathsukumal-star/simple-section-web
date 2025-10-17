@@ -45,8 +45,9 @@ const SubjectPayments = () => {
   const [createPaymentDialogOpen, setCreatePaymentDialogOpen] = useState(false);
   const [submitPaymentDialogOpen, setSubmitPaymentDialogOpen] = useState(false);
   const [selectedPaymentForSubmission, setSelectedPaymentForSubmission] = useState<SubjectPayment | null>(null);
+  
   const [searchQuery, setSearchQuery] = useState('');
-
+  
   // Pagination state
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
@@ -159,6 +160,7 @@ const SubjectPayments = () => {
     setPage(newPage);
     loadSubjectPayments(newPage, rowsPerPage);
   };
+
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newRowsPerPage = +event.target.value;
     setRowsPerPage(newRowsPerPage);
@@ -174,59 +176,46 @@ const SubjectPayments = () => {
   // Filter data locally for live search
   const filteredPayments = React.useMemo(() => {
     if (!subjectPaymentsData?.data) return [];
+    
     if (!searchQuery.trim()) return subjectPaymentsData.data;
+    
     const searchLower = searchQuery.toLowerCase();
+    
     return subjectPaymentsData.data.filter(payment => {
       // Search in Title
       const matchesTitle = payment.title?.toLowerCase().includes(searchLower);
-
+      
       // Search in Amount (convert to string and search)
       const matchesAmount = payment.amount?.toString().includes(searchQuery.trim());
-
+      
       // Search in Priority
       const matchesPriority = payment.priority?.toLowerCase().includes(searchLower);
+      
       return matchesTitle || matchesAmount || matchesPriority;
     });
   }, [subjectPaymentsData?.data, searchQuery]);
 
   // Table columns configuration
-  const columns = [{
-    id: 'title',
-    label: 'Title',
-    minWidth: 200
-  }, {
-    id: 'amount',
-    label: 'Amount (Rs)',
-    minWidth: 120,
-    align: 'right' as const
-  }, {
-    id: 'status',
-    label: 'Status',
-    minWidth: 100
-  }, {
-    id: 'priority',
-    label: 'Priority',
-    minWidth: 100
-  }, {
-    id: 'dueDate',
-    label: 'Due Date',
-    minWidth: 120
-  }, {
-    id: 'submissions',
-    label: 'Submissions',
-    minWidth: 150
-  }, {
-    id: 'actions',
-    label: 'Actions',
-    minWidth: 200
-  }];
+  const columns = [
+    { id: 'title', label: 'Title', minWidth: 200 },
+    { id: 'amount', label: 'Amount (Rs)', minWidth: 120, align: 'right' as const },
+    { id: 'status', label: 'Status', minWidth: 100 },
+    { id: 'priority', label: 'Priority', minWidth: 100 },
+    { id: 'dueDate', label: 'Due Date', minWidth: 120 },
+    { id: 'submissions', label: 'Submissions', minWidth: 150 },
+    { id: 'actions', label: 'Actions', minWidth: 200 }
+  ];
   return <AppLayout>
     <PageContainer className="h-full">
       {/* Header Section */}
       <div className="flex flex-col space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate(-1)} className="shrink-0">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate(-1)} 
+              className="shrink-0"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
@@ -234,30 +223,42 @@ const SubjectPayments = () => {
               <h1 className="text-2xl font-bold text-foreground">
                 Subject Payments
               </h1>
-              {selectedSubject && <p className="text-muted-foreground text-sm mt-1">
+              {selectedSubject && (
+                <p className="text-muted-foreground text-sm mt-1">
                   Subject: <span className="font-medium text-foreground">{selectedSubject.name}</span>
-                </p>}
+                </p>
+              )}
             </div>
           </div>
-          {(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && <Button onClick={() => setCreatePaymentDialogOpen(true)} className="shrink-0" disabled={!selectedInstitute || !selectedClass || !selectedSubject}>
+          {(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && (
+            <Button 
+              onClick={() => setCreatePaymentDialogOpen(true)} 
+              className="shrink-0"
+              disabled={!selectedInstitute || !selectedClass || !selectedSubject}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create Payment
-            </Button>}
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Subject Info Card */}
-      {selectedSubject && <Card className="border-border">
+      {selectedSubject && (
+        <Card className="border-border">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-foreground">
               <BookOpen className="h-5 w-5 text-primary" />
               {selectedSubject.name}
             </CardTitle>
-            {selectedClass && <p className="text-muted-foreground text-sm">
+            {selectedClass && (
+              <p className="text-muted-foreground text-sm">
                 Class: {selectedClass.name} | Institute: {selectedInstitute?.name}
-              </p>}
+              </p>
+            )}
           </CardHeader>
-        </Card>}
+        </Card>
+      )}
 
       {/* Search and Actions */}
       <Card>
@@ -266,23 +267,47 @@ const SubjectPayments = () => {
             <div className="flex-1 min-w-0">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search by title, amount, or priority..." className="pl-10 w-full" value={searchQuery} onChange={e => handleSearch(e.target.value)} />
+                <Input 
+                  placeholder="Search by title, amount, or priority..." 
+                  className="pl-10 w-full"
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
-              <Button variant="outline" onClick={() => loadSubjectPayments()} disabled={loading || !selectedInstitute || !selectedClass || !selectedSubject} size="sm">
+              <Button 
+                variant="outline"
+                onClick={() => loadSubjectPayments()} 
+                disabled={loading || !selectedInstitute || !selectedClass || !selectedSubject}
+                size="sm"
+              >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 {loading ? 'Loading...' : 'Load Data'}
               </Button>
-              {instituteRole === 'Student'}
-              
+              {instituteRole === 'Student' && (
+                <Button 
+                  onClick={handleViewMySubmissions} 
+                  variant="outline" 
+                  size="sm"
+                  disabled={!selectedInstitute || !selectedClass || !selectedSubject}
+                >
+                  <History className="h-4 w-4 mr-2" />
+                  My Submissions
+                </Button>
+              )}
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Loading State */}
-      {loading && <Card>
+      {loading && (
+        <Card>
           <CardContent className="pt-6">
             <div className="space-y-4">
               <Skeleton className="h-12 w-full" />
@@ -291,23 +316,28 @@ const SubjectPayments = () => {
               <Skeleton className="h-8 w-full" />
             </div>
           </CardContent>
-        </Card>}
+        </Card>
+      )}
 
       {/* Subject Payments Table */}
-      {!loading && <Card>
+      {!loading && (
+        <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <CreditCard className="h-5 w-5 text-primary" />
                 {instituteRole === 'Student' ? 'My Subject Payments' : 'Subject Payment Records'}
               </CardTitle>
-              {subjectPaymentsData && <Badge variant="outline" className="text-sm">
+              {subjectPaymentsData && (
+                <Badge variant="outline" className="text-sm">
                   {filteredPayments.length} of {subjectPaymentsData.total} total
-                </Badge>}
+                </Badge>
+              )}
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {!subjectPaymentsData ? <div className="text-center py-12">
+            {!subjectPaymentsData ? (
+              <div className="text-center py-12">
                 <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground text-lg mb-2">
                   Click "Load Data" to view payments
@@ -315,34 +345,36 @@ const SubjectPayments = () => {
                 <p className="text-muted-foreground text-sm">
                   Select institute, class, and subject first, then click Load Data.
                 </p>
-              </div> : <Paper sx={{
-            width: '100%',
-            overflow: 'hidden'
-          }}>
-                <TableContainer sx={{
-              maxHeight: 'calc(100vh - 350px)',
-              overflow: 'auto'
-            }}>
+              </div>
+            ) : (
+              <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                <TableContainer sx={{ maxHeight: 'calc(100vh - 350px)', overflow: 'auto' }}>
                   <Table stickyHeader aria-label="subject payments table">
                     <TableHead>
                       <TableRow>
-                        {columns.map(column => <TableCell key={column.id} align={column.align} style={{
-                      minWidth: column.minWidth
-                    }} sx={{
-                      fontWeight: 600,
-                      position: 'sticky',
-                      top: 0,
-                      zIndex: 2,
-                      backgroundColor: 'hsl(var(--muted))',
-                      color: 'hsl(var(--foreground))',
-                      borderBottom: '1px solid hsl(var(--border))'
-                    }}>
+                        {columns.map((column) => (
+                          <TableCell
+                            key={column.id}
+                            align={column.align}
+                            style={{ minWidth: column.minWidth }}
+                            sx={{
+                              fontWeight: 600,
+                              position: 'sticky',
+                              top: 0,
+                              zIndex: 2,
+                              backgroundColor: 'hsl(var(--muted))',
+                              color: 'hsl(var(--foreground))',
+                              borderBottom: '1px solid hsl(var(--border))'
+                            }}
+                          >
                             {column.label}
-                          </TableCell>)}
+                          </TableCell>
+                        ))}
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {filteredPayments.length === 0 ? <TableRow>
+                      {filteredPayments.length === 0 ? (
+                        <TableRow>
                           <TableCell colSpan={columns.length} align="center">
                             <div className="py-12">
                               <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -354,7 +386,12 @@ const SubjectPayments = () => {
                               </p>
                             </div>
                           </TableCell>
-                        </TableRow> : filteredPayments.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(payment => <TableRow hover role="checkbox" tabIndex={-1} key={payment.id}>
+                        </TableRow>
+                      ) : (
+                        filteredPayments
+                          .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                          .map((payment) => (
+                            <TableRow hover role="checkbox" tabIndex={-1} key={payment.id}>
                               <TableCell>
                                 <div>
                                   <div className="font-medium text-foreground">
@@ -387,7 +424,8 @@ const SubjectPayments = () => {
                                 {new Date(payment.lastDate).toLocaleDateString()}
                               </TableCell>
                               <TableCell>
-                                {(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && <div className="text-xs space-y-1">
+                                {(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && (
+                                  <div className="text-xs space-y-1">
                                     <div className="flex items-center space-x-1">
                                       <FileText className="h-3 w-3" />
                                       <span>Total: {payment.submissionsCount || 0}</span>
@@ -400,35 +438,64 @@ const SubjectPayments = () => {
                                       <Clock className="h-3 w-3" />
                                       <span>Pending: {payment.pendingSubmissionsCount || 0}</span>
                                     </div>
-                                  </div>}
+                                  </div>
+                                )}
                               </TableCell>
                               <TableCell>
                                 <div className="flex flex-col space-y-1">
-                                  {instituteRole === 'Student' && <Button variant="outline" size="sm" onClick={() => {
-                          setSelectedPaymentForSubmission(payment);
-                          setSubmitPaymentDialogOpen(true);
-                        }} className="flex items-center space-x-1">
+                                  {instituteRole === 'Student' && (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      onClick={() => {
+                                        setSelectedPaymentForSubmission(payment);
+                                        setSubmitPaymentDialogOpen(true);
+                                      }}
+                                      className="flex items-center space-x-1"
+                                    >
                                       <CreditCard className="h-3 w-3" />
                                       <span>Submit</span>
-                                    </Button>}
+                                    </Button>
+                                  )}
                                   
-                                  {(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && <Button variant="outline" size="sm" onClick={() => viewSubmissions(payment)} className="flex items-center space-x-1">
+                                  {(instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher') && (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      onClick={() => viewSubmissions(payment)} 
+                                      className="flex items-center space-x-1"
+                                    >
                                       <Eye className="h-3 w-3" />
                                       <span>View</span>
-                                    </Button>}
+                                    </Button>
+                                  )}
                                 </div>
                               </TableCell>
-                            </TableRow>)}
+                            </TableRow>
+                          ))
+                      )}
                     </TableBody>
                   </Table>
                 </TableContainer>
-                <TablePagination rowsPerPageOptions={[25, 50, 100]} component="div" count={searchQuery ? filteredPayments.length : subjectPaymentsData.total || 0} rowsPerPage={rowsPerPage} page={page} onPageChange={handleChangePage} onRowsPerPageChange={handleChangeRowsPerPage} />
-              </Paper>}
+                <TablePagination
+                  rowsPerPageOptions={[25, 50, 100]}
+                  component="div"
+                  count={searchQuery ? filteredPayments.length : (subjectPaymentsData.total || 0)}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+              </Paper>
+            )}
           </CardContent>
-        </Card>}
+        </Card>
+
+      )}
 
       {/* Summary Stats */}
-      {subjectPaymentsData && <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {subjectPaymentsData && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -467,10 +534,11 @@ const SubjectPayments = () => {
               </p>
             </CardContent>
           </Card>
-        </div>}
+        </div>
+      )}
 
         {/* Verify Dialog for Institute Admins */}
-        {selectedInstitute && instituteRole === 'InstituteAdmin' && <VerifySubmissionDialog open={verifyDialogOpen} onOpenChange={setVerifyDialogOpen} submission={selectedSubmission} instituteId={selectedInstitute.id} onSuccess={() => {
+        {selectedInstitute && user?.role === 'InstituteAdmin' && <VerifySubmissionDialog open={verifyDialogOpen} onOpenChange={setVerifyDialogOpen} submission={selectedSubmission} instituteId={selectedInstitute.id} onSuccess={() => {
         setVerifyDialogOpen(false);
         setSelectedSubmission(null);
         loadSubjectPayments(); // Reload data after verification
@@ -480,10 +548,19 @@ const SubjectPayments = () => {
         {user?.userType === 'Student' && selectedInstitute && selectedClass && selectedSubject && <StudentSubmissionsDialog open={submissionsDialogOpen} onOpenChange={setSubmissionsDialogOpen} instituteId={selectedInstitute.id} classId={selectedClass.id} subjectId={selectedSubject.id} />}
 
         {/* Create Subject Payment Dialog */}
-        {selectedInstitute && selectedClass && selectedSubject && <CreateSubjectPaymentForm open={createPaymentDialogOpen} onOpenChange={setCreatePaymentDialogOpen} instituteId={selectedInstitute.id} classId={selectedClass.id} subjectId={selectedSubject.id} onSuccess={loadSubjectPayments} />}
+        {selectedInstitute && selectedClass && selectedSubject && (
+          <CreateSubjectPaymentForm 
+            open={createPaymentDialogOpen} 
+            onOpenChange={setCreatePaymentDialogOpen} 
+            instituteId={selectedInstitute.id} 
+            classId={selectedClass.id} 
+            subjectId={selectedSubject.id} 
+            onSuccess={loadSubjectPayments} 
+          />
+        )}
 
         {/* Submit Payment Dialog for Students */}
-        {instituteRole === 'Student' && selectedPaymentForSubmission && <SubmitSubjectPaymentDialog open={submitPaymentDialogOpen} onOpenChange={setSubmitPaymentDialogOpen} payment={selectedPaymentForSubmission} onSuccess={() => {
+        {user?.role === 'Student' && selectedPaymentForSubmission && <SubmitSubjectPaymentDialog open={submitPaymentDialogOpen} onOpenChange={setSubmitPaymentDialogOpen} payment={selectedPaymentForSubmission} onSuccess={() => {
         setSubmitPaymentDialogOpen(false);
         setSelectedPaymentForSubmission(null);
         loadSubjectPayments();

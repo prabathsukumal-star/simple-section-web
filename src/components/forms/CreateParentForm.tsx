@@ -8,7 +8,6 @@ import { User } from 'lucide-react';
 import { ParentCreateData } from '@/api/parents.api';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -31,8 +30,8 @@ const CreateParentForm = ({
   } = useAuth();
 
   // Check if user has permission (only SuperAdmin and InstituteAdmin)
-  const userRole = useInstituteRole();
-  const hasPermission = user?.role === 'SystemAdmin' || userRole === 'InstituteAdmin';
+  const userRole = user?.role;
+  const hasPermission = userRole === 'SystemAdmin' || userRole === 'InstituteAdmin';
   const [formData, setFormData] = useState({
     // User Information
     firstName: initialData?.user?.firstName || '',

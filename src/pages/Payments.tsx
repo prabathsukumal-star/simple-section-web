@@ -1,30 +1,27 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
 import { 
   CreditCard, 
+  Calendar, 
+  DollarSign, 
   CheckCircle, 
   XCircle, 
   Clock,
+  Download,
   RefreshCw,
   Plus,
-  Eye
+  FileText
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
+import MUITable from '@/components/ui/mui-table';
+import { usePagination } from '@/hooks/usePagination';
 
 interface PaymentRecord {
   id: string;
@@ -60,10 +57,15 @@ const Payments = () => {
   const [allPayments, setAllPayments] = useState<PaymentRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'PENDING' | 'VERIFIED' | 'REJECTED'>('PENDING');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [apiResponse, setApiResponse] = useState<PaymentApiResponse | null>(null);
+  
+  // Single pagination instance since we're loading all data
+  const pagination = usePagination({ 
+    defaultLimit: 50, 
+    availableLimits: [25, 50, 100] 
+  });
 
-  // Load all payment history from API
+  // Load all payment history from API with pagination
   const loadPaymentHistory = async (showToast = true) => {
     if (!user?.id) {
       toast({
@@ -73,13 +75,15 @@ const Payments = () => {
       });
       return;
     }
+
+    const apiParams = pagination.getApiParams();
     
     setIsLoading(true);
     try {
       const baseUrl = getBaseUrl();
       const params = new URLSearchParams({
-        page: '1',
-        limit: '100'
+        page: apiParams.page.toString(),
+        limit: apiParams.limit.toString()
       });
       
       const response = await fetch(`${baseUrl}/payment/my-payments?${params}`, {
@@ -97,8 +101,14 @@ const Payments = () => {
       const data: PaymentApiResponse = await response.json();
       console.log('Payment API Response:', data);
       
-      setAllPayments(data.payments);
+      setApiResponse(data);
+      setAllPayments(data.payments); // Store current page payments
+      
+      // Filter payments based on active tab
       filterPaymentsByStatus(data.payments, activeTab);
+      
+      // Update pagination with API response total
+      pagination.actions.setTotalCount(data.total);
       
       if (showToast) {
         toast({
@@ -126,21 +136,22 @@ const Payments = () => {
     setPayments(filteredPayments);
   };
 
-  // Handle tab change
+  // Handle tab change - only filter existing data, no API call
   const handleTabChange = (tab: 'PENDING' | 'VERIFIED' | 'REJECTED') => {
     setActiveTab(tab);
-    setPage(0);
-    filterPaymentsByStatus(allPayments, tab);
+    pagination.actions.reset(); // Reset pagination for new tab
+    filterPaymentsByStatus(allPayments, tab); // Only filter existing data
   };
 
-  // Handle pagination changes
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
+  // Handle pagination changes - no API calls
+  const handlePageChange = (newPage: number) => {
+    pagination.actions.setPage(newPage);
+    // No API call - just update pagination state
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
+  const handleLimitChange = (newLimit: number) => {
+    pagination.actions.setLimit(newLimit);
+    // No API call - just update pagination state
   };
 
   const getStatusBadge = (status: PaymentRecord['status']) => {
@@ -185,7 +196,7 @@ const Payments = () => {
     return `Rs ${parseFloat(amount).toLocaleString()}`;
   };
 
-  const handleViewSlip = (payment: PaymentRecord) => {
+  const handleDownloadSlip = (payment: PaymentRecord) => {
     if (payment.paymentSlipUrl) {
       window.open(payment.paymentSlipUrl, '_blank');
       toast({
@@ -198,6 +209,78 @@ const Payments = () => {
   const handleNewPayment = () => {
     navigate('/payments/create');
   };
+
+  // Define table columns
+  const getColumns = () => [
+    {
+      id: 'paymentAmount',
+      label: 'Amount',
+      minWidth: 120,
+      format: (value: string) => formatAmount(value)
+    },
+    {
+      id: 'paymentReference',
+      label: 'Reference',
+      minWidth: 150,
+      format: (value: string) => (
+        <span className="font-mono text-xs">{value}</span>
+      )
+    },
+    {
+      id: 'paymentMethod',
+      label: 'Method',
+      minWidth: 120,
+      format: (value: string) => value?.replace('_', ' ') || '-'
+    },
+    {
+      id: 'paymentDate',
+      label: 'Payment Date',
+      minWidth: 150,
+      format: (value: string) => formatDate(value)
+    },
+    {
+      id: 'paymentMonth',
+      label: 'Month',
+      minWidth: 100
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      minWidth: 120,
+      format: (value: PaymentRecord['status']) => getStatusBadge(value)
+    },
+    {
+      id: 'notes',
+      label: 'Notes',
+      minWidth: 200,
+      format: (value: string) => (
+        <span className="text-sm text-gray-600 truncate block max-w-[200px]" title={value}>
+          {value || '-'}
+        </span>
+      )
+    },
+    {
+      id: 'rejectionReason',
+      label: 'Rejection Reason',
+      minWidth: 200,
+      format: (value: string) => (
+        <span className="text-sm text-red-600 truncate block max-w-[200px]" title={value}>
+          {value || '-'}
+        </span>
+      )
+    }
+  ];
+
+  // Custom actions for table rows
+  const getCustomActions = () => [
+    {
+      label: 'View Slip',
+      action: (row: PaymentRecord) => handleDownloadSlip(row),
+      variant: 'outline' as const
+    }
+  ].filter(action => 
+    action.label === 'View Slip' ? payments.some(p => p.paymentSlipUrl) : true
+  );
 
 
   return (
@@ -307,72 +390,21 @@ const Payments = () => {
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-6">
-            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-              <TableContainer sx={{ maxHeight: 600 }}>
-                <Table stickyHeader aria-label="payment submissions table">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell style={{ minWidth: 120 }}>Amount</TableCell>
-                      <TableCell style={{ minWidth: 150 }}>Reference</TableCell>
-                      <TableCell style={{ minWidth: 120 }}>Method</TableCell>
-                      <TableCell style={{ minWidth: 150 }}>Payment Date</TableCell>
-                      <TableCell style={{ minWidth: 100 }}>Month</TableCell>
-                      <TableCell style={{ minWidth: 120 }}>Status</TableCell>
-                      <TableCell style={{ minWidth: 200 }}>Notes</TableCell>
-                      <TableCell style={{ minWidth: 200 }}>Rejection Reason</TableCell>
-                      <TableCell style={{ minWidth: 120 }}>Slip</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {payments
-                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                      .map((payment) => (
-                        <TableRow hover role="checkbox" tabIndex={-1} key={payment.id}>
-                          <TableCell>{formatAmount(payment.paymentAmount)}</TableCell>
-                          <TableCell>
-                            <span className="font-mono text-xs">{payment.paymentReference}</span>
-                          </TableCell>
-                          <TableCell>{payment.paymentMethod?.replace('_', ' ') || '-'}</TableCell>
-                          <TableCell>{formatDate(payment.paymentDate)}</TableCell>
-                          <TableCell>{payment.paymentMonth}</TableCell>
-                          <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                          <TableCell>
-                            <span className="text-sm text-gray-600 truncate block max-w-[200px]" title={payment.notes}>
-                              {payment.notes || '-'}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-red-600 truncate block max-w-[200px]" title={payment.rejectionReason || ''}>
-                              {payment.rejectionReason || '-'}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            {payment.paymentSlipUrl && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleViewSlip(payment)}
-                              >
-                                <Eye className="h-4 w-4 mr-1" />
-                                View
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <TablePagination
-                rowsPerPageOptions={[10, 25, 50, 100]}
-                component="div"
-                count={payments.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-              />
-            </Paper>
+            <MUITable
+              title={`${activeTab} Payments`}
+              columns={getColumns()}
+              data={payments}
+              customActions={getCustomActions()}
+              page={pagination.pagination.page}
+              rowsPerPage={pagination.pagination.limit}
+              totalCount={payments.length}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleLimitChange}
+              rowsPerPageOptions={pagination.availableLimits}
+              allowAdd={false}
+              allowEdit={false}
+              allowDelete={false}
+            />
           </TabsContent>
         </Tabs>
       </div>

@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { organizationApi, OrganizationLecture, OrganizationQueryParams } from '@/api/organization.api';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import CreateOrganizationLectureForm from './forms/CreateOrganizationLectureForm';
 import { format } from 'date-fns';
 
@@ -28,7 +27,6 @@ const OrganizationLectures = ({ organizationId, courseId }: OrganizationLectures
   const [showCreateForm, setShowCreateForm] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const userRole = useInstituteRole();
 
   const fetchLectures = async () => {
     try {
@@ -38,9 +36,7 @@ const OrganizationLectures = ({ organizationId, courseId }: OrganizationLectures
         page: currentPage,
         limit: 10,
         ...(searchTerm && { search: searchTerm }),
-        ...(publicFilter !== 'all' && { isPublic: publicFilter === 'public' }),
-        userId: user?.id,
-        role: userRole || 'User'
+        ...(publicFilter !== 'all' && { isPublic: publicFilter === 'public' })
       };
 
       const response = await organizationApi.getLectures(params);

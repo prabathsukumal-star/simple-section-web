@@ -13,7 +13,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { organizationApi } from '@/api/organization.api';
 import { useToast } from '@/hooks/use-toast';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getBaseUrl2 } from '@/contexts/utils/auth.api';
@@ -41,7 +40,6 @@ const CreateCourseForm = ({ onSuccess, onCancel }: CreateCourseFormProps) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
-  const userRole = useInstituteRole();
 
   const form = useForm<CreateCourseFormData>({
     resolver: zodResolver(createCourseSchema),
@@ -58,10 +56,7 @@ const CreateCourseForm = ({ onSuccess, onCancel }: CreateCourseFormProps) => {
   React.useEffect(() => {
     const fetchOrganizations = async () => {
       try {
-        const response = await organizationApi.getOrganizations({
-          userId: user?.id,
-          role: userRole || 'User'
-        });
+        const response = await organizationApi.getOrganizations();
         setOrganizations(response.data);
       } catch (error) {
         console.error('Error fetching organizations:', error);

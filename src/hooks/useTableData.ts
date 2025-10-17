@@ -8,11 +8,6 @@ export interface TableDataConfig {
   cacheOptions?: {
     ttl?: number;
     forceRefresh?: boolean;
-    userId?: string;
-    role?: string;
-    instituteId?: string;
-    classId?: string;
-    subjectId?: string;
   };
   dependencies?: any[];
   pagination?: {
@@ -66,23 +61,18 @@ export const useTableData = <T = any>(config: TableDataConfig): UseTableDataRetu
     
     try {
       const params = buildParams();
-      console.log(`📥 Loading data from ${config.endpoint}:`, params);
+      console.log(`Loading data from ${config.endpoint}:`, params);
       
       const result = await cachedApiClient.get(
         config.endpoint, 
         params, 
         {
           ttl: config.cacheOptions?.ttl || 15,
-          forceRefresh,
-          userId: config.cacheOptions?.userId,
-          role: config.cacheOptions?.role,
-          instituteId: config.cacheOptions?.instituteId,
-          classId: config.cacheOptions?.classId,
-          subjectId: config.cacheOptions?.subjectId
+          forceRefresh
         }
       );
 
-      console.log('✅ Table data loaded successfully:', result);
+      console.log('Table data loaded successfully:', result);
       
       // Handle various API response formats
       let data, total;
@@ -94,10 +84,6 @@ export const useTableData = <T = any>(config: TableDataConfig): UseTableDataRetu
         // Institute payments API format
         data = result.data.payments;
         total = result.data.pagination?.totalItems || data.length;
-      } else if ((result as any)?.items) {
-        // SMS history API format {items, total, page, limit, totalPages}
-        data = (result as any).items;
-        total = (result as any).total || data.length;
       } else if ((result as any)?.messages) {
         // Enhanced SMS history API format
         data = (result as any).messages;

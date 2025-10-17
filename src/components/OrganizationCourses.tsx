@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import CreateCourseForm from './forms/CreateCourseForm';
 
 interface OrganizationCoursesProps {
@@ -34,7 +33,6 @@ const OrganizationCourses = ({ organizationId, onSelectCourse, organization }: O
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { user, selectedOrganization } = useAuth();
-  const userRole = useInstituteRole();
 
   // Debug logging
   console.log('OrganizationCourses props:', { organizationId, organization });
@@ -48,9 +46,7 @@ const OrganizationCourses = ({ organizationId, onSelectCourse, organization }: O
         page: currentPage,
         limit: 10,
         ...(searchTerm && { search: searchTerm }),
-        ...(publicFilter !== 'all' && { isPublic: publicFilter === 'public' }),
-        userId: user?.id,
-        role: userRole || 'User'
+        ...(publicFilter !== 'all' && { isPublic: publicFilter === 'public' })
       };
 
       let response;

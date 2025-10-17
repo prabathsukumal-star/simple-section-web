@@ -9,21 +9,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, Save, Video, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { lectureApi } from '@/api/lecture.api';
 
 const UpdateLecture = () => {
   const { lectureId } = useParams<{ lectureId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const userRole = useInstituteRole();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [fetchingLecture, setFetchingLecture] = useState(true);
   const [lecture, setLecture] = useState<any>(null);
 
   // Check if user has permission to update lectures - Teachers only
-  const canUpdate = userRole === 'Teacher';
+  const canUpdate = user?.role === 'Teacher';
 
   const [formData, setFormData] = useState({
     title: '',

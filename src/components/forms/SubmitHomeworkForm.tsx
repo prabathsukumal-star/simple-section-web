@@ -14,52 +14,50 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+
 const submissionSchema = z.object({
   submissionDate: z.string().min(1, 'Submission date is required'),
-  remarks: z.string().optional()
+  remarks: z.string().optional(),
 });
+
 type SubmissionFormData = z.infer<typeof submissionSchema>;
+
 interface SubmitHomeworkFormProps {
   homework: any;
   onClose: () => void;
   onSuccess: () => void;
 }
-const SubmitHomeworkForm = ({
-  homework,
-  onClose,
-  onSuccess
-}: SubmitHomeworkFormProps) => {
-  const {
-    user
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+
+const SubmitHomeworkForm = ({ homework, onClose, onSuccess }: SubmitHomeworkFormProps) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   // Early return if homework is not provided
   if (!homework) {
-    return <div className="text-center py-8">
+    return (
+      <div className="text-center py-8">
         <p className="text-muted-foreground">No homework selected</p>
-      </div>;
+      </div>
+    );
   }
+
   const {
     register,
     handleSubmit,
-    formState: {
-      errors
-    },
+    formState: { errors },
     watch,
-    setValue
+    setValue,
   } = useForm<SubmissionFormData>({
     resolver: zodResolver(submissionSchema),
     defaultValues: {
       submissionDate: new Date().toISOString().split('T')[0],
-      remarks: ''
-    }
+      remarks: '',
+    },
   });
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -73,15 +71,18 @@ const SubmitHomeworkForm = ({
         return;
       }
       setSelectedFile(file);
+      
       toast({
         title: "File selected",
-        description: "File ready for submission"
+        description: "File ready for submission",
       });
     }
   };
+
   const removeFile = () => {
     setSelectedFile(null);
   };
+
   const onSubmit = async (data: SubmissionFormData) => {
     if (!user?.id) {
       toast({
@@ -91,6 +92,7 @@ const SubmitHomeworkForm = ({
       });
       return;
     }
+
     if (!selectedFile) {
       toast({
         title: "Error",
@@ -99,6 +101,7 @@ const SubmitHomeworkForm = ({
       });
       return;
     }
+
     console.log('Starting homework submission:', {
       homeworkId: homework.id,
       homeworkTitle: homework.title,
@@ -106,14 +109,18 @@ const SubmitHomeworkForm = ({
       fileName: selectedFile.name,
       submissionDate: data.submissionDate
     });
+
     setIsSubmitting(true);
     try {
       const result = await homeworkSubmissionsApi.submitHomework(homework.id, selectedFile);
+
       console.log('Homework submission result:', result);
+      
       toast({
-        title: "Success",
-        description: result.message || "Homework submitted successfully!"
+        title: "Success", 
+        description: result.message || "Homework submitted successfully!",
       });
+
       onSuccess();
     } catch (error: any) {
       console.error('Error submitting homework:', {
@@ -121,7 +128,9 @@ const SubmitHomeworkForm = ({
         error: error.message,
         errorDetails: error
       });
+      
       let errorMessage = "Failed to submit homework. Please try again.";
+      
       if (error.message?.includes("not found")) {
         errorMessage = "This homework assignment is not available for submission. Please contact your teacher.";
       } else if (error.message?.includes("period")) {
@@ -129,6 +138,7 @@ const SubmitHomeworkForm = ({
       } else if (error.message) {
         errorMessage = error.message;
       }
+      
       toast({
         title: "Submission Failed",
         description: errorMessage,
@@ -138,36 +148,71 @@ const SubmitHomeworkForm = ({
       setIsSubmitting(false);
     }
   };
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6">
       <div className="bg-muted/50 p-4 rounded-lg border">
         <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
           <FileText className="h-5 w-5" />
           {homework.title}
         </h3>
         <p className="text-muted-foreground mb-2">{homework.description}</p>
-        {homework.endDate}
-        {homework.referenceLink && <div className="mt-2">
-            <Button size="sm" variant="outline" onClick={() => window.open(homework.referenceLink, '_blank')}>
+        {homework.endDate && (
+          <p className="text-sm text-destructive flex items-center gap-1">
+            <Calendar className="h-4 w-4" />
+            Due: {new Date(homework.endDate).toLocaleDateString()}
+          </p>
+        )}
+        {homework.referenceLink && (
+          <div className="mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => window.open(homework.referenceLink, '_blank')}
+            >
               <FileText className="h-3 w-3 mr-1" />
               View Reference Material
             </Button>
-          </div>}
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="submissionDate">Submission Date *</Label>
-          <Input id="submissionDate" type="date" {...register('submissionDate')} className="w-full" />
-          {errors.submissionDate && <p className="text-sm text-destructive">{errors.submissionDate.message}</p>}
+          <Input
+            id="submissionDate"
+            type="date"
+            {...register('submissionDate')}
+            className="w-full"
+          />
+          {errors.submissionDate && (
+            <p className="text-sm text-destructive">{errors.submissionDate.message}</p>
+          )}
         </div>
 
         {/* File Upload Section */}
         <div className="space-y-2">
           <Label>Upload File</Label>
           
-          {!selectedFile ? <div>
-              <input type="file" id="file-upload" onChange={handleFileSelect} accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.zip" className="hidden" disabled={isUploading} />
-              <Label htmlFor="file-upload" className={`flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg transition-colors ${isUploading ? 'border-blue-300 bg-blue-50 cursor-not-allowed' : 'border-muted-foreground/25 cursor-pointer hover:border-muted-foreground/50'}`}>
+          {!selectedFile ? (
+            <div>
+              <input
+                type="file"
+                id="file-upload"
+                onChange={handleFileSelect}
+                accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.zip"
+                className="hidden"
+                disabled={isUploading}
+              />
+              <Label
+                htmlFor="file-upload"
+                className={`flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg transition-colors ${
+                  isUploading 
+                    ? 'border-blue-300 bg-blue-50 cursor-not-allowed' 
+                    : 'border-muted-foreground/25 cursor-pointer hover:border-muted-foreground/50'
+                }`}
+              >
                 <div className="text-center">
                   <Upload className={`h-8 w-8 mx-auto mb-2 ${isUploading ? 'animate-spin text-blue-600' : 'text-muted-foreground'}`} />
                   <p className="text-sm text-muted-foreground">
@@ -178,7 +223,9 @@ const SubmitHomeworkForm = ({
                   </p>
                 </div>
               </Label>
-            </div> : <div className="border rounded-lg p-4 bg-muted/50">
+            </div>
+          ) : (
+            <div className="border rounded-lg p-4 bg-muted/50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <File className="h-5 w-5 text-green-600" />
@@ -189,34 +236,62 @@ const SubmitHomeworkForm = ({
                     </p>
                   </div>
                 </div>
-                <Button type="button" variant="ghost" size="sm" onClick={removeFile} className="h-8 w-8 p-0">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={removeFile}
+                  className="h-8 w-8 p-0"
+                >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-            </div>}
+            </div>
+          )}
         </div>
 
 
         <div className="space-y-2">
           <Label htmlFor="remarks">Additional Notes (Optional)</Label>
-          <Textarea id="remarks" placeholder="Any additional notes or comments about your submission..." {...register('remarks')} rows={3} />
+          <Textarea
+            id="remarks"
+            placeholder="Any additional notes or comments about your submission..."
+            {...register('remarks')}
+            rows={3}
+          />
         </div>
 
         <div className="flex gap-3 pt-4">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} className="flex-1">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="flex-1"
+          >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting || !selectedFile} className="flex-1">
-            {isSubmitting ? <>
+          <Button
+            type="submit"
+            disabled={isSubmitting || !selectedFile}
+            className="flex-1"
+          >
+            {isSubmitting ? (
+              <>
                 <Upload className="h-4 w-4 mr-2 animate-spin" />
                 Submitting...
-              </> : <>
+              </>
+            ) : (
+              <>
                 <Upload className="h-4 w-4 mr-2" />
                 Submit Homework
-              </>}
+              </>
+            )}
           </Button>
         </div>
       </form>
-    </div>;
+    </div>
+  );
 };
+
 export default SubmitHomeworkForm;
