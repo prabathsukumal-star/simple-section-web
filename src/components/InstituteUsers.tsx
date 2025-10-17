@@ -26,6 +26,7 @@ import { studentsApi } from '@/api/students.api';
 import { useApiRequest } from '@/hooks/useApiRequest';
 import { useTableData } from '@/hooks/useTableData';
 import CreateUserForm from '@/components/forms/CreateUserForm';
+import CreateComprehensiveUserForm from '@/components/forms/CreateComprehensiveUserForm';
 import AssignUserForm from '@/components/forms/AssignUserForm';
 import AssignParentForm from '@/components/forms/AssignParentForm';
 import AssignParentByPhoneForm from '@/components/forms/AssignParentByPhoneForm';
@@ -71,6 +72,7 @@ const InstituteUsers = () => {
   const [selectedUser, setSelectedUser] = useState<InstituteUserData | null>(null);
   const [showUserDialog, setShowUserDialog] = useState(false);
   const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
+  const [showCreateComprehensiveUserDialog, setShowCreateComprehensiveUserDialog] = useState(false);
   const [showAssignUserDialog, setShowAssignUserDialog] = useState(false);
   const [showAssignMethodsDialog, setShowAssignMethodsDialog] = useState(false);
   const [showAssignParentDialog, setShowAssignParentDialog] = useState(false);
@@ -394,7 +396,7 @@ const InstituteUsers = () => {
             Assign User
           </Button>
           <Button 
-            onClick={() => setShowCreateUserDialog(true)}
+            onClick={() => setShowCreateComprehensiveUserDialog(true)}
             className="flex items-center gap-2 flex-1 sm:flex-none"
             size="sm"
           >
@@ -1005,6 +1007,24 @@ const InstituteUsers = () => {
         onClose={() => setUserInfoDialog({ open: false, user: null })}
         user={userInfoDialog.user}
       />
+
+      {/* Create Comprehensive User Dialog */}
+      {showCreateComprehensiveUserDialog && (
+        <CreateComprehensiveUserForm
+          onSubmit={(data) => {
+            console.log('Comprehensive user created:', data);
+            setShowCreateComprehensiveUserDialog(false);
+            toast({
+              title: "Success",
+              description: data.message || "User created successfully!",
+              duration: 1500
+            });
+            // Refresh the current tab data
+            getCurrentTable().actions.refresh();
+          }}
+          onCancel={() => setShowCreateComprehensiveUserDialog(false)}
+        />
+      )}
 
       {/* Upload Image Dialog */}
       <Dialog open={!!uploadingUserId} onOpenChange={() => { setUploadingUserId(null); setSelectedImage(null); }}>
