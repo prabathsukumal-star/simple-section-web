@@ -65,6 +65,9 @@ export interface MarkAttendanceByCardResponse {
   message: string;
   attendanceId: string;
   action: string;
+  imageUrl?: string;
+  status: 'present' | 'absent' | 'late';
+  name?: string;
 }
 
 export interface MarkAttendanceRequest {
@@ -87,6 +90,9 @@ export interface MarkAttendanceResponse {
   message: string;
   attendanceId: string;
   action: string;
+  imageUrl?: string;
+  status: 'present' | 'absent' | 'late';
+  name?: string;
 }
 
 class ChildAttendanceApi {

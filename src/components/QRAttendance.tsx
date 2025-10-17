@@ -406,12 +406,33 @@ const QRAttendance = () => {
         console.log('📝 Attendance ID:', result.attendanceId);
         console.log('🔄 Action:', result.action);
 
+        // Show toast with all attendance details
+        toast({
+          title: "✅ Attendance Marked",
+          description: (
+            <div className="flex flex-col gap-2 mt-2">
+              {result.imageUrl && (
+                <img 
+                  src={result.imageUrl} 
+                  alt={result.name || 'Student'} 
+                  className="w-16 h-16 rounded-full object-cover border-2 border-green-500"
+                />
+              )}
+              <div className="space-y-1">
+                <p className="font-semibold text-base">{result.name || `Student ${studentCardId.trim()}`}</p>
+                <p className="text-sm">Status: <span className="font-medium capitalize">{result.status}</span></p>
+                <p className="text-xs text-muted-foreground">Marked at {new Date().toLocaleTimeString()}</p>
+              </div>
+            </div>
+          ),
+        });
+
         addAlert({
           type: 'success',
-          studentName: `Student ${studentCardId.trim()}`,
+          studentName: result.name || `Student ${studentCardId.trim()}`,
           studentId: studentCardId.trim(),
-          status: status,
-          message: `🎉 Student ${studentCardId.trim()} marked as ${status.toUpperCase()}`
+          status: result.status,
+          message: `🎉 ${result.name || `Student ${studentCardId.trim()}`} marked as ${result.status.toUpperCase()}`
         });
         
       } else {
@@ -525,12 +546,33 @@ const QRAttendance = () => {
         console.log('New Count:', previousCount + 1);
         console.log('Input field cleared');
 
+        // Show toast with all attendance details
+        toast({
+          title: "✅ Attendance Marked",
+          description: (
+            <div className="flex flex-col gap-2 mt-2">
+              {result.imageUrl && (
+                <img 
+                  src={result.imageUrl} 
+                  alt={result.name || 'Student'} 
+                  className="w-16 h-16 rounded-full object-cover border-2 border-green-500"
+                />
+              )}
+              <div className="space-y-1">
+                <p className="font-semibold text-base">{result.name || `Student ${studentId}`}</p>
+                <p className="text-sm">Status: <span className="font-medium capitalize">{result.status}</span></p>
+                <p className="text-xs text-muted-foreground">Marked at {new Date().toLocaleTimeString()}</p>
+              </div>
+            </div>
+          ),
+        });
+
         addAlert({
           type: 'success',
-          studentName: `Student ${studentId}`,
+          studentName: result.name || `Student ${studentId}`,
           studentId: studentId,
-          status: status,
-          message: `Student ${studentId} marked as ${status}`
+          status: result.status,
+          message: `${result.name || `Student ${studentId}`} marked as ${result.status}`
         });
 
         setTimeout(() => {
