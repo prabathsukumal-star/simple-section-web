@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Building2, Search, Users, Award, ArrowLeft, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { organizationApi, Organization } from '@/api/organization.api';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -34,6 +35,7 @@ const OrganizationSelector = ({
   const [roleFilter, setRoleFilter] = useState<'all' | 'PRESIDENT' | 'MEMBER'>('all');
   const { toast } = useToast();
   const { user } = useAuth();
+  const userRole = useInstituteRole();
 
   useEffect(() => {
     filterOrganizations();
@@ -44,7 +46,9 @@ const OrganizationSelector = ({
       setIsLoading(true);
       const response = await organizationApi.getUserEnrolledOrganizations({
         page: 1,
-        limit: 50
+        limit: 50,
+        userId: user?.id,
+        role: userRole || 'User'
       });
       setOrganizations(response.data);
       toast({

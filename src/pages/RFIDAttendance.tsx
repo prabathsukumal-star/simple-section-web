@@ -296,6 +296,34 @@ const RFIDAttendance = () => {
             </CardContent>
           </Card>
 
+          {/* Auto Date & Time Display */}
+          <Card className="border-muted bg-muted/50">
+            <CardContent className="p-4">
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Date</p>
+                  <p className="text-lg font-semibold text-foreground">
+                    {new Date().toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Time</p>
+                  <p className="text-lg font-semibold text-foreground">
+                    {new Date().toLocaleTimeString('en-US', { 
+                      hour: '2-digit', 
+                      minute: '2-digit',
+                      second: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Input Section */}
           <div className="grid gap-6 sm:grid-cols-2">
             {/* RFID Card ID Input */}

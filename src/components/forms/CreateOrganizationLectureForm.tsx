@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { ArrowLeft, Video, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { organizationApi } from '@/api/organization.api';
 import { getBaseUrl2 } from '@/contexts/utils/auth.api';
 
@@ -54,12 +56,19 @@ const CreateOrganizationLectureForm = ({ courseId, organizationId, onSuccess, on
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [documents, setDocuments] = useState<File[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const userRole = useInstituteRole();
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         // Fetch all courses with a high limit to show all available courses
-        const params = { limit: 1000, page: 1 };
+        const params = { 
+          limit: 1000, 
+          page: 1,
+          userId: user?.id,
+          role: userRole || 'User'
+        };
         
         if (organizationId) {
           const response = await organizationApi.getOrganizationCourses(organizationId, params);

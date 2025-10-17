@@ -60,6 +60,7 @@ const App = () => {
               {/* Institute Routes */}
               <Route path="/institutes" element={<Index />} />
               <Route path="/institutes/users" element={<Index />} />
+              <Route path="/institute-users" element={<Index />} />
               <Route path="/institutes/classes" element={<Index />} />
               <Route path="/verify-image" element={<Index />} />
               
@@ -81,6 +82,10 @@ const App = () => {
               <Route path="/subjects" element={<Index />} />
               <Route path="/grades" element={<Index />} />
               <Route path="/grading" element={<Index />} />
+              <Route path="/grades-table" element={<Index />} />
+              <Route path="/create-grade" element={<Index />} />
+              <Route path="/assign-grade-classes" element={<Index />} />
+              <Route path="/view-grade-classes" element={<Index />} />
               
               {/* Attendance Routes */}
               <Route path="/attendance" element={<Index />} />

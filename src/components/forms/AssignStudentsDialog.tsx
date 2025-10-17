@@ -137,7 +137,11 @@ const AssignStudentsDialog: React.FC<AssignStudentsDialogProps> = ({
         studentIds: assignData.studentUserIds
       });
       
-      const result = await instituteClassesApi.teacherAssignStudents(selectedInstitute.id, selectedClass.id, assignData);
+      const result = await instituteClassesApi.teacherAssignStudents(
+        selectedInstitute.id, 
+        selectedClass.id, 
+        assignData
+      );
       console.log('Assignment result:', result);
       
       // Handle new API response format

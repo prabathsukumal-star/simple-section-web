@@ -1,4 +1,5 @@
 import { getAttendanceUrl, getBaseUrl, getApiHeaders } from '@/contexts/utils/auth.api';
+import { enhancedCachedClient } from './enhancedCachedClient';
 
 export interface StudentAttendanceRecord {
   attendanceId: string;
@@ -40,52 +41,82 @@ export interface StudentAttendanceParams {
   endDate?: string;
   page?: number;
   limit?: number;
+  userId?: string;
+  role?: string;
+  instituteId?: string;
+  classId?: string;
 }
 
 export const studentAttendanceApi = {
-  getStudentAttendance: async (params: StudentAttendanceParams): Promise<StudentAttendanceResponse> => {
-    // Use attendance-specific URL first, fallback to main API URL
-    let baseUrl = getAttendanceUrl();
-    if (!baseUrl) {
-      baseUrl = getBaseUrl();
-    }
-    
-    if (!baseUrl) {
-      throw new Error('No API base URL configured. Please configure attendance URL in settings.');
-    }
-
-    // Remove trailing slash if present
-    baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    
+  getStudentAttendance: async (params: StudentAttendanceParams, forceRefresh = false): Promise<StudentAttendanceResponse> => {
+    // Build query params
     const queryParams = new URLSearchParams();
     if (params.startDate) queryParams.append('startDate', params.startDate);
     if (params.endDate) queryParams.append('endDate', params.endDate);
     queryParams.append('page', (params.page || 1).toString());
-    queryParams.append('limit', (params.limit || 50).toString()); // Default to 50
+    queryParams.append('limit', (params.limit || 50).toString());
 
-    const url = `${baseUrl}/api/attendance/student/${params.studentId}?${queryParams.toString()}`;
+    const endpoint = `/attendance/student/${params.studentId}?${queryParams.toString()}`;
     
     console.log('=== STUDENT ATTENDANCE API CALL ===');
-    console.log('Attendance URL from config:', getAttendanceUrl());
-    console.log('Base URL from config:', getBaseUrl());
-    console.log('Using base URL:', baseUrl);
-    console.log('Full API Endpoint:', url);
+    console.log('Endpoint:', endpoint);
     
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: getApiHeaders()
+    // Use enhancedCachedClient with context
+    return enhancedCachedClient.get<StudentAttendanceResponse>(endpoint, undefined, {
+      forceRefresh,
+      ttl: 10,
+      useStaleWhileRevalidate: true,
+      userId: params.userId || params.studentId,
+      instituteId: params.instituteId,
+      classId: params.classId,
+      role: params.role
     });
+  },
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        message: `HTTP Error: ${response.status}`,
-        success: false
-      }));
-      throw new Error(errorData.message || `HTTP Error: ${response.status}`);
-    }
+  // Utility methods
+  hasAttendanceCached: (params: StudentAttendanceParams) => {
+    const queryParams = new URLSearchParams();
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+    queryParams.append('page', (params.page || 1).toString());
+    queryParams.append('limit', (params.limit || 50).toString());
 
-    const result = await response.json();
-    console.log('Student attendance API response:', result);
-    return result;
+    return enhancedCachedClient.hasCache(`/attendance/student/${params.studentId}?${queryParams.toString()}`, undefined, {
+      userId: params.userId || params.studentId,
+      instituteId: params.instituteId,
+      classId: params.classId,
+      role: params.role
+    });
+  },
+
+  getCachedAttendance: (params: StudentAttendanceParams) => {
+    const queryParams = new URLSearchParams();
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+    queryParams.append('page', (params.page || 1).toString());
+    queryParams.append('limit', (params.limit || 50).toString());
+
+    return enhancedCachedClient.getCachedOnly<StudentAttendanceResponse>(`/attendance/student/${params.studentId}?${queryParams.toString()}`, undefined, {
+      userId: params.userId || params.studentId,
+      instituteId: params.instituteId,
+      classId: params.classId,
+      role: params.role
+    });
+  },
+
+  preloadAttendance: async (params: StudentAttendanceParams) => {
+    const queryParams = new URLSearchParams();
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+    queryParams.append('page', (params.page || 1).toString());
+    queryParams.append('limit', (params.limit || 50).toString());
+
+    await enhancedCachedClient.get<StudentAttendanceResponse>(`/attendance/student/${params.studentId}?${queryParams.toString()}`, undefined, {
+      ttl: 10,
+      userId: params.userId || params.studentId,
+      instituteId: params.instituteId,
+      classId: params.classId,
+      role: params.role
+    });
   }
 };

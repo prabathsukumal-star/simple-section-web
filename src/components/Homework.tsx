@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
+import { useRefreshWithCooldown } from '@/hooks/useRefreshWithCooldown';
 import MUITable from '@/components/ui/mui-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import SubmitHomeworkForm from '@/components/forms/SubmitHomeworkForm';
 import HomeworkDetailsDialog from '@/components/forms/HomeworkDetailsDialog';
 import { DataCardView } from '@/components/ui/data-card-view';
 import { useNavigate } from 'react-router-dom';
-import { cachedApiClient } from '@/api/cachedClient';
+import { homeworkApi } from '@/api/homework.api';
 
 interface HomeworkProps {
   apiLevel?: 'institute' | 'class' | 'subject';
@@ -28,14 +28,14 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
   const { user, selectedInstitute, selectedClass, selectedSubject, currentInstituteId, currentClassId, currentSubjectId } = useAuth();
   const instituteRole = useInstituteRole();
   const { toast } = useToast();
+  const { refresh, isRefreshing, canRefresh, cooldownRemaining } = useRefreshWithCooldown(10);
   
   // DEBUG: Log role and institute information
   console.log('🔍 HOMEWORK DEBUG:', {
     instituteRole,
     selectedInstitute,
     'selectedInstitute.userRole': selectedInstitute?.userRole,
-    'selectedInstitute.instituteUserType': (selectedInstitute as any)?.instituteUserType,
-    'user.role': user?.role
+    'selectedInstitute.instituteUserType': (selectedInstitute as any)?.instituteUserType
   });
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -64,7 +64,9 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
     const userRole = instituteRole;
     const params: Record<string, any> = {
       page: page + 1, // MUI pagination is 0-based, API is 1-based
-      limit: rowsPerPage
+      limit: rowsPerPage,
+      userId: user?.id,
+      role: userRole
     };
 
     // Add context-aware filtering
@@ -99,11 +101,10 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
 
   const handleLoadData = async (forceRefresh = false) => {
     const userRole = instituteRole;
-    let endpoint = '';
     const params = buildQueryParams();
     
     if (userRole === 'Student') {
-      // For students: use the specific API endpoint with required parameters
+      // For students: require all context
       if (!currentInstituteId || !currentClassId || !currentSubjectId) {
         toast({
           title: "Missing Selection",
@@ -112,13 +113,9 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
         });
         return;
       }
-      
-      endpoint = '/institute-class-subject-homeworks';
     } else if (userRole === 'InstituteAdmin' || userRole === 'Teacher') {
-      // For InstituteAdmin and Teacher: use institute class subject homeworks API
-      if (currentInstituteId && currentClassId && currentSubjectId) {
-        endpoint = '/institute-class-subject-homeworks';
-      } else {
+      // For InstituteAdmin and Teacher: require context
+      if (!currentInstituteId || !currentClassId || !currentSubjectId) {
         toast({
           title: "Missing Selection",
           description: "Please select institute, class, and subject to view homework.",
@@ -126,25 +123,17 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
         });
         return;
       }
-    } else {
-      // For other roles: use the original API
-      endpoint = '/homework';
     }
 
     setIsLoading(true);
-    console.log(`Loading homework data for role: ${userRole}`, { forceRefresh });
+    console.log(`📚 Loading homework with secure caching - Role: ${userRole}`, { forceRefresh, context: params });
     console.log(`Current context - Institute: ${selectedInstitute?.name}, Class: ${selectedClass?.name}, Subject: ${selectedSubject?.name}`);
     
     try {
-      console.log('Fetching homework from endpoint:', endpoint, 'with params:', params);
-      
-      // Use cached API client
-      const result = await cachedApiClient.get(endpoint, params, { 
-        forceRefresh,
-        ttl: 15 // Cache homework for 15 minutes
-      });
+      // Use enhanced homework API with automatic caching
+      const result = await homeworkApi.getHomework(params, forceRefresh);
 
-      console.log('Homework loaded successfully:', result);
+      console.log('✅ Homework loaded successfully:', result);
       
       // Handle both array response and paginated response
       const homework = Array.isArray(result) ? result : (result as any)?.data || [];
@@ -162,7 +151,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
         });
       }
     } catch (error) {
-      console.error('Failed to load homework:', error);
+      console.error('❌ Failed to load homework:', error);
       toast({
         title: "Load Failed",
         description: "Failed to load homework data.",
@@ -175,7 +164,11 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
 
   const handleRefreshData = async () => {
     console.log('Force refreshing homework data...');
-    await handleLoadData(true);
+    await refresh(async () => {
+      await handleLoadData(true);
+    }, {
+      successMessage: 'Homework data refreshed successfully'
+    });
   };
 
   const handleCreateHomework = async () => {
@@ -198,15 +191,19 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
   };
 
   const handleDeleteHomework = async (homeworkData: any) => {
-    console.log('Deleting homework:', homeworkData);
+    console.log('🗑️ Deleting homework:', homeworkData);
     
     try {
       setIsLoading(true);
       
-      // Use cached client for delete (will clear related cache)
-      await cachedApiClient.delete(`/homework/${homeworkData.id}`);
+      // Use homework API with automatic cache invalidation
+      await homeworkApi.deleteHomework(homeworkData.id, {
+        instituteId: currentInstituteId,
+        classId: currentClassId,
+        subjectId: currentSubjectId
+      });
 
-      console.log('Homework deleted successfully');
+      console.log('✅ Homework deleted successfully');
       
       toast({
         title: "Homework Deleted",
@@ -218,7 +215,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
       await handleLoadData(true);
       
     } catch (error) {
-      console.error('Error deleting homework:', error);
+      console.error('❌ Error deleting homework:', error);
       toast({
         title: "Delete Failed",
         description: "Failed to delete homework. Please try again.",
@@ -343,7 +340,8 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
         label: 'Submit',
         action: (homework: any) => handleSubmitHomework(homework),
         icon: <Upload className="h-3 w-3" />,
-        variant: 'default' as const
+        variant: 'default' as const,
+        className: 'bg-primary hover:bg-primary/90 text-primary-foreground'
       }
     ] : [])
   ];
@@ -440,14 +438,20 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
               </Button>
               <Button 
                 onClick={handleRefreshData} 
-                disabled={isLoading}
+                disabled={isLoading || isRefreshing || !canRefresh}
                 variant="outline"
                 size="sm"
+                title={!canRefresh ? `Please wait ${cooldownRemaining} seconds` : 'Refresh data from server'}
               >
-                {isLoading ? (
+                {isLoading || isRefreshing ? (
                   <>
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                     Refreshing...
+                  </>
+                ) : !canRefresh ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Wait ({cooldownRemaining}s)
                   </>
                 ) : (
                   <>
@@ -529,7 +533,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
               format: col.render
             }))}
             onAdd={canAdd ? () => setIsCreateDialogOpen(true) : undefined}
-            onEdit={canEdit && !isStudent ? handleEditHomework : undefined}
+            onEdit={isStudent ? handleSubmitHomework : (canEdit ? handleEditHomework : undefined)}
             onView={handleViewHomework}
             page={page}
             rowsPerPage={rowsPerPage}

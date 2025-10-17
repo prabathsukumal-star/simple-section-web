@@ -52,9 +52,11 @@ const ChildTransportPage = () => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'approved':
-        return 'bg-success/10 text-success border-success/20';
+        return 'bg-green-500 text-white';
       case 'pending':
-        return 'bg-warning/10 text-warning border-warning/20';
+        return 'bg-yellow-500 text-white';
+      case 'rejected':
+        return 'bg-red-500 text-white';
       case 'inactive':
         return 'bg-muted text-muted-foreground';
       default:
@@ -72,12 +74,12 @@ const ChildTransportPage = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="min-h-screen space-y-6">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Bus className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
+              <Bus className="h-6 w-6" />
               Transport Information
             </CardTitle>
             <Button onClick={loadEnrollments} disabled={loading} size="sm">
@@ -92,65 +94,61 @@ const ChildTransportPage = () => {
         </CardHeader>
         <CardContent>
           {enrollments.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
               {enrollments.map((enrollment) => (
-                <Card key={enrollment.id} className="overflow-hidden">
-                  {enrollment.imageUrl && (
-                    <div className="h-48 overflow-hidden bg-muted">
+                <div key={enrollment.id} className="relative flex flex-col rounded-xl bg-card shadow-lg">
+                  <div className="relative mx-4 -mt-6 h-48 overflow-hidden rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg">
+                    {enrollment.imageUrl ? (
                       <img
                         src={enrollment.imageUrl}
                         alt={enrollment.bookhireTitle}
                         className="w-full h-full object-cover"
                       />
-                    </div>
-                  )}
-                  <CardHeader>
-                    <CardTitle className="text-lg">{enrollment.bookhireTitle}</CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Badge className="text-xs">{enrollment.vehicleNumber}</Badge>
-                      <Badge variant="outline" className={getStatusColor(enrollment.status)}>
-                        {enrollment.status}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="flex items-start gap-2 text-sm">
-                      <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">Pickup</div>
-                        <div className="text-muted-foreground">{enrollment.pickupLocation || 'Not specified'}</div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Bus className="h-8 w-8 text-white/80" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-6 flex-1 flex flex-col">
+                    <div className="mb-4">
+                      <h5 className="mb-2 text-xl font-bold text-foreground line-clamp-2">
+                        {enrollment.bookhireTitle}
+                      </h5>
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <Badge className="text-sm bg-primary/10 text-primary border-primary/20 px-3 py-1">
+                          {enrollment.vehicleNumber}
+                        </Badge>
+                        <Badge className={`text-sm px-3 py-1 ${getStatusColor(enrollment.status)}`}>
+                          {enrollment.status}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="flex items-start gap-2 text-sm">
-                      <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">Dropoff</div>
-                        <div className="text-muted-foreground">{enrollment.dropoffLocation || 'Not specified'}</div>
+                    
+                    <div className="space-y-3 mb-4 flex-1 text-sm">
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                        <div className="line-clamp-3">
+                          <span className="font-semibold">Pickup: </span>
+                          <span className="text-muted-foreground">{enrollment.pickupLocation || 'Not specified'}</span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <span className="font-medium">Enrolled: </span>
-                        {enrollment.enrollmentDate ? new Date(enrollment.enrollmentDate).toLocaleDateString() : 'N/A'}
-                      </div>
-                    </div>
-                    <div className="pt-2 border-t">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-medium">Monthly Fee</span>
-                        <span className="text-lg font-bold text-primary">
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        <span className="font-semibold">Monthly Fee:</span>
+                        <span className="font-bold text-primary text-lg">
                           Rs. {enrollment.monthlyFee.toLocaleString()}
                         </span>
                       </div>
-                      <Button 
-                        className="w-full" 
-                        onClick={() => handleSelectTransport(enrollment)}
-                      >
-                        Select Transport
-                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                    
+                    <Button 
+                      className="w-full text-base h-12 font-semibold" 
+                      onClick={() => handleSelectTransport(enrollment)}
+                    >
+                      Select Transport
+                    </Button>
+                  </div>
+                </div>
               ))}
             </div>
           ) : (

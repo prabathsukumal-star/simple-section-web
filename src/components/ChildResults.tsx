@@ -6,11 +6,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Award, RefreshCw, AlertTriangle, TrendingUp, BookOpen, Calendar, Target } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { examResultsApi, type ExamResult, type ExamResultsQueryParams } from '@/api/examResults.api';
 import { useApiRequest } from '@/hooks/useApiRequest';
 
 const ChildResults = () => {
-  const { selectedChild, selectedInstitute, selectedClass, selectedSubject } = useAuth();
+  const { selectedChild, selectedInstitute, selectedClass, selectedSubject, user } = useAuth();
+  const userRole = useInstituteRole();
   const { toast } = useToast();
   const [examResults, setExamResults] = useState<ExamResult[]>([]);
   const [totalResults, setTotalResults] = useState(0);
@@ -31,7 +33,9 @@ const ChildResults = () => {
     try {
       const params: ExamResultsQueryParams = {
         page: currentPage,
-        limit: 10
+        limit: 10,
+        userId: user?.id,
+        role: userRole || 'User'
       };
 
       // Add context filters if available

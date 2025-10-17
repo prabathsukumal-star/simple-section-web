@@ -63,6 +63,36 @@ export interface EnrollTransportResponse {
   data: TransportEnrollment;
 }
 
+export interface TransportAttendanceRecord {
+  attendanceDate: string;
+  status: 'pickup' | 'dropoff';
+  pickupStatus?: 'present' | 'absent' | 'late';
+  dropoffStatus?: 'present' | 'absent' | 'late';
+  pickupTime?: string;
+  dropoffTime?: string;
+  pickupLocation?: string;
+  dropoffLocation?: string;
+  location?: string;
+  notes?: string;
+  vehicleNumber: string;
+  bookhireName: string;
+  timestamp: string;
+}
+
+export interface TransportAttendanceResponse {
+  success: boolean;
+  message: string;
+  data: {
+    success: boolean;
+    data: TransportAttendanceRecord[];
+    pagination: {
+      currentPage: number;
+      totalItems: number;
+      hasMore: boolean;
+    };
+  };
+}
+
 export const transportApi = {
   getStudentEnrollments: async (
     studentId: string,
@@ -80,5 +110,19 @@ export const transportApi = {
     data: EnrollTransportRequest
   ): Promise<EnrollTransportResponse> => {
     return attendanceApiClient.post(`/api/student-bookhire-enrollment/enroll`, data);
+  },
+
+  getStudentAttendance: async (
+    studentId: string,
+    bookhireId: string,
+    params?: { page?: number; limit?: number }
+  ): Promise<TransportAttendanceResponse> => {
+    const queryParams = new URLSearchParams({
+      page: String(params?.page || 1),
+      limit: String(params?.limit || 10),
+      bookhireId: bookhireId
+    });
+    
+    return attendanceApiClient.get(`/api/bookhire-attendance/student/${studentId}?${queryParams}`);
   }
 };

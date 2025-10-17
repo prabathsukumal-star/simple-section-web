@@ -57,7 +57,7 @@ const Profile = () => {
     confirmNewPassword: false
   });
   const [activeProfileTab, setActiveProfileTab] = useState('details');
-  const userPermissions = AccessControl.getPermissions((user?.role || 'Student') as UserRole);
+  const userPermissions = AccessControl.getPermissions(instituteRole);
 
   // Remove automatic loading - set default values instead
   const loadUserData = async () => {
@@ -217,13 +217,13 @@ const Profile = () => {
               {formData.name || "Welcome"}
             </h1>
             <p className="text-muted-foreground text-lg">
-              {(instituteRole || user?.role || "User")} • Member since {formData.joinDate}
+              {instituteRole || "User"} • Member since {formData.joinDate}
             </p>
           </div>
           <div className="flex items-center justify-center gap-4">
             <Badge variant="secondary" className="text-sm">
               <Shield className="h-3 w-3 mr-1" />
-              {instituteRole || user?.role}
+              {instituteRole}
             </Badge>
             <div className="flex gap-2">
               {!isEditing ? <>

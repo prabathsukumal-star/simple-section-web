@@ -3,75 +3,30 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Calendar, Clock, RefreshCw, UserCheck, UserX, MapPin } from 'lucide-react';
+import { ArrowLeft, Calendar, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/components/layout/AppLayout';
 import PageContainer from '@/components/layout/PageContainer';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
-interface AttendanceRecord {
-  id: string;
-  date: string;
-  status: 'present' | 'absent' | 'late';
-  checkIn?: string;
-  checkOut?: string;
-  location?: string;
-  markedBy?: string;
-}
+import { transportApi, type TransportAttendanceRecord } from '@/api/transport.api';
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TablePagination from '@mui/material/TablePagination';
+import TableRow from '@mui/material/TableRow';
 
 const TransportAttendance: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { selectedTransport, setSelectedTransport } = useAuth();
+  const { selectedTransport, setSelectedTransport, selectedChild } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
-    // Mock data for demonstration
-    {
-      id: '1',
-      date: '2025-10-11',
-      status: 'present',
-      checkIn: '07:30 AM',
-      checkOut: '03:45 PM',
-      location: 'Main Gate',
-      markedBy: 'System'
-    },
-    {
-      id: '2',
-      date: '2025-10-10',
-      status: 'present',
-      checkIn: '07:28 AM',
-      checkOut: '03:50 PM',
-      location: 'Main Gate',
-      markedBy: 'System'
-    },
-    {
-      id: '3',
-      date: '2025-10-09',
-      status: 'late',
-      checkIn: '08:15 AM',
-      checkOut: '03:45 PM',
-      location: 'Side Entrance',
-      markedBy: 'Guard'
-    },
-    {
-      id: '4',
-      date: '2025-10-08',
-      status: 'absent',
-      location: 'N/A',
-      markedBy: 'System'
-    },
-    {
-      id: '5',
-      date: '2025-10-07',
-      status: 'present',
-      checkIn: '07:35 AM',
-      checkOut: '03:40 PM',
-      location: 'Main Gate',
-      markedBy: 'System'
-    }
-  ]);
+  const [attendanceRecords, setAttendanceRecords] = useState<TransportAttendanceRecord[]>([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     // Set transport from location state if available
@@ -89,15 +44,32 @@ const TransportAttendance: React.FC = () => {
   };
 
   const loadAttendance = async () => {
+    if (!selectedChild?.id || !selectedTransport?.bookhireId) {
+      toast({
+        title: "Error",
+        description: "Missing student or transport information",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      // API call would go here
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await transportApi.getStudentAttendance(
+        selectedChild.id,
+        selectedTransport.bookhireId,
+        { page: 1, limit: 10 }
+      );
+      
+      const records = (response as any)?.data?.data?.data ?? (response as any)?.data?.data ?? [];
+      const list: TransportAttendanceRecord[] = Array.isArray(records) ? records : [];
+      setAttendanceRecords(list);
       toast({
         title: "Success",
-        description: "Attendance records loaded successfully",
+        description: `Loaded ${list.length} attendance records`,
       });
     } catch (error) {
+      console.error('Error loading attendance:', error);
       toast({
         title: "Error",
         description: "Failed to load attendance records",
@@ -108,29 +80,22 @@ const TransportAttendance: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'present':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'absent':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      case 'late':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+  useEffect(() => {
+    if (selectedChild?.id && selectedTransport?.bookhireId) {
+      loadAttendance();
     }
-  };
+  }, [selectedChild?.id, selectedTransport?.bookhireId]);
 
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'present':
-        return <UserCheck className="h-4 w-4" />;
-      case 'absent':
-        return <UserX className="h-4 w-4" />;
-      case 'late':
-        return <Clock className="h-4 w-4" />;
+  const normalizeStatus = (s?: string) => s?.toString().trim().toLowerCase() || '';
+
+  const getStatusColor = (status: string) => {
+    switch (normalizeStatus(status)) {
+      case 'pickup':
+        return 'bg-green-100 text-green-800';
+      case 'dropoff':
+        return 'bg-red-100 text-red-800';
       default:
-        return <Clock className="h-4 w-4" />;
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -140,6 +105,22 @@ const TransportAttendance: React.FC = () => {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(+event.target.value);
+    setPage(0);
   };
 
   if (!selectedTransport) {
@@ -159,8 +140,8 @@ const TransportAttendance: React.FC = () => {
 
   return (
     <AppLayout currentPage="transport-attendance">
-      <PageContainer>
-        <div className="space-y-6">
+      <div className="w-full h-full min-h-0 flex flex-col">
+        <div className="p-4 md:p-6 space-y-4 shrink-0">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={handleBack}>
               <ArrowLeft className="h-5 w-5" />
@@ -171,86 +152,112 @@ const TransportAttendance: React.FC = () => {
             </div>
           </div>
 
-          <Card>
+          <Card className="border shadow-sm">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Attendance Records
-                </CardTitle>
-                <Button onClick={loadAttendance} disabled={loading} size="sm">
-                  {loading ? (
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                  )}
-                  Refresh
-                </Button>
-              </div>
+              <CardTitle className="text-xl md:text-2xl">Transport Information</CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="flex justify-center items-center py-8">
-                  <RefreshCw className="h-6 w-6 animate-spin mr-2" />
-                  <span>Loading attendance...</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Transport ID</p>
+                  <p className="text-lg font-medium">{selectedTransport?.id || '-'}</p>
                 </div>
-              ) : attendanceRecords.length > 0 ? (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Check In</TableHead>
-                        <TableHead>Check Out</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Marked By</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {attendanceRecords.map((record) => (
-                        <TableRow key={record.id}>
-                          <TableCell className="font-medium">
-                            {formatDate(record.date)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={getStatusColor(record.status)}>
-                              <div className="flex items-center gap-1">
-                                {getStatusIcon(record.status)}
-                                {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                              </div>
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {record.checkIn || '-'}
-                          </TableCell>
-                          <TableCell>
-                            {record.checkOut || '-'}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3 text-muted-foreground" />
-                              {record.location || '-'}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {record.markedBy || 'System'}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <div>
+                  <p className="text-sm text-muted-foreground">Vehicle Number</p>
+                  <p className="text-lg font-medium">{selectedTransport?.vehicleNumber || '-'}</p>
                 </div>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No attendance records found</p>
+                <div>
+                  <p className="text-sm text-muted-foreground">Bookhire ID</p>
+                  <p className="text-lg font-medium">{selectedTransport?.bookhireId || '-'}</p>
                 </div>
-              )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Student ID</p>
+                  <p className="text-lg font-medium">{selectedChild?.id || '-'}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
+
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold flex items-center gap-2">
+              <Calendar className="h-6 w-6" />
+              Attendance Records
+            </h2>
+            <Button onClick={loadAttendance} disabled={loading} size="sm">
+              {loading ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Refresh
+            </Button>
+          </div>
         </div>
-      </PageContainer>
+
+        <div className="flex-1 min-h-0 px-0 md:px-6 pb-0 md:pb-6">
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+              <span>Loading attendance...</span>
+            </div>
+          ) : attendanceRecords.length > 0 ? (
+            <Paper sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+              <TableContainer sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+                <Table stickyHeader aria-label="transport attendance table">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Time</TableCell>
+                      <TableCell>Bookhire ID</TableCell>
+                      <TableCell>Vehicle Number</TableCell>
+                      <TableCell>Student ID</TableCell>
+                      <TableCell>Location</TableCell>
+                      <TableCell>Notes</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {attendanceRecords
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((record, index) => (
+                        <TableRow hover key={`${record.timestamp}-${index}`}>
+                          <TableCell>{formatDate(record.attendanceDate)}</TableCell>
+                          <TableCell>
+                            <Badge className={getStatusColor(record.status)}>
+                              {record.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{formatTime(record.timestamp)}</TableCell>
+                          <TableCell>{selectedTransport?.bookhireId || '-'}</TableCell>
+                          <TableCell>{selectedTransport?.vehicleNumber || '-'}</TableCell>
+                          <TableCell>{selectedChild?.id || '-'}</TableCell>
+                          <TableCell>
+                            {record.location || record.pickupLocation || record.dropoffLocation || '-'}
+                          </TableCell>
+                          <TableCell>{record.notes || '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                component="div"
+                count={attendanceRecords.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
+            </Paper>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No attendance records found</p>
+            </div>
+          )}
+        </div>
+      </div>
     </AppLayout>
   );
 };

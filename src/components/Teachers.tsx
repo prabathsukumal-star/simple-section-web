@@ -307,7 +307,7 @@ const Teachers = () => {
     setIsCreateDialogOpen(false);
   };
 
-  const userRole = (user?.role || 'Student') as UserRole;
+  const userRole = useInstituteRole();
   const canAdd = AccessControl.hasPermission(userRole, 'create-teacher');
   const canEdit = AccessControl.hasPermission(userRole, 'edit-teacher');
   const canDelete = AccessControl.hasPermission(userRole, 'delete-teacher');

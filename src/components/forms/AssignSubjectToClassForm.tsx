@@ -9,6 +9,7 @@ import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { useToast } from '@/hooks/use-toast';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
 
@@ -49,10 +50,11 @@ const AssignSubjectToClassForm: React.FC<AssignSubjectToClassFormProps> = ({
   onCancel
 }) => {
   const { currentInstituteId, user, selectedInstitute, selectedInstituteType } = useAuth();
+  const userRole = useInstituteRole();
   const { toast } = useToast();
 
   // Check if user is InstituteAdmin or Teacher
-  if (user?.role !== 'Teacher' && user?.role !== 'InstituteAdmin') {
+  if (userRole !== 'Teacher' && userRole !== 'InstituteAdmin') {
     return (
       <div className="p-6 text-center">
         <Alert variant="destructive">
@@ -150,7 +152,7 @@ const AssignSubjectToClassForm: React.FC<AssignSubjectToClassFormProps> = ({
       let url: string;
       let classData: any[] = [];
       
-      if (user?.role === 'Teacher' && user?.id) {
+      if (userRole === 'Teacher' && user?.id) {
         // Use teacher-specific API for Teachers
         url = `${baseUrl}/institute-classes/${currentInstituteId}/teacher/${user.id}?page=1&limit=10`;
         const response = await fetch(url, {
@@ -164,7 +166,7 @@ const AssignSubjectToClassForm: React.FC<AssignSubjectToClassFormProps> = ({
         
         const result = await response.json();
         classData = result.data || [];
-      } else if (user?.role === 'InstituteAdmin') {
+      } else if (userRole === 'InstituteAdmin') {
         // Use regular API for InstituteAdmin
         url = `${baseUrl}/institute-classes/institute/${currentInstituteId}`;
         const response = await fetch(url, {
@@ -182,7 +184,7 @@ const AssignSubjectToClassForm: React.FC<AssignSubjectToClassFormProps> = ({
       
       let mappedClasses: any[] = [];
       
-      if (user?.role === 'Teacher') {
+      if (userRole === 'Teacher') {
         // For teachers, map from class-subject assignments
         mappedClasses = classData.map((item: any) => ({
           id: item.class.id,

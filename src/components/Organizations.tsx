@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Building2, Search, Plus, LayoutGrid, List, Filter, UserPlus, ChevronDown, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { organizationApi, Organization, OrganizationQueryParams } from '@/api/organization.api';
 import { useToast } from '@/hooks/use-toast';
 import CreateOrganizationForm from '@/components/forms/CreateOrganizationForm';
@@ -19,6 +20,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 
 const Organizations = () => {
   const { setSelectedOrganization, user } = useAuth();
+  const userRole = useInstituteRole();
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,6 +50,8 @@ const Organizations = () => {
         limit: 10,
         sortBy,
         sortOrder,
+        userId: user?.id,
+        role: userRole || 'User'
       };
 
       if (searchTerm) {

@@ -1,4 +1,4 @@
-import { cachedApiClient } from './cachedClient';
+import { enhancedCachedClient } from './enhancedCachedClient';
 import { ApiResponse } from './client';
 
 export interface ExamResult {
@@ -34,6 +34,8 @@ export interface ExamResultsQueryParams {
   classId?: string;
   subjectId?: string;
   examId?: string;
+  userId?: string;
+  role?: string;
 }
 
 export interface ExamResultsResponse {
@@ -53,10 +55,47 @@ export interface ExamResultsResponse {
 class ExamResultsApi {
   async getExamResults(params?: ExamResultsQueryParams, forceRefresh = false): Promise<ExamResultsResponse> {
     console.log('Fetching exam results:', params, { forceRefresh });
-    return cachedApiClient.get<ExamResultsResponse>('/institute-class-subject-resaults', params, {
+    return enhancedCachedClient.get<ExamResultsResponse>('/institute-class-subject-resaults', params, {
       forceRefresh,
-      ttl: 30, // Cache results for 30 minutes
-      useStaleWhileRevalidate: true
+      ttl: 30,
+      useStaleWhileRevalidate: true,
+      userId: params?.userId,
+      instituteId: params?.instituteId,
+      classId: params?.classId,
+      subjectId: params?.subjectId,
+      role: params?.role
+    });
+  }
+
+  // Utility methods
+  hasResultsCached(params?: ExamResultsQueryParams): Promise<boolean> {
+    return enhancedCachedClient.hasCache('/institute-class-subject-resaults', params, {
+      userId: params?.userId,
+      instituteId: params?.instituteId,
+      classId: params?.classId,
+      subjectId: params?.subjectId,
+      role: params?.role
+    });
+  }
+
+  getCachedResults(params?: ExamResultsQueryParams): Promise<ExamResultsResponse | null> {
+    return enhancedCachedClient.getCachedOnly<ExamResultsResponse>('/institute-class-subject-resaults', params, {
+      userId: params?.userId,
+      instituteId: params?.instituteId,
+      classId: params?.classId,
+      subjectId: params?.subjectId,
+      role: params?.role
+    });
+  }
+
+  async preloadResults(params?: ExamResultsQueryParams): Promise<void> {
+    await enhancedCachedClient.get<ExamResultsResponse>('/institute-class-subject-resaults', params, {
+      ttl: 30,
+      userId: params?.userId,
+      instituteId: params?.instituteId,
+      classId: params?.classId,
+      subjectId: params?.subjectId,
+      role: params?.role
     });
   }
 }

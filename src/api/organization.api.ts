@@ -72,6 +72,8 @@ export interface OrganizationQueryParams {
   search?: string;
   type?: 'INSTITUTE' | 'GLOBAL';
   isPublic?: boolean;
+  userId?: string;
+  role?: string;
 }
 
 export interface OrganizationLoginCredentials {

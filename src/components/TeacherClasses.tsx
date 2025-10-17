@@ -11,6 +11,7 @@ import { DataCardView } from '@/components/ui/data-card-view';
 import DataTable from '@/components/ui/data-table';
 import { useTableData } from '@/hooks/useTableData';
 import PaymentSubmissionsPagination from '@/components/PaymentSubmissionsPagination';
+import { cachedApiClient } from '@/api/cachedClient';
 
 interface TeacherClass {
   id: string;
@@ -84,7 +85,7 @@ const TeacherClasses = () => {
   };
 
 
-  const fetchTeacherClasses = async () => {
+  const fetchTeacherClasses = async (forceRefresh = false) => {
     if (!selectedInstitute?.id || !user?.id) {
       toast({
         title: "Missing Information",
@@ -96,34 +97,36 @@ const TeacherClasses = () => {
 
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: itemsPerPage.toString(),
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
         instituteId: selectedInstitute.id,
         grade: '11',
         isActive: 'true',
         classTeacherId: user.id
-      });
+      };
 
-      const response = await fetch(
-        `${getBaseUrl()}/institute-classes?${params}`,
-        { headers: getApiHeaders() }
+      const data: ApiResponse = await cachedApiClient.get(
+        '/institute-classes',
+        params,
+        {
+          ttl: 15, // Cache for 15 minutes
+          forceRefresh,
+          userId: user.id,
+          role: effectiveRole || 'Teacher',
+          instituteId: selectedInstitute.id
+        }
       );
       
-      if (response.ok) {
-        const data: ApiResponse = await response.json();
-        setClasses(data.data);
-        setTotalItems(data.meta.total);
-        setTotalPages(data.meta.totalPages);
-        setDataLoaded(true);
-        
-        toast({
-          title: "Classes Loaded",
-          description: `Successfully loaded ${data.data.length} classes.`
-        });
-      } else {
-        throw new Error('Failed to fetch classes');
-      }
+      setClasses(data.data);
+      setTotalItems(data.meta.total);
+      setTotalPages(data.meta.totalPages);
+      setDataLoaded(true);
+      
+      toast({
+        title: "Classes Loaded",
+        description: `Successfully loaded ${data.data.length} classes.`
+      });
     } catch (error) {
       console.error('Error fetching teacher classes:', error);
       toast({
@@ -137,6 +140,14 @@ const TeacherClasses = () => {
   };
 
   // Removed automatic API call - users must click Refresh to load data
+  
+  const handleLoadData = () => {
+    fetchTeacherClasses(false); // Normal load with cache
+  };
+  
+  const handleRefresh = () => {
+    fetchTeacherClasses(true); // Force refresh, bypass cache
+  };
 
   const handleSelectClass = (classData: TeacherClass) => {
     setSelectedClass({
@@ -227,7 +238,7 @@ const TeacherClasses = () => {
             Click the button below to load your classes
           </p>
           <Button 
-            onClick={fetchTeacherClasses} 
+            onClick={handleLoadData} 
             disabled={loading}
           >
             {loading ? (
@@ -264,7 +275,7 @@ const TeacherClasses = () => {
             {classes.length} Classes
           </Badge>
           <Button 
-            onClick={fetchTeacherClasses} 
+            onClick={handleRefresh} 
             disabled={loading}
             variant="outline"
             size="sm"
