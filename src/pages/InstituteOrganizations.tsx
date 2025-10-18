@@ -117,7 +117,6 @@ const InstituteOrganizations = () => {
       format: (_value: any, row: any) => (
         <Button
           size="sm"
-          variant="outline"
           onClick={() => setAddUserDialog({ open: true, orgId: row.organizationId, orgName: row.name })}
           className="gap-1"
         >
@@ -149,7 +148,7 @@ const InstituteOrganizations = () => {
   }
 
   return (
-    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
+    <div className="h-full flex flex-col p-3 sm:p-6 space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold">Institute Organizations</h1>
@@ -211,8 +210,8 @@ const InstituteOrganizations = () => {
         </Card>
       )}
 
-      <Card>
-        <CardContent className="p-0">
+      <Card className="flex-1 flex flex-col">
+        <CardContent className="p-0 flex-1 flex flex-col">
           <MUITable
             title=""
             columns={columns}
