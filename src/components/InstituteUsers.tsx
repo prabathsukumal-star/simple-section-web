@@ -408,38 +408,69 @@ const InstituteUsers = () => {
 
       {/* Tabs for different user types */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as UserType)}>
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 gap-2 p-2 h-auto bg-muted/50">
-          <TabsTrigger 
-            value="STUDENT" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-          >
-            <GraduationCap className="h-4 w-4" />
-            <span>Students</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="TEACHER" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-          >
-            <Users className="h-4 w-4" />
-            <span>Teachers</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="ATTENDANCE_MARKER" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-          >
-            <UserCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">Markers</span>
-            <span className="sm:hidden">Markers</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="INSTITUTE_ADMIN" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-          >
-            <Shield className="h-4 w-4" />
-            <span className="hidden sm:inline">Admins</span>
-            <span className="sm:hidden">Admins</span>
-          </TabsTrigger>
-        </TabsList>
+        {/* Mobile: Horizontal scrollable icon-only tabs */}
+        <div className="lg:hidden">
+          <TabsList className="inline-flex h-12 w-auto gap-1 p-1 bg-background border rounded-lg overflow-x-auto">
+            <TabsTrigger 
+              value="STUDENT" 
+              className="h-10 w-10 p-0 flex items-center justify-center data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md"
+            >
+              <GraduationCap className="h-5 w-5" />
+            </TabsTrigger>
+            <TabsTrigger 
+              value="TEACHER" 
+              className="h-10 w-10 p-0 flex items-center justify-center data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md"
+            >
+              <Users className="h-5 w-5" />
+            </TabsTrigger>
+            <TabsTrigger 
+              value="ATTENDANCE_MARKER" 
+              className="h-10 w-10 p-0 flex items-center justify-center data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md"
+            >
+              <UserCheck className="h-5 w-5" />
+            </TabsTrigger>
+            <TabsTrigger 
+              value="INSTITUTE_ADMIN" 
+              className="h-10 w-10 p-0 flex items-center justify-center data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md"
+            >
+              <Shield className="h-5 w-5" />
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Desktop: Full width tabs with text */}
+        <div className="hidden lg:block">
+          <TabsList className="grid w-full grid-cols-4 gap-2 p-2 h-auto bg-muted/50">
+            <TabsTrigger 
+              value="STUDENT" 
+              className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <GraduationCap className="h-4 w-4" />
+              <span>Students</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="TEACHER" 
+              className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <Users className="h-4 w-4" />
+              <span>Teachers</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="ATTENDANCE_MARKER" 
+              className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <UserCheck className="h-4 w-4" />
+              <span>Markers</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="INSTITUTE_ADMIN" 
+              className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <Shield className="h-4 w-4" />
+              <span>Admins</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="STUDENT" className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
