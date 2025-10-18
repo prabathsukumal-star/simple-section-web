@@ -408,36 +408,36 @@ const InstituteUsers = () => {
 
       {/* Tabs for different user types */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as UserType)}>
-        {/* Mobile: Horizontal scrollable tabs with icons and text */}
+        {/* Mobile: Horizontal scrollable tabs - icon only, name shows when active */}
         <div className="lg:hidden overflow-x-auto">
           <TabsList className="inline-flex h-auto w-auto gap-2 p-1.5 bg-background border rounded-lg">
             <TabsTrigger 
               value="STUDENT" 
-              className="flex items-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap"
+              className="flex items-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap data-[state=inactive]:px-2"
             >
               <GraduationCap className="h-4 w-4" />
-              <span className="text-sm">Students</span>
+              {activeTab === 'STUDENT' && <span className="text-sm">Students</span>}
             </TabsTrigger>
             <TabsTrigger 
               value="TEACHER" 
-              className="flex items-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap"
+              className="flex items-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap data-[state=inactive]:px-2"
             >
               <Users className="h-4 w-4" />
-              <span className="text-sm">Teachers</span>
+              {activeTab === 'TEACHER' && <span className="text-sm">Teachers</span>}
             </TabsTrigger>
             <TabsTrigger 
               value="ATTENDANCE_MARKER" 
-              className="flex items-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap"
+              className="flex items-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap data-[state=inactive]:px-2"
             >
               <UserCheck className="h-4 w-4" />
-              <span className="text-sm">Markers</span>
+              {activeTab === 'ATTENDANCE_MARKER' && <span className="text-sm">Markers</span>}
             </TabsTrigger>
             <TabsTrigger 
               value="INSTITUTE_ADMIN" 
-              className="flex items-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap"
+              className="flex items-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md whitespace-nowrap data-[state=inactive]:px-2"
             >
               <Shield className="h-4 w-4" />
-              <span className="text-sm">Admins</span>
+              {activeTab === 'INSTITUTE_ADMIN' && <span className="text-sm">Admins</span>}
             </TabsTrigger>
           </TabsList>
         </div>
