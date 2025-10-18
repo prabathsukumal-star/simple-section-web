@@ -3,11 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Building2, RefreshCw, Plus } from 'lucide-react';
+import { Building2, RefreshCw, Plus, UserPlus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTableData } from '@/hooks/useTableData';
 import MUITable from '@/components/ui/mui-table';
 import CreateOrganizationForm from '@/components/forms/CreateOrganizationForm';
+import AddOrganizationUserDialog from '@/components/forms/AddOrganizationUserDialog';
 
 interface Organization {
   organizationId: string;
@@ -29,6 +30,11 @@ interface Organization {
 const InstituteOrganizations = () => {
   const { selectedInstitute } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [addUserDialog, setAddUserDialog] = useState<{ open: boolean; orgId: string; orgName: string }>({
+    open: false,
+    orgId: '',
+    orgName: '',
+  });
 
   const { state, actions, pagination, availableLimits } = useTableData<Organization>({
     endpoint: `/organizations/institute/${selectedInstitute?.id}`,
@@ -103,6 +109,23 @@ const InstituteOrganizations = () => {
       minWidth: 100,
       align: 'center' as const,
     },
+    {
+      id: 'actions',
+      label: 'Actions',
+      minWidth: 120,
+      align: 'center' as const,
+      format: (_value: any, row: any) => (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setAddUserDialog({ open: true, orgId: row.organizationId, orgName: row.name })}
+          className="gap-1"
+        >
+          <UserPlus className="h-4 w-4" />
+          Add User
+        </Button>
+      )
+    },
   ];
 
   const handleCreateSuccess = () => {
@@ -171,6 +194,14 @@ const InstituteOrganizations = () => {
           />
         </DialogContent>
       </Dialog>
+
+      <AddOrganizationUserDialog
+        open={addUserDialog.open}
+        onOpenChange={(open) => setAddUserDialog({ ...addUserDialog, open })}
+        organizationId={addUserDialog.orgId}
+        organizationName={addUserDialog.orgName}
+        onSuccess={() => actions.loadData(true)}
+      />
 
       {state.error && (
         <Card className="border-destructive">
