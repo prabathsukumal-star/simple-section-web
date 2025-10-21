@@ -245,8 +245,23 @@ const Exams = ({ apiLevel = 'institute' }: ExamsProps) => {
       )
     },
     {
+      key: 'createResults',
+      header: 'Create Results',
+      render: (value: any, row: any) => (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => navigate(`/exams/${row.id}/create-results`)}
+          className="flex items-center gap-2"
+        >
+          <BarChart3 className="h-4 w-4" />
+          Create
+        </Button>
+      )
+    },
+    {
       key: 'results',
-      header: 'Results',
+      header: 'View Results',
       render: (value: any, row: any) => (
         <Button
           size="sm"

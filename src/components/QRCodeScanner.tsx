@@ -99,8 +99,8 @@ const QRCodeScanner = () => {
             setLocation({ latitude, longitude, address });
             console.log('Location set:', { latitude, longitude, address });
           } catch (error) {
-            console.log('Reverse geocoding failed, using generated address');
-            const address = generateAddress();
+            console.log('Reverse geocoding failed, using coordinates');
+            const address = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
             setLocation({ latitude, longitude, address });
           }
           setLocationLoading(false);
@@ -108,12 +108,11 @@ const QRCodeScanner = () => {
         (error) => {
           console.log('Location access error:', error);
           toast({
-            title: "Location Access",
-            description: "Using default location. For better accuracy, please allow location access.",
-            variant: "default"
+            title: 'Location Required',
+            description: 'Please allow location access to mark attendance',
+            variant: 'destructive'
           });
-          const address = generateAddress();
-          setLocation({ latitude: 0, longitude: 0, address });
+          setLocation(null);
           setLocationLoading(false);
         },
         {
@@ -124,8 +123,7 @@ const QRCodeScanner = () => {
       );
     } else {
       console.log('Geolocation not supported');
-      const address = generateAddress();
-      setLocation({ latitude: 0, longitude: 0, address });
+      setLocation(null);
       setLocationLoading(false);
     }
   };
@@ -141,7 +139,7 @@ const QRCodeScanner = () => {
       throw new Error('No address found');
     } catch (error) {
       console.log('Reverse geocoding failed:', error);
-      return generateAddress();
+      return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
     }
   };
 

@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { apiClient } from '@/api/client';
+import { homeworkApi } from '@/api/homework.api';
 import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -99,9 +99,9 @@ const CreateHomeworkForm = ({ onClose, onSuccess }: CreateHomeworkFormProps) => 
 
       console.log('Creating homework with data:', homeworkData);
       
-      const response = await apiClient.post('/homeworks', homeworkData);
+      const newHomework = await homeworkApi.createHomework(homeworkData);
       
-      console.log('Homework created successfully:', response.data);
+      console.log('Homework created successfully:', newHomework);
       
       toast({
         title: "Homework Created",

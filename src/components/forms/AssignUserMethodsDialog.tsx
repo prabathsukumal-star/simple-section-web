@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/api/client';
-import { UserPlus, Phone, CreditCard, User, Eye } from 'lucide-react';
+import { UserPlus, Phone, CreditCard, User, Eye, Mail, Upload } from 'lucide-react';
 
 interface AssignUserMethodsDialogProps {
   open: boolean;
@@ -17,7 +17,7 @@ interface AssignUserMethodsDialogProps {
   onSuccess: () => void;
 }
 
-type AssignMethod = 'id' | 'phone' | 'rfid';
+type AssignMethod = 'id' | 'phone' | 'rfid' | 'email';
 
 interface UserPreviewData {
   id: string;
@@ -37,19 +37,34 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
   // Form states for different methods
   const [idFormData, setIdFormData] = useState({
     userId: '',
+    instituteUserType: 'STUDENT',
     userIdByInstitute: '',
-    status: 'ACTIVE'
+    instituteCardId: '',
+    image: null as File | null
   });
 
   const [phoneFormData, setPhoneFormData] = useState({
     phoneNumber: '+94',
-    userType: 'STUDENT',
-    userIdByInstitute: ''
+    instituteUserType: 'STUDENT',
+    userIdByInstitute: '',
+    instituteCardId: '',
+    image: null as File | null
   });
 
   const [rfidFormData, setRfidFormData] = useState({
     rfid: '',
-    userIdByInstitute: ''
+    instituteUserType: 'STUDENT',
+    userIdByInstitute: '',
+    instituteCardId: '',
+    image: null as File | null
+  });
+
+  const [emailFormData, setEmailFormData] = useState({
+    email: '',
+    instituteUserType: 'STUDENT',
+    userIdByInstitute: '',
+    instituteCardId: '',
+    image: null as File | null
   });
 
   const handleAssignById = async () => {
@@ -64,12 +79,21 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
 
     setIsLoading(true);
     try {
-      const response = await apiClient.post('/institute-users', {
-        instituteId,
-        userId: idFormData.userId,
-        userIdByInstitute: idFormData.userIdByInstitute,
-        status: idFormData.status
-      });
+      const formData = new FormData();
+      formData.append('userId', idFormData.userId);
+      formData.append('instituteUserType', idFormData.instituteUserType);
+      formData.append('userIdByInstitute', idFormData.userIdByInstitute);
+      if (idFormData.instituteCardId) {
+        formData.append('instituteCardId', idFormData.instituteCardId);
+      }
+      if (idFormData.image) {
+        formData.append('image', idFormData.image);
+      }
+
+      const response = await apiClient.post(
+        `/institute-users/institute/${instituteId}/assign-user-by-id`,
+        formData
+      );
 
       if (response.success) {
         toast({
@@ -102,7 +126,21 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
 
     setIsLoading(true);
     try {
-      const response = await apiClient.post(`/institute-users/institute/${instituteId}/assign-user-by-phone`, phoneFormData);
+      const formData = new FormData();
+      formData.append('phoneNumber', phoneFormData.phoneNumber);
+      formData.append('instituteUserType', phoneFormData.instituteUserType);
+      formData.append('userIdByInstitute', phoneFormData.userIdByInstitute);
+      if (phoneFormData.instituteCardId) {
+        formData.append('instituteCardId', phoneFormData.instituteCardId);
+      }
+      if (phoneFormData.image) {
+        formData.append('image', phoneFormData.image);
+      }
+
+      const response = await apiClient.post(
+        `/institute-users/institute/${instituteId}/assign-user-by-phone`,
+        formData
+      );
 
       if (response.success) {
         toast({
@@ -135,7 +173,21 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
 
     setIsLoading(true);
     try {
-      const response = await apiClient.post(`/institute-users/institute/${instituteId}/assign-student-by-rfid`, rfidFormData);
+      const formData = new FormData();
+      formData.append('rfid', rfidFormData.rfid);
+      formData.append('instituteUserType', rfidFormData.instituteUserType);
+      formData.append('userIdByInstitute', rfidFormData.userIdByInstitute);
+      if (rfidFormData.instituteCardId) {
+        formData.append('instituteCardId', rfidFormData.instituteCardId);
+      }
+      if (rfidFormData.image) {
+        formData.append('image', rfidFormData.image);
+      }
+
+      const response = await apiClient.post(
+        `/institute-users/institute/${instituteId}/assign-student-by-rfid`,
+        formData
+      );
 
       if (response.success) {
         toast({
@@ -149,6 +201,53 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
       toast({
         title: "Error",
         description: error.response?.data?.message || 'Failed to assign student by RFID',
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAssignByEmail = async () => {
+    if (!emailFormData.email || !emailFormData.userIdByInstitute) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter email and institute user ID",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('email', emailFormData.email);
+      formData.append('instituteUserType', emailFormData.instituteUserType);
+      formData.append('userIdByInstitute', emailFormData.userIdByInstitute);
+      if (emailFormData.instituteCardId) {
+        formData.append('instituteCardId', emailFormData.instituteCardId);
+      }
+      if (emailFormData.image) {
+        formData.append('image', emailFormData.image);
+      }
+
+      const response = await apiClient.post(
+        `/institute-users/institute/${instituteId}/assign-user-by-email`,
+        formData
+      );
+
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: response.message,
+        });
+        onSuccess();
+        onClose();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || 'Failed to assign user by email',
         variant: "destructive"
       });
     } finally {
@@ -209,11 +308,38 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
     }
   };
 
+  const fetchUserByEmail = async (email: string) => {
+    if (!email.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid email address",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoadingPreview(true);
+    try {
+      const response = await apiClient.get(`/users/basic/email/${email}`);
+      setUserPreview(response);
+      setShowUserPreview(true);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || 'User not found',
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  };
+
   const resetForm = () => {
     setSelectedMethod(null);
-    setIdFormData({ userId: '', userIdByInstitute: '', status: 'ACTIVE' });
-    setPhoneFormData({ phoneNumber: '+94', userType: 'STUDENT', userIdByInstitute: '' });
-    setRfidFormData({ rfid: '', userIdByInstitute: '' });
+    setIdFormData({ userId: '', instituteUserType: 'STUDENT', userIdByInstitute: '', instituteCardId: '', image: null });
+    setPhoneFormData({ phoneNumber: '+94', instituteUserType: 'STUDENT', userIdByInstitute: '', instituteCardId: '', image: null });
+    setRfidFormData({ rfid: '', instituteUserType: 'STUDENT', userIdByInstitute: '', instituteCardId: '', image: null });
+    setEmailFormData({ email: '', instituteUserType: 'STUDENT', userIdByInstitute: '', instituteCardId: '', image: null });
   };
 
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -306,6 +432,20 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
                   </div>
                 </div>
               </Button>
+
+              <Button
+                variant="outline"
+                className="w-full justify-start h-auto p-4"
+                onClick={() => setSelectedMethod('email')}
+              >
+                <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-orange-500" />
+                  <div className="text-left">
+                    <div className="font-medium">Assign user by Email</div>
+                    <div className="text-sm text-muted-foreground">Find user by email address</div>
+                  </div>
+                </div>
+              </Button>
             </div>
           </div>
         ) : (
@@ -351,31 +491,61 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
                 </div>
 
                 <div>
-                  <Label htmlFor="userIdByInstitute">Institute User ID *</Label>
-                  <Input
-                    id="userIdByInstitute"
-                    value={idFormData.userIdByInstitute}
-                    onChange={(e) => setIdFormData(prev => ({ ...prev, userIdByInstitute: e.target.value }))}
-                    placeholder="e.g., s103"
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="status">Status</Label>
+                  <Label htmlFor="instituteUserType">User Type *</Label>
                   <Select
-                    value={idFormData.status}
-                    onValueChange={(value) => setIdFormData(prev => ({ ...prev, status: value }))}
+                    value={idFormData.instituteUserType}
+                    onValueChange={(value) => setIdFormData(prev => ({ ...prev, instituteUserType: value }))}
                   >
                     <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ACTIVE">Active</SelectItem>
-                      <SelectItem value="PENDING">Pending</SelectItem>
-                      <SelectItem value="INACTIVE">Inactive</SelectItem>
+                      <SelectItem value="STUDENT">Student</SelectItem>
+                      <SelectItem value="TEACHER">Teacher</SelectItem>
+                      <SelectItem value="PARENT">Parent</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="userIdByInstitute">Institute User ID *</Label>
+                  <Input
+                    id="userIdByInstitute"
+                    value={idFormData.userIdByInstitute}
+                    onChange={(e) => setIdFormData(prev => ({ ...prev, userIdByInstitute: e.target.value }))}
+                    placeholder="e.g., STU2024001"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="instituteCardId">Institute Card ID</Label>
+                  <Input
+                    id="instituteCardId"
+                    value={idFormData.instituteCardId}
+                    onChange={(e) => setIdFormData(prev => ({ ...prev, instituteCardId: e.target.value }))}
+                    placeholder="e.g., CARD-2024-001"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="idImage">Profile Image</Label>
+                  <div className="mt-1">
+                    <Input
+                      id="idImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setIdFormData(prev => ({ ...prev, image: e.target.files?.[0] || null }))}
+                      className="cursor-pointer"
+                    />
+                    {idFormData.image && (
+                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                        <Upload className="h-3 w-3" />
+                        {idFormData.image.name}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <Button
@@ -423,10 +593,10 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
                 </div>
 
                 <div>
-                  <Label htmlFor="userType">User Type</Label>
+                  <Label htmlFor="phoneUserType">User Type *</Label>
                   <Select
-                    value={phoneFormData.userType}
-                    onValueChange={(value) => setPhoneFormData(prev => ({ ...prev, userType: value }))}
+                    value={phoneFormData.instituteUserType}
+                    onValueChange={(value) => setPhoneFormData(prev => ({ ...prev, instituteUserType: value }))}
                   >
                     <SelectTrigger className="mt-1">
                       <SelectValue />
@@ -448,6 +618,36 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
                     placeholder="e.g., STU2024001"
                     className="mt-1"
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="phoneInstituteCardId">Institute Card ID</Label>
+                  <Input
+                    id="phoneInstituteCardId"
+                    value={phoneFormData.instituteCardId}
+                    onChange={(e) => setPhoneFormData(prev => ({ ...prev, instituteCardId: e.target.value }))}
+                    placeholder="e.g., CARD-2024-001"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="phoneImage">Profile Image</Label>
+                  <div className="mt-1">
+                    <Input
+                      id="phoneImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setPhoneFormData(prev => ({ ...prev, image: e.target.files?.[0] || null }))}
+                      className="cursor-pointer"
+                    />
+                    {phoneFormData.image && (
+                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                        <Upload className="h-3 w-3" />
+                        {phoneFormData.image.name}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <Button
@@ -491,6 +691,23 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
                 </div>
 
                 <div>
+                  <Label htmlFor="rfidUserType">User Type *</Label>
+                  <Select
+                    value={rfidFormData.instituteUserType}
+                    onValueChange={(value) => setRfidFormData(prev => ({ ...prev, instituteUserType: value }))}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="STUDENT">Student</SelectItem>
+                      <SelectItem value="TEACHER">Teacher</SelectItem>
+                      <SelectItem value="PARENT">Parent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
                   <Label htmlFor="rfidUserIdByInstitute">Institute User ID *</Label>
                   <Input
                     id="rfidUserIdByInstitute"
@@ -501,12 +718,141 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
                   />
                 </div>
 
+                <div>
+                  <Label htmlFor="rfidInstituteCardId">Institute Card ID</Label>
+                  <Input
+                    id="rfidInstituteCardId"
+                    value={rfidFormData.instituteCardId}
+                    onChange={(e) => setRfidFormData(prev => ({ ...prev, instituteCardId: e.target.value }))}
+                    placeholder="e.g., CARD-2024-001"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="rfidImage">Profile Image</Label>
+                  <div className="mt-1">
+                    <Input
+                      id="rfidImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setRfidFormData(prev => ({ ...prev, image: e.target.files?.[0] || null }))}
+                      className="cursor-pointer"
+                    />
+                    {rfidFormData.image && (
+                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                        <Upload className="h-3 w-3" />
+                        {rfidFormData.image.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
                 <Button
                   onClick={handleAssignByRfid}
                   disabled={isLoading}
                   className="w-full"
                 >
                   {isLoading ? 'Assigning...' : 'Assign Student'}
+                </Button>
+              </div>
+            )}
+
+            {selectedMethod === 'email' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Mail className="h-4 w-4 text-orange-500" />
+                  <Badge variant="outline">Assign by Email</Badge>
+                </div>
+
+                <div>
+                  <Label htmlFor="email">Email Address *</Label>
+                  <div className="relative mt-1">
+                    <Input
+                      id="email"
+                      type="email"
+                      value={emailFormData.email}
+                      onChange={(e) => setEmailFormData(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="user@example.com"
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                      onClick={() => fetchUserByEmail(emailFormData.email)}
+                      disabled={isLoadingPreview || !emailFormData.email.trim()}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="emailUserType">User Type *</Label>
+                  <Select
+                    value={emailFormData.instituteUserType}
+                    onValueChange={(value) => setEmailFormData(prev => ({ ...prev, instituteUserType: value }))}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="STUDENT">Student</SelectItem>
+                      <SelectItem value="TEACHER">Teacher</SelectItem>
+                      <SelectItem value="PARENT">Parent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="emailUserIdByInstitute">Institute User ID *</Label>
+                  <Input
+                    id="emailUserIdByInstitute"
+                    value={emailFormData.userIdByInstitute}
+                    onChange={(e) => setEmailFormData(prev => ({ ...prev, userIdByInstitute: e.target.value }))}
+                    placeholder="e.g., STU2024001"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="emailInstituteCardId">Institute Card ID</Label>
+                  <Input
+                    id="emailInstituteCardId"
+                    value={emailFormData.instituteCardId}
+                    onChange={(e) => setEmailFormData(prev => ({ ...prev, instituteCardId: e.target.value }))}
+                    placeholder="e.g., CARD-2024-001"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="emailImage">Profile Image</Label>
+                  <div className="mt-1">
+                    <Input
+                      id="emailImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setEmailFormData(prev => ({ ...prev, image: e.target.files?.[0] || null }))}
+                      className="cursor-pointer"
+                    />
+                    {emailFormData.image && (
+                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                        <Upload className="h-3 w-3" />
+                        {emailFormData.image.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleAssignByEmail}
+                  disabled={isLoading}
+                  className="w-full"
+                >
+                  {isLoading ? 'Assigning...' : 'Assign User'}
                 </Button>
               </div>
             )}

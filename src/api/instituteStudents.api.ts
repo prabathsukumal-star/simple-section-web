@@ -2,23 +2,17 @@ import { getAttendanceUrl, getApiHeaders } from '@/contexts/utils/auth.api';
 
 export interface StudentAttendanceRecord {
   studentId: string;
-  studentCardId: string;
   studentName: string;
+  instituteId: string;
   instituteName: string;
+  classId?: string;
   className?: string;
+  subjectId?: string;
   subjectName?: string;
-  lastAttendanceDate: string;
-  attendanceCount: number;
-  studentDetails: {
-    email: string;
-    phoneNumber: string;
-    city: string;
-    district: string;
-    province: string;
-    isActive: boolean;
-    dateOfBirth: string;
-    gender: string;
-  };
+  date: string;
+  status: 'present' | 'absent' | 'late';
+  location: string;
+  markingMethod: string;
 }
 
 export interface StudentAttendanceResponse {
@@ -33,6 +27,11 @@ export interface StudentAttendanceResponse {
     hasPrevPage: boolean;
   };
   data: StudentAttendanceRecord[];
+  summary?: {
+    totalPresent: number;
+    totalAbsent: number;
+    attendanceRate: number;
+  };
 }
 
 export interface StudentAttendanceParams {
@@ -57,7 +56,7 @@ class InstituteStudentsApi {
     console.log('Fetching institute student attendance for institute:', instituteId, 'with params:', queryParams);
 
     const attendanceUrl = getAttendanceUrl();
-    const endpoint = `${attendanceUrl}/api/students/by-institute/${instituteId}/?page=${queryParams.page}&limit=${queryParams.limit}`;
+    const endpoint = `${attendanceUrl}/api/attendance/institute/${instituteId}?page=${queryParams.page}&limit=${queryParams.limit}`;
     const headers = await getApiHeaders();
     
     const response = await fetch(endpoint, { headers });

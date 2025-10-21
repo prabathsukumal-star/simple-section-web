@@ -18,17 +18,21 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 interface AttendanceRecord {
-  attendanceId: string;
+  attendanceId?: string;
   studentId: string;
   studentName: string;
+  instituteId?: string;
+  instituteName?: string;
   classId?: string;
   className?: string;
   subjectId?: string;
   subjectName?: string;
-  markedAt: string;
+  date: string;
+  markedAt?: string;
   status: 'present' | 'absent' | 'late';
+  location?: string;
   markingMethod: string;
-  markedBy: string;
+  markedBy?: string;
 }
 interface AttendanceResponse {
   success: boolean;
@@ -310,8 +314,10 @@ const NewAttendance = () => {
 
     // Apply sorting
     filtered.sort((a, b) => {
-      const dateA = new Date(a.markedAt);
-      const dateB = new Date(b.markedAt);
+      const aDateStr = a.markedAt || a.date || '';
+      const bDateStr = b.markedAt || b.date || '';
+      const dateA = new Date(aDateStr);
+      const dateB = new Date(bDateStr);
       return sortOrder === 'ascending' ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
     });
     setFilteredRecords(filtered);
@@ -385,26 +391,20 @@ const NewAttendance = () => {
             <span>ID: {record.studentId}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-blue-600" />
-            <span>Time: {formatTime(record.markedAt)}</span>
+            <Calendar className="h-4 w-4 text-blue-600" />
+            <span>Date: {formatDate(record.date || record.markedAt || '')}</span>
           </div>
-          {record.className && <div className="flex items-center gap-2">
+          {record.instituteName && <div className="flex items-center gap-2">
               <School className="h-4 w-4 text-blue-600" />
-              <span>Class: {record.className}</span>
+              <span>Institute: {record.instituteName}</span>
             </div>}
-          {record.subjectName && <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-blue-600" />
-              <span>Subject: {record.subjectName}</span>
+          {record.location && <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-blue-600" />
+              <span>Location: {record.location}</span>
             </div>}
           <div className="flex items-center gap-2">
             <CheckCircle className="h-4 w-4 text-blue-600" />
-            <span>Marked By: {record.markedBy}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-blue-600" />
-            <span className="text-xs text-gray-500">
-              {formatDate(record.markedAt)}
-            </span>
+            <span>Method: {record.markingMethod}</span>
           </div>
         </div>
       </CardContent>
@@ -586,40 +586,36 @@ const NewAttendance = () => {
                   <TableCell style={{
                   minWidth: 120,
                   fontWeight: 600
-                }}>Date</TableCell>
-                  <TableCell style={{
-                  minWidth: 100,
-                  fontWeight: 600
-                }}>Time</TableCell>
-                  <TableCell style={{
-                  minWidth: 120,
-                  fontWeight: 600
                 }}>Student ID</TableCell>
                   <TableCell style={{
                   minWidth: 170,
                   fontWeight: 600
                 }}>Student Name</TableCell>
                   <TableCell style={{
-                  minWidth: 120,
-                  fontWeight: 600
-                }}>Class</TableCell>
-                  <TableCell style={{
                   minWidth: 150,
                   fontWeight: 600
-                }}>Subject</TableCell>
+                }}>Institute Name</TableCell>
+                  <TableCell style={{
+                  minWidth: 120,
+                  fontWeight: 600
+                }}>Date</TableCell>
                   <TableCell style={{
                   minWidth: 100,
                   fontWeight: 600
                 }}>Status</TableCell>
                   <TableCell style={{
+                  minWidth: 200,
+                  fontWeight: 600
+                }}>Location</TableCell>
+                  <TableCell style={{
                   minWidth: 150,
                   fontWeight: 600
-                }}>Marked By</TableCell>
+                }}>Marking Method</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredRecords.length === 0 ? <TableRow>
-                    <TableCell colSpan={8} align="center" style={{
+                    <TableCell colSpan={7} align="center" style={{
                   padding: '48px'
                 }}>
                       <div>
@@ -637,21 +633,20 @@ const NewAttendance = () => {
                         </p>
                       </div>
                     </TableCell>
-                  </TableRow> : filteredRecords.map(record => <TableRow hover role="checkbox" tabIndex={-1} key={record.attendanceId}>
-                      <TableCell>{formatDate(record.markedAt)}</TableCell>
-                      <TableCell>{formatTime(record.markedAt)}</TableCell>
+                  </TableRow> : filteredRecords.map((record, index) => <TableRow hover role="checkbox" tabIndex={-1} key={record.attendanceId || index}>
                       <TableCell style={{
                   fontWeight: 500
                 }}>{record.studentId}</TableCell>
                       <TableCell>{record.studentName}</TableCell>
-                      <TableCell>{record.className || '-'}</TableCell>
-                      <TableCell>{record.subjectName || '-'}</TableCell>
+                      <TableCell>{record.instituteName || '-'}</TableCell>
+                      <TableCell>{formatDate(record.date || record.markedAt || '')}</TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(record.status)}>
                           {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
                         </Badge>
                       </TableCell>
-                      <TableCell>{record.markedBy}</TableCell>
+                      <TableCell>{record.location || '-'}</TableCell>
+                      <TableCell>{record.markingMethod}</TableCell>
                     </TableRow>)}
               </TableBody>
             </Table>

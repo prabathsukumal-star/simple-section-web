@@ -10,12 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { instituteClassesApi, InstituteClassCreateData } from '@/api/instituteClasses.api.ts';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { getBaseUrl } from '@/contexts/utils/auth.api';
 
 const updateClassSchema = z.object({
   instituteId: z.string().min(1, 'Institute ID is required'),
@@ -49,6 +50,7 @@ interface UpdateClassFormProps {
 const UpdateClassForm: React.FC<UpdateClassFormProps> = ({ classData, onSubmit, onCancel }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const form = useForm<UpdateClassFormData>({
     resolver: zodResolver(updateClassSchema),
@@ -77,35 +79,49 @@ const UpdateClassForm: React.FC<UpdateClassFormProps> = ({ classData, onSubmit, 
   const handleSubmit = async (data: UpdateClassFormData) => {
     setIsSubmitting(true);
     try {
-      const updateData: InstituteClassCreateData = {
-        instituteId: data.instituteId,
-        name: data.name,
-        code: data.code,
-        academicYear: data.academicYear,
-        level: data.level,
-        grade: data.grade,
-        specialty: data.specialty,
-        classType: data.classType,
-        capacity: data.capacity,
-        classTeacherId: data.classTeacherId,
-        description: data.description,
-        imageUrl: data.imageUrl,
-        isActive: data.isActive,
-        startDate: new Date(data.startDate).toISOString(),
-        endDate: new Date(data.endDate).toISOString(),
-        enrollmentCode: data.enrollmentCode,
-        enrollmentEnabled: data.enrollmentEnabled,
-        requireTeacherVerification: data.requireTeacherVerification,
-      };
-
-      const response = await instituteClassesApi.update(classData.id, updateData);
+      const token = localStorage.getItem('access_token');
+      const formDataToSend = new FormData();
+      
+      formDataToSend.append('instituteId', data.instituteId);
+      formDataToSend.append('name', data.name);
+      formDataToSend.append('code', data.code);
+      formDataToSend.append('academicYear', data.academicYear);
+      formDataToSend.append('level', String(data.level));
+      formDataToSend.append('grade', String(data.grade));
+      formDataToSend.append('specialty', data.specialty);
+      formDataToSend.append('classType', data.classType);
+      formDataToSend.append('capacity', String(data.capacity));
+      if (data.classTeacherId) formDataToSend.append('classTeacherId', data.classTeacherId);
+      if (data.description) formDataToSend.append('description', data.description);
+      formDataToSend.append('isActive', String(data.isActive));
+      formDataToSend.append('startDate', new Date(data.startDate).toISOString());
+      formDataToSend.append('endDate', new Date(data.endDate).toISOString());
+      if (data.enrollmentCode) formDataToSend.append('enrollmentCode', data.enrollmentCode);
+      formDataToSend.append('enrollmentEnabled', String(data.enrollmentEnabled));
+      formDataToSend.append('requireTeacherVerification', String(data.requireTeacherVerification));
+      if (selectedImage) formDataToSend.append('image', selectedImage);
+      
+      const response = await fetch(`${getBaseUrl()}/institute-classes/${classData.id}/upload-image`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formDataToSend
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update class');
+      }
+      
+      const updatedClass = await response.json();
       
       toast({
         title: "Success",
         description: "Class updated successfully",
       });
       
-      onSubmit(response);
+      onSubmit(updatedClass);
     } catch (error) {
       console.error('Error updating class:', error);
       toast({
@@ -272,19 +288,26 @@ const UpdateClassForm: React.FC<UpdateClassFormProps> = ({ classData, onSubmit, 
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="imageUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Image URL (Optional)</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter image URL" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div>
+            <FormLabel>Class Image</FormLabel>
+            <div className="space-y-2">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
+              />
+              {selectedImage && (
+                <span className="text-xs text-muted-foreground">
+                  Selected: {selectedImage.name}
+                </span>
+              )}
+              {!selectedImage && classData.imageUrl && (
+                <span className="text-xs text-muted-foreground">
+                  Current: {classData.imageUrl}
+                </span>
+              )}
+            </div>
+          </div>
 
           <FormField
             control={form.control}

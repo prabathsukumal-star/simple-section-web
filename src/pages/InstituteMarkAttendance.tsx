@@ -12,7 +12,7 @@ import { childAttendanceApi } from '@/api/childAttendance.api';
 import AppLayout from '@/components/layout/AppLayout';
 
 interface LastAttendance {
-  rfidCardId: string;
+  instituteCardId: string;
   studentName: string;
   userIdByInstitute: string;
   status: 'present' | 'absent' | 'late';
@@ -20,11 +20,11 @@ interface LastAttendance {
   imageUrl?: string;
 }
 
-const RFIDAttendance = () => {
+const InstituteMarkAttendance = () => {
   const { selectedInstitute, selectedClass, selectedSubject, currentInstituteId } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [rfidCardId, setRfidCardId] = useState('');
+  const [instituteCardId, setInstituteCardId] = useState('');
   const [status, setStatus] = useState<'present' | 'absent' | 'late'>('present');
   const [isProcessing, setIsProcessing] = useState(false);
   const [scannerStatus, setScannerStatus] = useState('Ready to Scan');
@@ -91,10 +91,10 @@ const RFIDAttendance = () => {
   }, [lastAttendance]);
 
   const handleMarkAttendance = async () => {
-    if (!rfidCardId.trim()) {
+    if (!instituteCardId.trim()) {
       toast({
         title: "Error",
-        description: "Please enter or scan an RFID card ID",
+        description: "Please enter or scan an institute card ID",
         variant: "destructive"
       });
       return;
@@ -110,7 +110,7 @@ const RFIDAttendance = () => {
     }
 
     // Check for duplicate
-    if (lastAttendance && lastAttendance.rfidCardId === rfidCardId.trim()) {
+    if (lastAttendance && lastAttendance.instituteCardId === instituteCardId.trim()) {
       toast({
         title: "Duplicate Detected",
         description: `Attendance already marked for ${lastAttendance.studentName}`,
@@ -124,7 +124,7 @@ const RFIDAttendance = () => {
 
     try {
       const request: any = {
-        rfidCardId: rfidCardId.trim(),
+        instituteCardId: instituteCardId.trim(),
         instituteId: currentInstituteId.toString(),
         instituteName: selectedInstitute.name,
         address: buildAddress(),
@@ -144,28 +144,17 @@ const RFIDAttendance = () => {
         request.subjectName = selectedSubject.name;
       }
 
-      const result = await childAttendanceApi.markAttendanceByCard({
-        studentCardId: rfidCardId.trim(),
-        instituteId: currentInstituteId.toString(),
-        instituteName: selectedInstitute.name,
-        classId: selectedClass?.id.toString(),
-        className: selectedClass?.name,
-        subjectId: selectedSubject?.id.toString(),
-        subjectName: selectedSubject?.name,
-        address: buildAddress(),
-        markingMethod: 'rfid/nfc',
-        status: status
-      });
+      const result = await childAttendanceApi.markAttendanceByInstituteCard(request);
 
       if (result.success) {
-        const studentName = result.name || 'Student';
+        const studentName = result.name || result.data?.studentName || 'Student';
         const imageUrl = result.imageUrl;
-        const userIdByInstitute = rfidCardId.trim();
-        const dateStr = new Date().toLocaleDateString();
-        const timeStr = new Date().toLocaleTimeString();
+        const userIdByInstitute = result.userIdByInstitute || '';
+        const dateStr = result.data?.date ? new Date(result.data.date).toLocaleDateString() : new Date().toLocaleDateString();
+        const timeStr = result.data?.markedAt ? new Date(result.data.markedAt).toLocaleTimeString() : new Date().toLocaleTimeString();
         
         setLastAttendance({
-          rfidCardId: rfidCardId.trim(),
+          instituteCardId: instituteCardId.trim(),
           studentName: studentName,
           userIdByInstitute: userIdByInstitute,
           status: result.status || status,
@@ -180,7 +169,7 @@ const RFIDAttendance = () => {
           imageUrl: imageUrl,
           status: status,
         });
-        setRfidCardId('');
+        setInstituteCardId('');
         setScannerStatus('Attendance Marked Successfully');
         inputRef.current?.focus();
       } else {
@@ -222,7 +211,7 @@ const RFIDAttendance = () => {
             <div className="flex-1 space-y-1">
               <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
                 <Wifi className="h-6 w-6" />
-                RFID Attendance
+                Institute Mark Attendance
               </h1>
               <p className="text-sm text-muted-foreground">
                 Tap your RFID card or enter the ID manually to mark attendance
@@ -295,7 +284,7 @@ const RFIDAttendance = () => {
                         Status: {lastAttendance.status.toUpperCase()}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Card ID: {lastAttendance.rfidCardId}
+                        Card ID: {lastAttendance.instituteCardId}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         User ID: {lastAttendance.userIdByInstitute}
@@ -340,16 +329,16 @@ const RFIDAttendance = () => {
 
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="rfid-card-input" className="text-sm font-medium text-foreground">
-                RFID Card ID
+              <Label htmlFor="institute-card-input" className="text-sm font-medium text-foreground">
+                Institute Card ID
               </Label>
               <Input
-                id="rfid-card-input"
+                id="institute-card-input"
                 ref={inputRef}
                 type="text"
-                placeholder="Scan or enter RFID card ID..."
-                value={rfidCardId}
-                onChange={(e) => setRfidCardId(e.target.value)}
+                placeholder="Scan or enter institute card ID..."
+                value={instituteCardId}
+                onChange={(e) => setInstituteCardId(e.target.value)}
                 onKeyPress={handleKeyPress}
                 disabled={isProcessing}
                 className="h-12 text-base border-2 border-blue-500 focus:border-blue-600 focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -380,7 +369,7 @@ const RFIDAttendance = () => {
 
           <Button
             onClick={handleMarkAttendance}
-            disabled={isProcessing || !rfidCardId.trim()}
+            disabled={isProcessing || !instituteCardId.trim()}
             className="w-full h-14 text-lg font-medium bg-blue-500 hover:bg-blue-600 text-white"
             size="lg"
           >
@@ -392,4 +381,4 @@ const RFIDAttendance = () => {
   );
 };
 
-export default RFIDAttendance;
+export default InstituteMarkAttendance;

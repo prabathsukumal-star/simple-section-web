@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import Index from "./pages/Index";
 import QRAttendance from '@/components/QRAttendance';
 import RFIDAttendance from '@/pages/RFIDAttendance';
+import InstituteMarkAttendance from '@/pages/InstituteMarkAttendance';
 
 import NotFound from "./pages/NotFound";
 import Payments from "./pages/Payments";
@@ -26,6 +27,7 @@ import UpdateHomework from '@/pages/UpdateHomework';
 import UpdateLecture from '@/pages/UpdateLecture';
 import CardDemo from '@/pages/CardDemo';
 import ExamResults from '@/pages/ExamResults';
+import CreateExamResults from '@/pages/CreateExamResults';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import Transport from '@/pages/Transport';
 import TransportAttendance from '@/pages/TransportAttendance';
@@ -93,8 +95,9 @@ const App = () => {
               <Route path="/daily-attendance" element={<Index />} />
               
               <Route path="/attendance-markers" element={<Index />} />
-               <Route path="/qr-attendance" element={<QRAttendance />} />
-               <Route path="/rfid-attendance" element={<RFIDAttendance />} />
+              <Route path="/qr-attendance" element={<QRAttendance />} />
+              <Route path="/rfid-attendance" element={<RFIDAttendance />} />
+              <Route path="/institute-mark-attendance" element={<InstituteMarkAttendance />} />
               
               {/* Academic Content Routes */}
               <Route path="/lectures" element={<Index />} />
@@ -108,7 +111,8 @@ const App = () => {
               <Route path="/homework-submissions/:homeworkId" element={<HomeworkSubmissions />} />
               <Route path="/homework/:homeworkId/submissions" element={<HomeworkSubmissionDetails />} />
               <Route path="/exams" element={<Index />} />
-              <Route path="/exams/:examId/results" element={<ExamResults />} />
+          <Route path="/exams/:examId/results" element={<ExamResults />} />
+          <Route path="/exams/:examId/create-results" element={<CreateExamResults />} />
               <Route path="/results" element={<Index />} />
               
               {/* Selection Routes */}

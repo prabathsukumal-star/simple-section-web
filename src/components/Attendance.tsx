@@ -119,50 +119,27 @@ const Attendance = () => {
 
   // Define columns based on view type
   const getColumns = (): AttendanceColumn[] => {
-    if (viewType === 'student') {
-      // For parent viewing child attendance
-      return [
-        { id: 'attendanceId', label: 'Attendance ID', minWidth: 120 },
-        { id: 'studentName', label: 'Student Name', minWidth: 170 },
-        { id: 'instituteName', label: 'Institute', minWidth: 170 },
-        { id: 'className', label: 'Class', minWidth: 100 },
-        { id: 'subjectName', label: 'Subject', minWidth: 130 },
-        { id: 'markedAt', label: 'Date & Time', minWidth: 150, format: (value) => new Date(value).toLocaleString() },
-        { id: 'markingMethod', label: 'Method', minWidth: 100 },
-        { 
-          id: 'status', 
-          label: 'Status', 
-          minWidth: 100,
-          format: (value) => (
-            <Badge variant={value === 'present' ? 'default' : value === 'late' ? 'secondary' : 'destructive'}>
-              {value?.toUpperCase()}
-            </Badge>
-          )
-        },
-        { id: 'markedBy', label: 'Marked By', minWidth: 130 }
-      ];
-    } else {
-      // For institute/class/subject attendance
-      return [
-        { id: 'studentCardId', label: 'Student ID', minWidth: 120 },
-        { id: 'studentName', label: 'Student Name', minWidth: 170 },
-        { id: 'instituteName', label: 'Institute', minWidth: 170 },
-        { id: 'className', label: 'Class', minWidth: 100 },
-        { id: 'subjectName', label: 'Subject', minWidth: 130 },
-        { id: 'lastAttendanceDate', label: 'Last Attendance', minWidth: 150, format: (value) => value ? new Date(value).toLocaleDateString() : 'Never' },
-        { id: 'attendanceCount', label: 'Total Days', minWidth: 100, align: 'right' as const },
-        { 
-          id: 'studentDetails', 
-          label: 'Status', 
-          minWidth: 100,
-          format: (value) => (
-            <Badge variant={value?.isActive ? 'default' : 'destructive'}>
-              {value?.isActive ? 'ACTIVE' : 'INACTIVE'}
-            </Badge>
-          )
-        }
-      ];
-    }
+    // For institute attendance records with new API response format
+    return [
+      { id: 'studentId', label: 'Student ID', minWidth: 100 },
+      { id: 'studentName', label: 'Student Name', minWidth: 170 },
+      { id: 'instituteName', label: 'Institute', minWidth: 150 },
+      { id: 'className', label: 'Class', minWidth: 120 },
+      { id: 'subjectName', label: 'Subject', minWidth: 130 },
+      { id: 'date', label: 'Date', minWidth: 120, format: (value) => value ? new Date(value).toLocaleDateString() : '-' },
+      { 
+        id: 'status', 
+        label: 'Status', 
+        minWidth: 100,
+        format: (value) => (
+          <Badge variant={value === 'present' ? 'default' : value === 'absent' ? 'destructive' : 'secondary'}>
+            {value?.toUpperCase()}
+          </Badge>
+        )
+      },
+      { id: 'location', label: 'Location', minWidth: 200 },
+      { id: 'markingMethod', label: 'Method', minWidth: 120 }
+    ];
   };
 
   const handleFiltersChange = (newFilters: AttendanceFilterParams) => {

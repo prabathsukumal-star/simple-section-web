@@ -57,7 +57,6 @@ export interface MarkAttendanceByCardRequest {
   address: string;
   markingMethod: 'qr' | 'barcode' | 'rfid/nfc';
   status: 'present' | 'absent' | 'late';
-  date?: string;
 }
 
 export interface MarkAttendanceByCardResponse {
@@ -82,7 +81,6 @@ export interface MarkAttendanceRequest {
   address: string;
   markingMethod: 'manual';
   status: 'present' | 'absent' | 'late';
-  date?: string;
 }
 
 export interface MarkAttendanceResponse {
@@ -156,8 +154,7 @@ class ChildAttendanceApi {
       instituteName: request.instituteName,
       address: request.address,
       markingMethod: request.markingMethod,
-      status: request.status,
-      date: request.date || new Date().toISOString()
+      status: request.status
     };
 
     // Only include class data if provided
@@ -224,6 +221,59 @@ class ChildAttendanceApi {
     return result;
   }
 
+  async markAttendanceByInstituteCard(request: {
+    instituteCardId: string;
+    instituteId: string;
+    instituteName: string;
+    classId?: string;
+    className?: string;
+    subjectId?: string;
+    subjectName?: string;
+    address: string;
+    markingMethod: string;
+    status: 'present' | 'absent' | 'late';
+    date: string;
+    location?: string;
+  }): Promise<any> {
+    let attendanceBaseUrl = getAttendanceUrl();
+    if (!attendanceBaseUrl) {
+      attendanceBaseUrl = getBaseUrl();
+      if (!attendanceBaseUrl) {
+        throw new Error('No API URL configured. Please set the API URL in settings.');
+      }
+    }
+
+    const baseUrl = attendanceBaseUrl.endsWith('/') ? attendanceBaseUrl.slice(0, -1) : attendanceBaseUrl;
+    const fullApiUrl = `${baseUrl}/api/attendance/mark-by-institute-card`;
+    
+    console.log('=== INSTITUTE CARD ATTENDANCE API CALL ===');
+    console.log('Full API Endpoint:', fullApiUrl);
+    console.log('Request Body:', JSON.stringify(request, null, 2));
+    console.log('========================================');
+
+    const response = await fetch(fullApiUrl, {
+      method: 'POST',
+      headers: getApiHeaders(),
+      body: JSON.stringify(request)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      console.error('=== INSTITUTE CARD ATTENDANCE ERROR ===');
+      console.error('Status Code:', response.status);
+      console.error('Error Response:', errorText);
+      console.error('=====================================');
+      throw new Error(`Failed to mark attendance: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log('=== INSTITUTE CARD ATTENDANCE SUCCESS ===');
+    console.log('Response:', JSON.stringify(result, null, 2));
+    console.log('======================================');
+    
+    return result;
+  }
+
   async markAttendance(request: MarkAttendanceRequest): Promise<MarkAttendanceResponse> {
     // Get current user ID from localStorage
     const userId = localStorage.getItem('userId') || 'unknown';
@@ -262,7 +312,7 @@ class ChildAttendanceApi {
       address: request.address,
       markingMethod: request.markingMethod,
       status: request.status,
-      date: request.date || new Date().toISOString()
+      date: new Date().toISOString()
     };
 
     // Only include class data if provided
