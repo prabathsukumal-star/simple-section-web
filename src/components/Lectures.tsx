@@ -435,7 +435,7 @@ const Lectures = ({ apiLevel = 'institute' }: LecturesProps) => {
           )}
 
           {/* Add Create Button for InstituteAdmin and Teacher */}
-          {(userRole === 'InstituteAdmin' || userRole === 'Teacher') && canAdd && (
+          {['InstituteAdmin', 'Teacher'].includes(userRole) && canAdd && (
             <div className="flex justify-end mb-4">
               <Button 
                 onClick={() => setIsCreateDialogOpen(true)}

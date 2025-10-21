@@ -78,7 +78,7 @@ interface LoginProps {
   loginFunction: (credentials: { email: string; password: string }) => Promise<void>;
 }
 
-type LoginStep = 'login' | 'first-login-email' | 'first-login-otp' | 'first-login-password' | 'forgot-password' | 'forgot-otp-verification' | 'reset-password';
+type LoginStep = 'login' | 'first-login-email' | 'first-login-otp' | 'first-login-password' | 'forgot-password' | 'reset-password';
 
 const Login = ({ onLogin, loginFunction }: LoginProps) => {
   const [email, setEmail] = useState('');
@@ -356,9 +356,9 @@ const Login = ({ onLogin, loginFunction }: LoginProps) => {
       if (response.ok && data.success) {
         toast({
           title: "Reset Code Sent",
-          description: "Please check your email for the reset code.",
+          description: data.message || `Password reset code sent to your email. Expires in ${data.data?.expiresInMinutes || 15} minutes.`,
         });
-        setLoginStep('forgot-otp-verification');
+        setLoginStep('reset-password');
         startOtpTimer();
         return true;
       } else {
@@ -367,34 +367,6 @@ const Login = ({ onLogin, loginFunction }: LoginProps) => {
     } catch (error) {
       console.error('Forgot password error:', error);
       setError(error instanceof Error ? error.message : 'Failed to send reset code');
-      return false;
-    }
-  };
-
-  const verifyForgotPasswordOTP = async (email: string, otp: string) => {
-    try {
-      const response = await fetch(`${baseUrl}/auth/verify-reset-otp`, {
-        method: 'POST',
-        headers: getApiHeaders(),
-        body: JSON.stringify({ email, otp }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setVerificationToken(data.verificationToken);
-        setLoginStep('reset-password');
-        toast({
-          title: "Reset Code Verified",
-          description: "Please enter your new password.",
-        });
-        return true;
-      } else {
-        throw new Error(data.message || 'Invalid reset code');
-      }
-    } catch (error) {
-      console.error('Reset code verification error:', error);
-      setError(error instanceof Error ? error.message : 'Reset code verification failed');
       return false;
     }
   };
@@ -411,8 +383,8 @@ const Login = ({ onLogin, loginFunction }: LoginProps) => {
         headers: getApiHeaders(),
         body: JSON.stringify({
           email,
-          verificationToken,
-          password: newPassword,
+          otp,
+          newPassword,
           confirmPassword,
         }),
       });
@@ -422,7 +394,7 @@ const Login = ({ onLogin, loginFunction }: LoginProps) => {
       if (response.ok && data.success) {
         toast({
           title: "Password Reset Successfully",
-          description: "You can now login with your new password.",
+          description: data.message || "You can now login with your new password.",
         });
         
         // Reset to login step and clear form
@@ -446,7 +418,7 @@ const Login = ({ onLogin, loginFunction }: LoginProps) => {
 
   const resendForgotPasswordOtp = async () => {
     try {
-      const response = await fetch(`${baseUrl}/auth/resend-reset-otp`, {
+      const response = await fetch(`${baseUrl}/auth/forgot-password`, {
         method: 'POST',
         headers: getApiHeaders(),
         body: JSON.stringify({ email }),
@@ -480,8 +452,6 @@ const Login = ({ onLogin, loginFunction }: LoginProps) => {
     try {
       if (loginStep === 'forgot-password') {
         await initiateForgotPassword(email);
-      } else if (loginStep === 'forgot-otp-verification') {
-        await verifyForgotPasswordOTP(email, otp);
       } else if (loginStep === 'reset-password') {
         const success = await resetPassword();
         if (success) {
@@ -720,7 +690,7 @@ const Login = ({ onLogin, loginFunction }: LoginProps) => {
             <CardTitle className="flex items-center gap-2">
               {loginStep === 'login' && <Key className="w-5 h-5" />}
               {loginStep === 'first-login-email' && <UserCheck className="w-5 h-5" />}
-              {(loginStep === 'first-login-otp' || loginStep === 'forgot-otp-verification') && <Mail className="w-5 h-5" />}
+              {loginStep === 'first-login-otp' && <Mail className="w-5 h-5" />}
               {(loginStep === 'first-login-password' || loginStep === 'reset-password') && <Key className="w-5 h-5" />}
               {loginStep === 'forgot-password' && <RotateCcw className="w-5 h-5" />}
               
@@ -729,7 +699,6 @@ const Login = ({ onLogin, loginFunction }: LoginProps) => {
               {loginStep === 'first-login-otp' && 'Verify Email'}
               {loginStep === 'first-login-password' && 'Set Password'}
               {loginStep === 'forgot-password' && 'Forgot Password'}
-              {loginStep === 'forgot-otp-verification' && 'Verify Reset Code'}
               {loginStep === 'reset-password' && 'Reset Password'}
             </CardTitle>
             <CardDescription>
@@ -738,8 +707,7 @@ const Login = ({ onLogin, loginFunction }: LoginProps) => {
               {loginStep === 'first-login-otp' && "Enter the 6-digit code sent to your email"}
               {loginStep === 'first-login-password' && "Create a secure password for your account"}
               {loginStep === 'forgot-password' && "Enter your email to receive a password reset code"}
-              {loginStep === 'forgot-otp-verification' && "Enter the 6-digit reset code sent to your email"}
-              {loginStep === 'reset-password' && "Enter your new password"}
+              {loginStep === 'reset-password' && "Enter the reset code and your new password"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -1083,75 +1051,36 @@ const Login = ({ onLogin, loginFunction }: LoginProps) => {
               </form>
             )}
 
-            {/* Forgot Password OTP Verification */}
-            {loginStep === 'forgot-otp-verification' && (
-              <form onSubmit={handleForgotPasswordFlow} className="space-y-4">
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      We sent a 6-digit reset code to <strong>{email}</strong>
-                    </p>
-                  </div>
-                  
-                  <div className="flex justify-center">
-                    <InputOTP
-                      maxLength={6}
-                      value={otp}
-                      onChange={setOtp}
-                    >
-                      <InputOTPGroup>
-                        <InputOTPSlot index={0} />
-                        <InputOTPSlot index={1} />
-                        <InputOTPSlot index={2} />
-                        <InputOTPSlot index={3} />
-                        <InputOTPSlot index={4} />
-                        <InputOTPSlot index={5} />
-                      </InputOTPGroup>
-                    </InputOTP>
-                  </div>
-
-                  {error && (
-                    <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-md text-center">
-                      {error}
-                    </div>
-                  )}
-
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isLoading || otp.length !== 6}
-                  >
-                    {isLoading ? 'Verifying...' : 'Verify Reset Code'}
-                  </Button>
-
-                  <div className="text-center">
-                    {otpTimer > 0 ? (
-                      <p className="text-sm text-gray-500">
-                        Resend code in {otpTimer}s
-                      </p>
-                    ) : (
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        onClick={resendForgotPasswordOtp}
-                        disabled={isLoading}
-                      >
-                        Resend Reset Code
-                      </Button>
-                    )}
-                  </div>
-
-                  <Button type="button" variant="ghost" onClick={resetToLogin} className="w-full">
-                    Back to Login
-                  </Button>
-                </div>
-              </form>
-            )}
-
             {/* Reset Password Form */}
             {loginStep === 'reset-password' && (
               <form onSubmit={handleForgotPasswordFlow} className="space-y-4">
                 <div className="space-y-4">
+                  <div className="text-center mb-4">
+                    <p className="text-sm text-muted-foreground">
+                      We sent a 6-digit reset code to <strong>{email}</strong>
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="resetOtp">Reset Code (OTP)</Label>
+                    <div className="flex justify-center">
+                      <InputOTP
+                        maxLength={6}
+                        value={otp}
+                        onChange={setOtp}
+                      >
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="newResetPassword">New Password</Label>
                     <div className="relative">
@@ -1226,10 +1155,28 @@ const Login = ({ onLogin, loginFunction }: LoginProps) => {
                   <Button 
                     type="submit" 
                     className="w-full" 
-                    disabled={isLoading || !newPassword || !confirmPassword}
+                    disabled={isLoading || otp.length !== 6 || !newPassword || !confirmPassword}
                   >
                     {isLoading ? 'Resetting Password...' : 'Reset Password'}
                   </Button>
+
+                  <div className="text-center">
+                    {otpTimer > 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Resend code in {otpTimer}s
+                      </p>
+                    ) : (
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        onClick={resendForgotPasswordOtp}
+                        disabled={isLoading}
+                        className="text-sm"
+                      >
+                        Resend Reset Code
+                      </Button>
+                    )}
+                  </div>
 
                   <Button type="button" variant="ghost" onClick={resetToLogin} className="w-full">
                     Back to Login

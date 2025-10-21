@@ -12,7 +12,7 @@ import { getBaseUrl } from '@/contexts/utils/auth.api';
 import { instituteClassesApi } from '@/api/instituteClasses.api';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +26,7 @@ const CreateClassForm = ({ onSubmit, onCancel }: CreateClassFormProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [teachers, setTeachers] = useState<any[]>([]);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -79,28 +80,43 @@ const CreateClassForm = ({ onSubmit, onCancel }: CreateClassFormProps) => {
     setIsLoading(true);
     
     try {
-      const classData = {
-        instituteId: selectedInstitute.id,
-        name: formData.name,
-        code: formData.code,
-        academicYear: formData.academicYear,
-        level: formData.level,
-        grade: formData.grade,
-        specialty: formData.specialty,
-        classType: formData.classType,
-        capacity: formData.capacity,
-        classTeacherId: formData.classTeacherId || undefined,
-        description: formData.description,
-        isActive: formData.isActive,
-        startDate: formData.startDate ? new Date(formData.startDate).toISOString() : new Date().toISOString(),
-        endDate: formData.endDate ? new Date(formData.endDate).toISOString() : new Date(new Date().getFullYear() + 1, 5, 30).toISOString(),
-        enrollmentCode: formData.enrollmentCode,
-        enrollmentEnabled: formData.enrollmentEnabled,
-        requireTeacherVerification: formData.requireTeacherVerification,
-        imageUrl: formData.imageUrl
-      };
-
-      const response = await instituteClassesApi.create(classData);
+      const token = localStorage.getItem('access_token');
+      const formDataToSend = new FormData();
+      
+      // Append all form fields
+      formDataToSend.append('instituteId', selectedInstitute.id);
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('code', formData.code);
+      formDataToSend.append('academicYear', formData.academicYear);
+      formDataToSend.append('level', String(formData.level));
+      formDataToSend.append('grade', String(formData.grade));
+      formDataToSend.append('specialty', formData.specialty);
+      formDataToSend.append('classType', formData.classType);
+      formDataToSend.append('capacity', String(formData.capacity));
+      if (formData.classTeacherId) formDataToSend.append('classTeacherId', formData.classTeacherId);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('isActive', String(formData.isActive));
+      formDataToSend.append('startDate', formData.startDate ? new Date(formData.startDate).toISOString() : new Date().toISOString());
+      formDataToSend.append('endDate', formData.endDate ? new Date(formData.endDate).toISOString() : new Date(new Date().getFullYear() + 1, 5, 30).toISOString());
+      formDataToSend.append('enrollmentCode', formData.enrollmentCode);
+      formDataToSend.append('enrollmentEnabled', String(formData.enrollmentEnabled));
+      formDataToSend.append('requireTeacherVerification', String(formData.requireTeacherVerification));
+      if (selectedImage) formDataToSend.append('image', selectedImage);
+      
+      const responseRaw = await fetch(`${getBaseUrl()}/institute-classes`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formDataToSend
+      });
+      
+      if (!responseRaw.ok) {
+        const error = await responseRaw.json();
+        throw new Error(error.message || 'Failed to create class');
+      }
+      
+      const response = await responseRaw.json();
       
       toast({
         title: "Class Created",
@@ -349,14 +365,21 @@ const CreateClassForm = ({ onSubmit, onCancel }: CreateClassFormProps) => {
             </div>
             <div className="space-y-2">
               <div>
-                <Label htmlFor="imageUrl" className="text-xs">Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  placeholder="https://example.com/image.jpg"
-                  value={formData.imageUrl}
-                  onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-                  className="h-8 text-sm"
-                />
+                <Label htmlFor="image" className="text-xs">Class Image</Label>
+                <div className="space-y-1">
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
+                    className="h-8 text-sm"
+                  />
+                  {selectedImage && (
+                    <span className="text-xs text-muted-foreground">
+                      Selected: {selectedImage.name}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <Switch

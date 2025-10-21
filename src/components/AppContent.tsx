@@ -28,7 +28,7 @@ import MyAttendance from '@/components/MyAttendance';
 
 import AttendanceMarkers from '@/components/AttendanceMarkers';
 import QRAttendance from '@/components/QRAttendance';
-import RFIDAttendance from '@/pages/RFIDAttendance';
+import InstituteMarkAttendance from '@/pages/InstituteMarkAttendance';
 import Lectures from '@/components/Lectures';
 import LiveLectures from '@/components/LiveLectures';
 import Homework from '@/components/Homework';
@@ -671,8 +671,8 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <NewAttendance />;
         case 'qr-attendance':
           return <QRAttendance />;
-        case 'rfid-attendance':
-          return <RFIDAttendance />;
+        case 'institute-mark-attendance':
+          return <InstituteMarkAttendance />;
         case 'lectures':
           return userRole === 'Teacher' ? <TeacherLectures /> : <Lectures />;
         case 'institute-lectures':
@@ -727,8 +727,8 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <AttendanceMarkers />;
         case 'qr-attendance':
           return <QRAttendance />;
-        case 'rfid-attendance':
-          return <RFIDAttendance />;
+        case 'institute-mark-attendance':
+          return <InstituteMarkAttendance />;
         case 'profile':
           return <Profile />;
         case 'select-institute':
@@ -834,8 +834,8 @@ const AppContent = ({ initialPage }: AppContentProps) => {
         return <AttendanceMarkers />;
       case 'qr-attendance':
         return <QRAttendance />;
-      case 'rfid-attendance':
-        return <RFIDAttendance />;
+      case 'institute-mark-attendance':
+        return <InstituteMarkAttendance />;
       case 'lectures':
         return <Lectures />;
       case 'free-lectures':

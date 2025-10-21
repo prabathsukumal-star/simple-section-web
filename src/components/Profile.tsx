@@ -199,6 +199,7 @@ const Profile = () => {
 
   // Use the imageUrl from API response
   const currentImageUrl = userData?.imageUrl || '';
+  const userTypeDisplay = userData?.userType || user?.userType || 'USER';
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -217,13 +218,13 @@ const Profile = () => {
               {formData.name || "Welcome"}
             </h1>
             <p className="text-muted-foreground text-lg">
-              {instituteRole || "User"} • Member since {formData.joinDate}
+              {userTypeDisplay} • Member since {formData.joinDate}
             </p>
           </div>
           <div className="flex items-center justify-center gap-4">
             <Badge variant="secondary" className="text-sm">
               <Shield className="h-3 w-3 mr-1" />
-              {instituteRole}
+              {userTypeDisplay}
             </Badge>
             <div className="flex gap-2">
               {!isEditing ? <>
@@ -346,6 +347,14 @@ const Profile = () => {
                         <div className="p-3 rounded-md bg-muted/50 border flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           <p className="font-medium">{formData.joinDate}</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">User Type</Label>
+                        <div className="p-3 rounded-md bg-muted/50 border flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-muted-foreground" />
+                          <p className="font-medium">{userData?.userType || 'N/A'}</p>
                         </div>
                       </div>
                     </div>

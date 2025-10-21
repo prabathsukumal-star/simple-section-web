@@ -12,7 +12,6 @@ import { DataCardView } from '@/components/ui/data-card-view';
 import MUITable from '@/components/ui/mui-table';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import CreateStudentForm from '@/components/forms/CreateStudentForm';
 import AssignStudentsDialog from '@/components/forms/AssignStudentsDialog';
 import AssignSubjectStudentsDialog from '@/components/forms/AssignSubjectStudentsDialog';
 import { cachedApiClient } from '@/api/cachedClient';
@@ -97,7 +96,6 @@ const Students = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [instituteStudents, setInstituteStudents] = useState<InstituteStudent[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [showSubjectAssignDialog, setShowSubjectAssignDialog] = useState(false);
@@ -136,16 +134,6 @@ const Students = () => {
       'Authorization': `Bearer ${token}`
     };
   };
-
-  // Use API request hook for creating students with duplicate prevention
-  const createStudentRequest = useApiRequest(
-    async (studentData: any) => {
-      console.log('Creating student with data:', studentData);
-      const response = await cachedApiClient.post('/students', studentData);
-      return response;
-    },
-    { preventDuplicates: true, showLoading: false }
-  );
 
   // Use API request hook for fetching students (original API)
   const fetchStudentsRequest = useApiRequest(
@@ -300,33 +288,6 @@ const Students = () => {
     if (selectedClass) parts.push(`Class: ${selectedClass.name}`);
     if (selectedSubject) parts.push(`Subject: ${selectedSubject.name}`);
     return parts.join(' → ');
-  };
-
-  const handleCreateStudent = async (studentData: any) => {
-    try {
-      console.log('Submitting student data:', studentData);
-      
-      await createStudentRequest.execute(studentData);
-      
-      toast({
-        title: "Success",
-        description: "Student created successfully!",
-      });
-      
-      setShowCreateForm(false);
-      
-      // Refresh students list after successful creation
-      const loadFn = getLoadFunction();
-      await loadFn();
-      
-    } catch (error) {
-      console.error('Error creating student:', error);
-      toast({
-        title: "Error", 
-        description: "Failed to create student",
-        variant: "destructive"
-      });
-    }
   };
 
   // Columns for both student types
@@ -693,13 +654,6 @@ const Students = () => {
               </>
             )}
           </Button>
-          {!shouldUseInstituteApi() && (
-            <Button onClick={() => setShowCreateForm(true)} className="flex-1 sm:flex-none" size="sm">
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Add Student</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
-          )}
         </div>
       </div>
 
@@ -804,13 +758,6 @@ const Students = () => {
       )}
 
       {/* Create Student Form Dialog - Only for non-institute users */}
-      {!shouldUseInstituteApi() && showCreateForm && (
-        <CreateStudentForm
-          onSubmit={handleCreateStudent}
-          onCancel={() => setShowCreateForm(false)}
-          loading={createStudentRequest.loading}
-        />
-      )}
 
       {/* Assign Students Dialog - Only for InstituteAdmin and Teacher (Class level) */}
       {shouldUseInstituteApi() && selectedClass && !selectedSubject && (

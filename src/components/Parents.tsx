@@ -13,7 +13,7 @@ import { useInstituteRole } from '@/hooks/useInstituteRole';
 import { type UserRole } from '@/contexts/types/auth.types';
 import { useToast } from '@/hooks/use-toast';
 import { useTableData } from '@/hooks/useTableData';
-import CreateParentForm from '@/components/forms/CreateParentForm';
+
 const Parents = () => {
   const {
     user,
@@ -122,16 +122,8 @@ const Parents = () => {
     align: 'center' as const,
     format: (value: string) => <Badge variant={value ? "default" : "secondary"} className="text-xs">
           {value ? 'Verified' : 'Unverified'}
-        </Badge>
+      </Badge>
   }];
-  const handleCreateParentSubmit = (data: any) => {
-    toast({
-      title: "Success",
-      description: "Parent created successfully"
-    });
-    setShowCreateDialog(false);
-    tableData.actions.refresh(); // Refresh the list
-  };
 
   // Filter data based on search term and filters
   const filteredData = tableData.state.data.filter(parent => {
@@ -208,19 +200,6 @@ const Parents = () => {
             <RefreshCw className={`w-4 h-4 mr-2 ${tableData.state.loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          
-          {canCreateParents && <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="w-full sm:w-auto">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Parent
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
-                
-                <CreateParentForm onSubmit={handleCreateParentSubmit} onCancel={() => setShowCreateDialog(false)} />
-              </DialogContent>
-            </Dialog>}
         </div>
       </div>
 

@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Calendar, Clock, MapPin, Video } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/api/client';
+import { useInstituteRole } from '@/hooks/useInstituteRole';
 
 interface CreateLectureFormProps {
   onClose?: () => void;
@@ -35,6 +36,9 @@ const CreateLectureForm = ({ onClose, onSuccess, courseId }: CreateLectureFormPr
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user, selectedInstitute, selectedClass, selectedSubject } = useAuth();
+  const instituteRole = useInstituteRole();
+  
+  const canCreate = instituteRole === 'InstituteAdmin' || instituteRole === 'Teacher';
 
   const handleInputChange = (field: string, value: string | boolean | number) => {
     setFormData(prev => ({
@@ -51,6 +55,15 @@ const CreateLectureForm = ({ onClose, onSuccess, courseId }: CreateLectureFormPr
         title: "Error",
         description: "Please select an institute, class, and subject before creating a lecture",
         variant: "destructive",
+      });
+      return;
+    }
+
+    if (!canCreate) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to create lectures. Only Institute Admins and Teachers can create lectures.",
+        variant: "destructive"
       });
       return;
     }
@@ -72,15 +85,16 @@ const CreateLectureForm = ({ onClose, onSuccess, courseId }: CreateLectureFormPr
           endTime: formData.timeEnd,
           meetingLink: formData.liveLink || undefined,
           meetingId: formData.meetingId || undefined,
-          recordingUrl: formData.recordingUrl || undefined,
+          recodingUrl: formData.recordingUrl || undefined,
           maxParticipants: formData.maxParticipants,
-          meetingPassword: formData.meetingPassword || undefined
+          meetingPassword: formData.meetingPassword || undefined,
+          isRecorded: !!formData.recordingUrl
         }
       };
       
       console.log('Creating lecture with data:', lectureData);
       
-      const response = await apiClient.post('/lectures', lectureData);
+      const response = await apiClient.post('/institute-class-subject-lectures', lectureData);
       const newLecture = response.data;
       
       toast({
