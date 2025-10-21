@@ -58,8 +58,6 @@ const TeacherExams = () => {
   const effectiveRole = useInstituteRole();
   const { toast } = useToast();
   
-  const canCreateEdit = ['InstituteAdmin', 'Teacher'].includes(effectiveRole);
-  
   const [showFilters, setShowFilters] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreateResultsDialogOpen, setIsCreateResultsDialogOpen] = useState(false);
@@ -174,23 +172,8 @@ const TeacherExams = () => {
       )
     },
     {
-      key: 'createResults',
-      header: 'Create Results',
-      render: (value: any, row: TeacherExam) => (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => navigate(`/exams/${row.id}/create-results`)}
-          className="flex items-center gap-2"
-        >
-          <BarChart3 className="h-3 w-3" />
-          Create
-        </Button>
-      )
-    },
-    {
       key: 'results',
-      header: 'View Results',
+      header: 'Results',
       render: (value: any, row: TeacherExam) => (
         <Button
           size="sm"
@@ -441,25 +424,23 @@ const TeacherExams = () => {
         )}
 
         {/* Add Create Buttons */}
-        {canCreateEdit && (
-          <div className="flex justify-end gap-2 mb-4">
-            <Button 
-              onClick={handleCreateResults}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <BarChart3 className="h-4 w-4" />
-              Create Results
-            </Button>
-            <Button 
-              onClick={() => setIsCreateDialogOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Create Exam
-            </Button>
-          </div>
-        )}
+        <div className="flex justify-end gap-2 mb-4">
+          <Button 
+            onClick={handleCreateResults}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Create Results
+          </Button>
+          <Button 
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Create Exam
+          </Button>
+        </div>
 
         {/* MUI Table View */}
         <MUITable

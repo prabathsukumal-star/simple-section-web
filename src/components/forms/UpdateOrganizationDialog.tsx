@@ -7,8 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Organization, organizationSpecificApi, OrganizationUpdateData } from '@/api/organization.api';
-import { Save, Loader2, Upload } from 'lucide-react';
-import { getBaseUrl } from '@/contexts/utils/auth.api';
+import { Save, Loader2 } from 'lucide-react';
 
 interface UpdateOrganizationDialogProps {
   open: boolean;
@@ -25,7 +24,6 @@ const UpdateOrganizationDialog = ({
 }: UpdateOrganizationDialogProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [formData, setFormData] = useState<OrganizationUpdateData>({
     name: organization.name,
     isPublic: organization.isPublic,
@@ -50,31 +48,10 @@ const UpdateOrganizationDialog = ({
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem('access_token');
-      const formDataToSend = new FormData();
-      
-      formDataToSend.append('name', formData.name || '');
-      formDataToSend.append('isPublic', String(formData.isPublic));
-      formDataToSend.append('needEnrollmentVerification', String(formData.needEnrollmentVerification));
-      formDataToSend.append('enabledEnrollments', String(formData.enabledEnrollments));
-      if (formData.enrollmentKey) formDataToSend.append('enrollmentKey', formData.enrollmentKey);
-      if (formData.instituteId) formDataToSend.append('instituteId', formData.instituteId);
-      if (selectedImage) formDataToSend.append('image', selectedImage);
-      
-      const response = await fetch(`${getBaseUrl()}/organizations/${organization.organizationId}/upload-image`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formDataToSend
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to update organization');
-      }
-      
-      const updatedOrganization = await response.json();
+      const updatedOrganization = await organizationSpecificApi.updateOrganizationManagement(
+        organization.organizationId, 
+        formData
+      );
 
       toast({
         title: "Success",
@@ -123,25 +100,13 @@ const UpdateOrganizationDialog = ({
             </div>
 
             <div>
-              <Label htmlFor="image">Organization Image</Label>
-              <div className="space-y-2">
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
-                />
-                {selectedImage && (
-                  <span className="text-xs text-muted-foreground">
-                    Selected: {selectedImage.name}
-                  </span>
-                )}
-                {!selectedImage && formData.imageUrl && (
-                  <span className="text-xs text-muted-foreground">
-                    Current: {formData.imageUrl}
-                  </span>
-                )}
-              </div>
+              <Label htmlFor="imageUrl">Image URL</Label>
+              <Input
+                id="imageUrl"
+                value={formData.imageUrl || ''}
+                onChange={(e) => handleInputChange('imageUrl', e.target.value)}
+                placeholder="Enter image URL"
+              />
             </div>
 
             <div>

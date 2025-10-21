@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { homeworkApi } from '@/api/homework.api';
+import { getBaseUrl, getApiHeaders } from '@/contexts/utils/auth.api';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
@@ -38,9 +38,6 @@ const UpdateHomeworkForm = ({ homework, onClose, onSuccess }: UpdateHomeworkForm
 
     try {
       const payload = {
-        instituteId: homework.instituteId,
-        classId: homework.classId,
-        subjectId: homework.subjectId,
         title: formData.title,
         description: formData.description,
         startDate: formData.startDate || null,
@@ -49,14 +46,27 @@ const UpdateHomeworkForm = ({ homework, onClose, onSuccess }: UpdateHomeworkForm
         isActive: formData.isActive
       };
 
-      await homeworkApi.updateHomework(homework.id, payload);
+      const baseUrl = getBaseUrl();
+      const response = await fetch(
+        `${baseUrl}/institute-class-subject-homeworks/${homework.id}`,
+        {
+          method: 'PATCH',
+          headers: getApiHeaders(),
+          body: JSON.stringify(payload)
+        }
+      );
 
-      toast({
-        title: "Success",
-        description: "Homework updated successfully"
-      });
-      onSuccess();
-      onClose();
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Homework updated successfully"
+        });
+        onSuccess();
+        onClose();
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update homework');
+      }
     } catch (error) {
       console.error('Error updating homework:', error);
       toast({

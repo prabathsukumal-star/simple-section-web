@@ -44,8 +44,6 @@ const TeacherLectures = () => {
   const effectiveRole = useInstituteRole();
   const { toast } = useToast();
   
-  const canCreateEdit = ['InstituteAdmin', 'Teacher'].includes(effectiveRole);
-  
   const [showFilters, setShowFilters] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
@@ -383,17 +381,15 @@ const TeacherLectures = () => {
       )}
 
       {/* Add Create Button */}
-      {canCreateEdit && (
-        <div className="flex justify-end mb-4">
-          <Button 
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Create Lecture
-          </Button>
-        </div>
-      )}
+      <div className="flex justify-end mb-4">
+        <Button 
+          onClick={() => setIsCreateDialogOpen(true)}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Create Lecture
+        </Button>
+      </div>
 
       {/* MUI Table View */}
       <MUITable

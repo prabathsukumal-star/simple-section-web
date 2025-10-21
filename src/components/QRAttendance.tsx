@@ -41,7 +41,6 @@ const QRAttendance = () => {
   const [attendanceAlerts, setAttendanceAlerts] = useState<AttendanceAlert[]>([]);
   const [showMethodDialog, setShowMethodDialog] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<'qr' | 'barcode' | 'rfid/nfc'>('qr');
-  const [studentImagesMap, setStudentImagesMap] = useState<Map<string, string>>(new Map());
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,48 +49,6 @@ const QRAttendance = () => {
 
   // Check if user has permission - InstituteAdmin, Teacher, and AttendanceMarker can mark attendance
   const hasPermission = ['InstituteAdmin', 'Teacher', 'AttendanceMarker'].includes(instituteRole);
-
-  // Fetch students to get their images
-  useEffect(() => {
-    const fetchStudents = async () => {
-      if (!currentInstituteId) return;
-      
-      try {
-        const baseUrl = localStorage.getItem('baseUrl') || '';
-        const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-        
-        const response = await fetch(
-          `${baseUrl}/institute-users/institute/${currentInstituteId}/users/STUDENT?page=1&limit=500`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          const studentsData = data.data || [];
-          
-          // Create a map of studentId -> imageUrl
-          const imagesMap = new Map<string, string>();
-          studentsData.forEach((student: any) => {
-            if (student.id && student.imageUrl) {
-              imagesMap.set(student.id.toString(), student.imageUrl);
-            }
-          });
-          
-          setStudentImagesMap(imagesMap);
-          console.log('📸 Loaded student images for', imagesMap.size, 'students');
-        }
-      } catch (error) {
-        console.error('Failed to fetch student images:', error);
-      }
-    };
-    
-    fetchStudents();
-  }, [currentInstituteId]);
 
   useEffect(() => {
     fetchLocation();
@@ -140,15 +97,16 @@ const QRAttendance = () => {
             setLocation({ latitude, longitude, address });
             console.log('Location set:', { latitude, longitude, address });
           } catch (error) {
-            console.log('Reverse geocoding failed, using coordinates');
-            const address = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+            console.log('Reverse geocoding failed, using generated address');
+            const address = generateAddress();
             setLocation({ latitude, longitude, address });
           }
           setLocationLoading(false);
         },
         (error) => {
           console.log('Location access error:', error);
-          setLocation(null);
+          const address = generateAddress();
+          setLocation({ latitude: 0, longitude: 0, address });
           setLocationLoading(false);
         },
         {
@@ -159,7 +117,8 @@ const QRAttendance = () => {
       );
     } else {
       console.log('Geolocation not supported');
-      setLocation(null);
+      const address = generateAddress();
+      setLocation({ latitude: 0, longitude: 0, address });
       setLocationLoading(false);
     }
   };
@@ -175,7 +134,7 @@ const QRAttendance = () => {
       throw new Error('No address found');
     } catch (error) {
       console.log('Reverse geocoding failed:', error);
-      return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+      return generateAddress();
     }
   };
 
@@ -437,27 +396,36 @@ const QRAttendance = () => {
 
       const result = await childAttendanceApi.markAttendanceByCard(request);
 
+      console.log('📥 API Response received');
+      console.log('📊 Result:', JSON.stringify(result, null, 2));
+
       if (result.success) {
-        const responseData = (result as any).data || result;
-        const studentName = responseData.studentName || (result as any).studentName || 'Student';
-        const studentIdFromResponse = responseData.studentId || studentCardId.trim();
-        const imageUrl = responseData.imageUrl || (result as any).imageUrl || studentImagesMap.get(studentIdFromResponse);
-        const dateStr = responseData.date ? new Date(responseData.date).toLocaleDateString() : new Date().toLocaleDateString();
-        const timeStr = responseData.time || new Date().toLocaleTimeString();
-        const attendanceStatus = responseData.status || request.status;
-        
-        toast({
-          title: attendanceStatus === 'present' ? 'Attendance Marked ✓' : 'Attendance Marked',
-          description: `${studentName} - ${attendanceStatus.toUpperCase()} - ${dateStr} ${timeStr}`,
-          isAttendanceAlert: true,
-          imageUrl: imageUrl,
-          status: attendanceStatus,
-        });
         setMarkedCount(prev => prev + 1);
         
         console.log('🎉 SUCCESS: Attendance marked!');
         console.log('📝 Attendance ID:', result.attendanceId);
         console.log('🔄 Action:', result.action);
+
+        // Show toast with all attendance details
+        toast({
+          title: "✅ Attendance Marked",
+          description: (
+            <div className="flex flex-col gap-2 mt-2">
+              {result.imageUrl && (
+                <img 
+                  src={result.imageUrl} 
+                  alt={result.name || 'Student'} 
+                  className="w-16 h-16 rounded-full object-cover border-2 border-green-500"
+                />
+              )}
+              <div className="space-y-1">
+                <p className="font-semibold text-base">{result.name || `Student ${studentCardId.trim()}`}</p>
+                <p className="text-sm">Status: <span className="font-medium capitalize">{result.status}</span></p>
+                <p className="text-xs text-muted-foreground">Marked at {new Date().toLocaleTimeString()}</p>
+              </div>
+            </div>
+          ),
+        });
 
         addAlert({
           type: 'success',
@@ -561,22 +529,12 @@ const QRAttendance = () => {
 
       const result = await childAttendanceApi.markAttendance(request);
 
+      console.log('=== MANUAL ATTENDANCE API RESULT ===');
+      console.log('API Call Completed Successfully');
+      console.log('Result:', JSON.stringify(result, null, 2));
+      console.log('==================================');
+
       if (result.success) {
-        const responseData = (result as any).data || result;
-        const studentName = responseData.studentName || (result as any).studentName || (result as any).name || 'Student';
-        const studentIdFromResponse = responseData.studentId || studentId;
-        const imageUrl = responseData.imageUrl || (result as any).imageUrl || studentImagesMap.get(studentIdFromResponse);
-        const dateStr = responseData.date ? new Date(responseData.date).toLocaleDateString() : new Date().toLocaleDateString();
-        const timeStr = responseData.time || new Date().toLocaleTimeString();
-        const attendanceStatus = responseData.status || status;
-        
-        toast({
-          title: "✓ Attendance Marked Successfully",
-          description: `${studentName} - Status: ${attendanceStatus.toUpperCase()} - Date: ${dateStr} - Time: ${timeStr}${selectedInstitute?.name ? ` - ${selectedInstitute.name}` : ''}`,
-          isAttendanceAlert: true,
-          imageUrl: imageUrl,
-          status: attendanceStatus,
-        });
         const previousCount = markedCount;
         setMarkedCount(prev => prev + 1);
         setStudentId('');
@@ -587,6 +545,27 @@ const QRAttendance = () => {
         console.log('Previous Count:', previousCount);
         console.log('New Count:', previousCount + 1);
         console.log('Input field cleared');
+
+        // Show toast with all attendance details
+        toast({
+          title: "✅ Attendance Marked",
+          description: (
+            <div className="flex flex-col gap-2 mt-2">
+              {result.imageUrl && (
+                <img 
+                  src={result.imageUrl} 
+                  alt={result.name || 'Student'} 
+                  className="w-16 h-16 rounded-full object-cover border-2 border-green-500"
+                />
+              )}
+              <div className="space-y-1">
+                <p className="font-semibold text-base">{result.name || `Student ${studentId}`}</p>
+                <p className="text-sm">Status: <span className="font-medium capitalize">{result.status}</span></p>
+                <p className="text-xs text-muted-foreground">Marked at {new Date().toLocaleTimeString()}</p>
+              </div>
+            </div>
+          ),
+        });
 
         addAlert({
           type: 'success',

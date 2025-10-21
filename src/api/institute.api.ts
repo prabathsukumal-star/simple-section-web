@@ -210,55 +210,6 @@ class InstituteApi {
     });
   }
 
-  async getInstituteStudentsByClassAndSubject(
-    instituteId: string, 
-    classId: string, 
-    subjectId: string, 
-    queryParams?: { page?: number; limit?: number; userId?: string; role?: string }, 
-    forceRefresh = false
-  ): Promise<{
-    data: Array<{
-      id: string;
-      name: string;
-      email?: string;
-      addressLine1?: string;
-      addressLine2?: string;
-      phoneNumber?: string;
-      imageUrl?: string;
-      dateOfBirth?: string;
-      userIdByInstitute?: string | null;
-      fatherId?: string;
-      motherId?: string;
-      guardianId?: string;
-      emergencyContact?: string;
-      medicalConditions?: string;
-      allergies?: string;
-      studentId?: string;
-    }>;
-    meta: {
-      total: number;
-      page: number;
-      limit: number;
-      totalPages: number;
-    };
-  }> {
-    console.log('Fetching students for class and subject:', { instituteId, classId, subjectId, forceRefresh });
-    const page = queryParams?.page || 1;
-    const limit = queryParams?.limit || 10;
-    const endpoint = `/institute-users/institute/${instituteId}/users/STUDENT/class/${classId}/subject/${subjectId}`;
-    
-    return enhancedCachedClient.get(endpoint, { page, limit }, { 
-      forceRefresh,
-      ttl: 30,
-      useStaleWhileRevalidate: true,
-      userId: queryParams?.userId,
-      instituteId,
-      classId,
-      subjectId,
-      role: queryParams?.role
-    });
-  }
-
   async getClassSubjects(instituteId: string, classId: string, params?: { userId?: string; role?: string }, forceRefresh = false): Promise<ApiResponse<any[]>> {
     console.log('Fetching class subjects:', { instituteId, classId, forceRefresh });
     const endpoint = `/institutes/${instituteId}/classes/${classId}/subjects`;

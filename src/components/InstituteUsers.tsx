@@ -30,6 +30,7 @@ import CreateComprehensiveUserForm from '@/components/forms/CreateComprehensiveU
 import AssignUserForm from '@/components/forms/AssignUserForm';
 import AssignParentForm from '@/components/forms/AssignParentForm';
 import AssignParentByPhoneForm from '@/components/forms/AssignParentByPhoneForm';
+import CreateStudentForm from '@/components/forms/CreateStudentForm';
 import AssignUserMethodsDialog from '@/components/forms/AssignUserMethodsDialog';
 import { usersApi, BasicUser } from '@/api/users.api';
 import UserInfoDialog from '@/components/forms/UserInfoDialog';
@@ -75,6 +76,7 @@ const InstituteUsers = () => {
   const [showAssignUserDialog, setShowAssignUserDialog] = useState(false);
   const [showAssignMethodsDialog, setShowAssignMethodsDialog] = useState(false);
   const [showAssignParentDialog, setShowAssignParentDialog] = useState(false);
+  const [showCreateStudentDialog, setShowCreateStudentDialog] = useState(false);
   const [selectedStudentForParent, setSelectedStudentForParent] = useState<InstituteUserData | null>(null);
   const [assignInitialUserId, setAssignInitialUserId] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<UserType>('STUDENT');
@@ -128,6 +130,14 @@ const InstituteUsers = () => {
         body: JSON.stringify(userData)
       });
       return response.json();
+    },
+    { preventDuplicates: true, showLoading: false }
+  );
+
+  // Use API request hook for creating students
+  const createStudentRequest = useApiRequest(
+    async (studentData: any) => {
+      return await studentsApi.create(studentData);
     },
     { preventDuplicates: true, showLoading: false }
   );
@@ -196,6 +206,31 @@ const InstituteUsers = () => {
     
     // Refresh students data
     studentsTable.actions.refresh();
+  };
+
+  const handleCreateStudent = async (studentData: any) => {
+    try {
+      const response = await createStudentRequest.execute(studentData);
+      
+      toast({
+        title: "Student Created",
+        description: "Student has been created successfully.",
+        duration: 1500
+      });
+      
+      setShowCreateStudentDialog(false);
+      
+      // Refresh students data
+      studentsTable.actions.refresh();
+    } catch (error) {
+      console.error('Error creating student:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create student.",
+        variant: "destructive",
+        duration: 1500
+      });
+    }
   };
 
   const handleImageUpload = async (userId: string) => {
@@ -450,6 +485,15 @@ const InstituteUsers = () => {
               </Badge>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <Button 
+                onClick={() => setShowCreateStudentDialog(true)}
+                className="flex items-center gap-2 w-full sm:w-auto"
+                size="sm"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Create Student</span>
+                <span className="sm:hidden">Create</span>
+              </Button>
               <Button 
                 onClick={() => studentsTable.actions.refresh()} 
                 disabled={studentsTable.state.loading}
@@ -972,6 +1016,15 @@ const InstituteUsers = () => {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Create Student Dialog */}
+      {showCreateStudentDialog && (
+        <CreateStudentForm
+          onSubmit={handleCreateStudent}
+          onCancel={() => setShowCreateStudentDialog(false)}
+          loading={createStudentRequest.loading}
+        />
+      )}
 
       {/* Assign User Methods Dialog */}
       <AssignUserMethodsDialog

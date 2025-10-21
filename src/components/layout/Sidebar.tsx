@@ -33,8 +33,7 @@ import {
   Truck,
   ImageIcon,
   IdCard,
-  MessageSquare,
-  Wifi
+  MessageSquare
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -948,19 +947,19 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             alwaysShow: false
           },
           {
+            id: 'attendance',
+            label: 'View Attendance',
+            icon: ClipboardList,
+            permission: 'view-attendance',
+            alwaysShow: false
+          },
+          {
             id: 'qr-attendance',
             label: 'QR Attendance',
             icon: QrCode,
             permission: 'mark-attendance',
             alwaysShow: false
-          },
-          ...(selectedInstitute && ['InstituteAdmin', 'AttendanceMarker', 'Teacher'].includes(userRole) ? [{
-            id: 'institute-mark-attendance',
-            label: 'Institute Mark Attendance',
-            icon: Wifi,
-            permission: 'mark-attendance',
-            alwaysShow: false
-          }] : [])
+          }
         ];
       }
 
@@ -975,19 +974,19 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             alwaysShow: false
           },
           {
+            id: 'attendance',
+            label: 'View Attendance',
+            icon: ClipboardList,
+            permission: 'view-attendance',
+            alwaysShow: false
+          },
+          {
             id: 'qr-attendance',
             label: 'QR Attendance',
             icon: QrCode,
             permission: 'mark-attendance',
             alwaysShow: false
-          },
-          ...(selectedInstitute && ['InstituteAdmin', 'AttendanceMarker', 'Teacher'].includes(userRole) ? [{
-            id: 'institute-mark-attendance',
-            label: 'Institute Mark Attendance',
-            icon: Wifi,
-            permission: 'mark-attendance',
-            alwaysShow: false
-          }] : [])
+          }
         ];
       }
 
@@ -1012,19 +1011,19 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             alwaysShow: false
           },
           {
+            id: 'attendance',
+            label: 'View Attendance',
+            icon: ClipboardList,
+            permission: 'view-attendance',
+            alwaysShow: false
+          },
+          {
             id: 'qr-attendance',
             label: 'QR Attendance',
             icon: QrCode,
             permission: 'mark-attendance',
             alwaysShow: false
-          },
-          ...(selectedInstitute && ['InstituteAdmin', 'AttendanceMarker', 'Teacher'].includes(userRole) ? [{
-            id: 'institute-mark-attendance',
-            label: 'Institute Mark Attendance',
-            icon: Wifi,
-            permission: 'mark-attendance',
-            alwaysShow: false
-          }] : [])
+          }
         ];
       }
 
@@ -1039,19 +1038,19 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
             alwaysShow: false
           },
           {
+            id: 'attendance',
+            label: 'View Attendance',
+            icon: ClipboardList,
+            permission: 'view-attendance',
+            alwaysShow: false
+          },
+          {
             id: 'qr-attendance',
             label: 'QR Attendance',
             icon: QrCode,
             permission: 'mark-attendance',
             alwaysShow: false
-          },
-          ...(selectedInstitute && ['InstituteAdmin', 'AttendanceMarker', 'Teacher'].includes(userRole) ? [{
-            id: 'institute-mark-attendance',
-            label: 'Institute Mark Attendance',
-            icon: Wifi,
-            permission: 'mark-attendance',
-            alwaysShow: false
-          }] : [])
+          }
         ];
       }
     }
@@ -1062,6 +1061,13 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
         id: 'daily-attendance',
         label: 'Daily Attendance',
         icon: UserCheck,
+        permission: 'view-attendance',
+        alwaysShow: false
+      },
+      {
+        id: 'attendance',
+        label: 'View Attendance',
+        icon: ClipboardList,
         permission: 'view-attendance',
         alwaysShow: false
       },
@@ -1078,14 +1084,7 @@ const Sidebar = ({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) =
         icon: QrCode,
         permission: 'mark-attendance',
         alwaysShow: userRole === 'AttendanceMarker' // Always show for AttendanceMarker
-      },
-      ...(selectedInstitute && ['InstituteAdmin', 'AttendanceMarker', 'Teacher'].includes(userRole) ? [{
-        id: 'institute-mark-attendance',
-        label: 'Institute Mark Attendance',
-        icon: Wifi,
-        permission: 'mark-attendance',
-        alwaysShow: false
-      }] : [])
+      }
     ];
 
     return attendanceItems;

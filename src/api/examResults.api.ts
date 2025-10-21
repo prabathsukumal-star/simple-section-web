@@ -98,28 +98,6 @@ class ExamResultsApi {
       role: params?.role
     });
   }
-
-  async createBulkResults(data: BulkResultsCreateData): Promise<ExamResult[]> {
-    console.log('Creating bulk exam results:', data);
-    return enhancedCachedClient.post<ExamResult[]>('/institute-class-subject-resaults/bulk', data, {
-      instituteId: data.instituteId,
-      classId: data.classId,
-      subjectId: data.subjectId
-    });
-  }
-}
-
-export interface BulkResultsCreateData {
-  instituteId: string;
-  classId: string;
-  subjectId: string;
-  examId: string;
-  results: {
-    studentId: string;
-    score: string;
-    grade: string;
-    remarks: string;
-  }[];
 }
 
 export const examResultsApi = new ExamResultsApi();

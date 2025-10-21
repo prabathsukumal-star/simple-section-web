@@ -169,12 +169,9 @@ const TeacherHomework = () => {
       action: (homework: any) => handleEditHomework(homework),
       icon: <Edit className="h-4 w-4" />,
       variant: 'outline' as const,
-      tooltip: 'Edit homework',
-      show: ['InstituteAdmin', 'Teacher'].includes(effectiveRole)
+      tooltip: 'Edit homework'
     }
-  ].filter(action => action.show !== false);
-  
-  const canCreateEdit = ['InstituteAdmin', 'Teacher'].includes(effectiveRole);
+  ];
 
   const handleEditHomework = (homework: TeacherHomework) => {
     setSelectedHomework(homework);
@@ -363,17 +360,15 @@ const TeacherHomework = () => {
         )}
 
         {/* Add Create Button */}
-        {canCreateEdit && (
-          <div className="flex justify-end gap-2 mb-4">
-            <Button 
-              onClick={() => setIsCreateDialogOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Create Homework
-            </Button>
-          </div>
-        )}
+        <div className="flex justify-end gap-2 mb-4">
+          <Button 
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Create Homework
+          </Button>
+        </div>
 
         {/* MUI Table View */}
         <MUITable
