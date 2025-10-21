@@ -33,6 +33,7 @@ import AssignParentByPhoneForm from '@/components/forms/AssignParentByPhoneForm'
 import AssignUserMethodsDialog from '@/components/forms/AssignUserMethodsDialog';
 import { usersApi, BasicUser } from '@/api/users.api';
 import UserInfoDialog from '@/components/forms/UserInfoDialog';
+import UserOrganizationsDialog from '@/components/forms/UserOrganizationsDialog';
 import { getBaseUrl } from '@/contexts/utils/auth.api';
 
 interface InstituteUserData {
@@ -87,6 +88,8 @@ const InstituteUsers = () => {
   });
   const [uploadingUserId, setUploadingUserId] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [orgDialogOpen, setOrgDialogOpen] = useState(false);
+  const [selectedUserForOrg, setSelectedUserForOrg] = useState<{ id: string; name: string } | null>(null);
 
   // Table data management for each user type
   const studentsTable = useTableData<InstituteUserData>({
@@ -637,6 +640,7 @@ const InstituteUsers = () => {
                 <TableCell>Email</TableCell>
                 <TableCell>Phone Number</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell>Org</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -675,6 +679,19 @@ const InstituteUsers = () => {
                     <Badge variant={userData.verifiedBy ? "default" : "secondary"}>
                       {userData.verifiedBy ? 'Verified' : 'Unverified'}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => {
+                        setSelectedUserForOrg({ id: userData.id, name: userData.name });
+                        setOrgDialogOpen(true);
+                      }}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      View
+                    </Button>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
@@ -722,7 +739,7 @@ const InstituteUsers = () => {
               ))}
               {filteredUsers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     <div className="py-12 text-center text-gray-500">
                       <IconComponent className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p className="text-lg">No {getUserTypeLabel(activeTab).toLowerCase()}</p>
@@ -989,6 +1006,16 @@ const InstituteUsers = () => {
         onClose={() => setUserInfoDialog({ open: false, user: null })}
         user={userInfoDialog.user}
       />
+
+      {/* User Organizations Dialog */}
+      {selectedUserForOrg && (
+        <UserOrganizationsDialog
+          open={orgDialogOpen}
+          onOpenChange={setOrgDialogOpen}
+          userId={selectedUserForOrg.id}
+          userName={selectedUserForOrg.name}
+        />
+      )}
 
       {/* Create Comprehensive User Dialog */}
       {showCreateComprehensiveUserDialog && (
