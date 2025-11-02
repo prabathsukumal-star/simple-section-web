@@ -63,6 +63,8 @@ const CourseDetail = () => {
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedLectureDetails, setSelectedLectureDetails] = useState<Lecture | null>(null);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [currentPdfUrl, setCurrentPdfUrl] = useState<string | null>(null);
 
   // Get course info from localStorage or state management
   const [course, setCourse] = useState<any>(null);
@@ -124,6 +126,10 @@ const CourseDetail = () => {
   const handleVideoClick = (url: string) => {
     setCurrentVideoUrl(getEmbedUrl(url));
     setVideoDialogOpen(true);
+  };
+  const handlePdfClick = (url: string) => {
+    setCurrentPdfUrl(url);
+    setPdfDialogOpen(true);
   };
   return <SidebarProvider>
       <div className="h-screen flex w-full overflow-hidden">{/* Fixed height, no scroll */}
@@ -297,11 +303,11 @@ const CourseDetail = () => {
                                   Docs ({lecture.documentCount})
                                 </Button>
                                 {expandedDocuments.has(lecture.lectureId) && <div className="mt-2 space-y-1">
-                                    {lecture.documents.map(doc => <a key={doc.documentationId} href={doc.docUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-1 rounded text-sm hover:bg-muted">
+                                    {lecture.documents.map(doc => <button key={doc.documentationId} onClick={() => handlePdfClick(doc.docUrl)} className="flex items-center gap-2 p-1 rounded text-sm hover:bg-muted w-full text-left">
                                         <FileText className="h-3 w-3" />
                                         <span className="flex-1 truncate">{doc.title}</span>
                                         <ExternalLink className="h-3 w-3" />
-                                      </a>)}
+                                      </button>)}
                                   </div>}
                               </div> : <span className="text-sm text-muted-foreground">-</span>}
                           </TableCell>
@@ -358,6 +364,21 @@ const CourseDetail = () => {
               </button>
               <div className="relative w-full pt-[56.25%] bg-black">{/* 16:9 aspect ratio */}
                 {currentVideoUrl && <iframe src={currentVideoUrl} className="absolute top-0 left-0 w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />}
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* PDF Viewer Dialog */}
+          <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
+            <DialogContent className="max-w-4xl w-[80vw] p-0 overflow-hidden border-[40px] border-white shadow-2xl">
+              <button
+                onClick={() => setPdfDialogOpen(false)}
+                className="absolute top-2 right-2 z-10 rounded-full bg-white/90 hover:bg-white p-2 shadow-lg transition-all"
+              >
+                <X className="h-5 w-5 text-gray-800" />
+              </button>
+              <div className="relative w-full h-[80vh] bg-gray-100">
+                {currentPdfUrl && <iframe src={currentPdfUrl} className="w-full h-full" />}
               </div>
             </DialogContent>
           </Dialog>
