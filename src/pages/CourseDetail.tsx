@@ -390,7 +390,7 @@ const CourseDetail = () => {
 
           {/* Video Player Dialog */}
           <Dialog open={videoDialogOpen} onOpenChange={setVideoDialogOpen}>
-            <DialogContent className="max-w-7xl w-[95vw] p-0 overflow-hidden border-8 border-white shadow-2xl">
+            <DialogContent className="max-w-7xl w-[95vw] p-0 overflow-hidden border-[20px] border-white shadow-2xl">
               <Button
                 onClick={() => setVideoDialogOpen(false)}
                 className="absolute -top-4 -right-4 z-50 h-10 w-10 rounded-full bg-white text-black hover:bg-gray-100 shadow-lg p-0"
