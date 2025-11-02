@@ -5,7 +5,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, PlayCircle, FileText, ArrowLeft, Video, ExternalLink, Plus, Pencil, Loader2, Eye } from "lucide-react";
+import { Clock, PlayCircle, FileText, ArrowLeft, Video, ExternalLink, Plus, Pencil, Loader2, Eye, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CreateLectureForm } from "@/components/forms/CreateLectureForm";
 import { UpdateLectureForm } from "@/components/forms/UpdateLectureForm";
@@ -390,7 +390,13 @@ const CourseDetail = () => {
 
           {/* Video Player Dialog */}
           <Dialog open={videoDialogOpen} onOpenChange={setVideoDialogOpen}>
-            <DialogContent className="max-w-3xl w-[90vw] p-0 overflow-hidden border-8 border-white shadow-2xl">
+            <DialogContent className="max-w-7xl w-[95vw] p-0 overflow-hidden border-8 border-white shadow-2xl">
+              <Button
+                onClick={() => setVideoDialogOpen(false)}
+                className="absolute -top-4 -right-4 z-50 h-10 w-10 rounded-full bg-white text-black hover:bg-gray-100 shadow-lg p-0"
+              >
+                <X className="h-5 w-5" />
+              </Button>
               <div className="relative w-full pt-[56.25%] bg-black">{/* 16:9 aspect ratio */}
                 {currentVideoUrl && (
                   <iframe
