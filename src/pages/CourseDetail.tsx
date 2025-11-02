@@ -5,7 +5,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, PlayCircle, FileText, ArrowLeft, Video, ExternalLink, Plus, Pencil, Loader2 } from "lucide-react";
+import { Clock, PlayCircle, FileText, ArrowLeft, Video, ExternalLink, Plus, Pencil, Loader2, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CreateLectureForm } from "@/components/forms/CreateLectureForm";
 import { UpdateLectureForm } from "@/components/forms/UpdateLectureForm";
@@ -58,6 +58,8 @@ const CourseDetail = () => {
   const [expandedDocuments, setExpandedDocuments] = useState<Set<string>>(new Set());
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedLectureDetails, setSelectedLectureDetails] = useState<Lecture | null>(null);
 
   // Get course info from localStorage or state management
   const [course, setCourse] = useState<any>(null);
@@ -228,12 +230,7 @@ const CourseDetail = () => {
                         <TableRow hover key={lecture.lectureId}>
                           <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                           <TableCell>
-                            <div>
-                              <div style={{ fontWeight: 500, marginBottom: '4px' }}>{lecture.title}</div>
-                              <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
-                                {lecture.description}
-                              </div>
-                            </div>
+                            <div style={{ fontWeight: 500 }}>{lecture.title}</div>
                           </TableCell>
                           <TableCell style={{ fontSize: '0.875rem' }}>
                             <div>{new Date(lecture.timeStart).toLocaleDateString()}</div>
@@ -324,18 +321,30 @@ const CourseDetail = () => {
                             )}
                           </TableCell>
                           <TableCell align="center">
-                            {canManageLecture() && (
+                            <div className="flex items-center justify-center gap-2">
                               <Button 
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => {
-                                  setSelectedLecture(lecture);
-                                  setIsUpdateDialogOpen(true);
+                                  setSelectedLectureDetails(lecture);
+                                  setDetailsDialogOpen(true);
                                 }}
                               >
-                                <Pencil className="h-4 w-4" />
+                                <Eye className="h-4 w-4" />
                               </Button>
-                            )}
+                              {canManageLecture() && (
+                                <Button 
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSelectedLecture(lecture);
+                                    setIsUpdateDialogOpen(true);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -381,7 +390,7 @@ const CourseDetail = () => {
 
           {/* Video Player Dialog */}
           <Dialog open={videoDialogOpen} onOpenChange={setVideoDialogOpen}>
-            <DialogContent className="max-w-7xl w-[95vw] p-0 bg-black border-none">
+            <DialogContent className="max-w-3xl w-[90vw] p-0 overflow-hidden border-8 border-white shadow-2xl">
               <div className="relative w-full pt-[56.25%] bg-black">{/* 16:9 aspect ratio */}
                 {currentVideoUrl && (
                   <iframe
@@ -392,6 +401,105 @@ const CourseDetail = () => {
                   />
                 )}
               </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Lecture Details Dialog */}
+          <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Lecture Details</DialogTitle>
+              </DialogHeader>
+              {selectedLectureDetails && (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-lg mb-1">{selectedLectureDetails.title}</h3>
+                    <p className="text-sm text-muted-foreground">{selectedLectureDetails.description}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium mb-1">Venue</p>
+                      <p className="text-sm text-muted-foreground">{selectedLectureDetails.venue || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium mb-1">Mode</p>
+                      <Badge variant="outline">{selectedLectureDetails.mode}</Badge>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium mb-1">Time</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(selectedLectureDetails.timeStart).toLocaleString()} - {new Date(selectedLectureDetails.timeEnd).toLocaleTimeString()}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium mb-1">Status</p>
+                    <Badge variant={selectedLectureDetails.isPublic ? "secondary" : "outline"}>
+                      {selectedLectureDetails.isPublic ? "Public" : "Private"}
+                    </Badge>
+                  </div>
+
+                  {selectedLectureDetails.liveLink && (
+                    <div>
+                      <p className="text-sm font-medium mb-2">Live Meeting</p>
+                      <Button 
+                        size="sm" 
+                        className="bg-[hsl(var(--lecture-live))] text-[hsl(var(--lecture-live-foreground))] hover:bg-[hsl(var(--lecture-live))]/90"
+                        asChild
+                      >
+                        <a href={selectedLectureDetails.liveLink} target="_blank" rel="noopener noreferrer">
+                          <Video className="h-4 w-4 mr-2" />
+                          Join Live ({selectedLectureDetails.liveMode})
+                        </a>
+                      </Button>
+                    </div>
+                  )}
+
+                  {selectedLectureDetails.recordingUrl && (
+                    <div>
+                      <p className="text-sm font-medium mb-2">Recording</p>
+                      <Button 
+                        size="sm"
+                        className="bg-[hsl(var(--lecture-recording))] text-[hsl(var(--lecture-recording-foreground))] hover:bg-[hsl(var(--lecture-recording))]/90"
+                        onClick={() => {
+                          handleVideoClick(selectedLectureDetails.recordingUrl!);
+                          setDetailsDialogOpen(false);
+                        }}
+                      >
+                        <PlayCircle className="h-4 w-4 mr-2" />
+                        Watch Recording
+                      </Button>
+                    </div>
+                  )}
+
+                  {selectedLectureDetails.documents && selectedLectureDetails.documents.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium mb-2">Documents ({selectedLectureDetails.documentCount})</p>
+                      <div className="space-y-2">
+                        {selectedLectureDetails.documents.map((doc) => (
+                          <a 
+                            key={doc.documentationId}
+                            href={doc.docUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-2 rounded border hover:bg-muted transition-colors"
+                          >
+                            <FileText className="h-4 w-4 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{doc.title}</p>
+                              <p className="text-xs text-muted-foreground truncate">{doc.description}</p>
+                            </div>
+                            <ExternalLink className="h-4 w-4 flex-shrink-0" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </DialogContent>
           </Dialog>
         </main>
