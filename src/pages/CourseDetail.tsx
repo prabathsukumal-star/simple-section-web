@@ -349,7 +349,7 @@ const CourseDetail = () => {
 
           {/* Video Player Dialog */}
           <Dialog open={videoDialogOpen} onOpenChange={setVideoDialogOpen}>
-            <DialogContent className="max-w-7xl w-[95vw] p-0 overflow-hidden border-[20px] border-white shadow-2xl">
+            <DialogContent className="max-w-4xl w-[80vw] p-0 overflow-hidden border-[40px] border-white shadow-2xl">
               
               <div className="relative w-full pt-[56.25%] bg-black">{/* 16:9 aspect ratio */}
                 {currentVideoUrl && <iframe src={currentVideoUrl} className="absolute top-0 left-0 w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />}
