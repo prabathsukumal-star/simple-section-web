@@ -350,7 +350,12 @@ const CourseDetail = () => {
           {/* Video Player Dialog */}
           <Dialog open={videoDialogOpen} onOpenChange={setVideoDialogOpen}>
             <DialogContent className="max-w-4xl w-[80vw] p-0 overflow-hidden border-[40px] border-white shadow-2xl">
-              
+              <button
+                onClick={() => setVideoDialogOpen(false)}
+                className="absolute top-2 right-2 z-10 rounded-full bg-white/90 hover:bg-white p-2 shadow-lg transition-all"
+              >
+                <X className="h-5 w-5 text-gray-800" />
+              </button>
               <div className="relative w-full pt-[56.25%] bg-black">{/* 16:9 aspect ratio */}
                 {currentVideoUrl && <iframe src={currentVideoUrl} className="absolute top-0 left-0 w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />}
               </div>
