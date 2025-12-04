@@ -87,13 +87,13 @@ export const generateSignedUrl = async (file: File, context: string = 'profile')
   });
   
   const params = new URLSearchParams({
-    folder,
     fileName: file.name,
     contentType: file.type,
     fileSize: file.size.toString()
   });
 
-  const response = await fetch(`${getApiBaseUrl()}/upload/get-signed-url?${params}`, {
+  // URL format: /upload/{folder}/get-signed-url?fileName=...&contentType=...&fileSize=...
+  const response = await fetch(`${getApiBaseUrl()}/upload/${folder}/get-signed-url?${params}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`
