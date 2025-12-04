@@ -74,6 +74,17 @@ export interface SignedUrlResponse {
 
 export const generateSignedUrl = async (file: File, context: string = 'profile'): Promise<SignedUrlResponse> => {
   const folder = getFolderType(context as any);
+  const token = getJwtToken();
+  
+  // Debug logging for signed URL request
+  console.log('🔐 Signed URL Request:', {
+    folder,
+    fileName: file.name,
+    contentType: file.type,
+    fileSize: file.size,
+    tokenPresent: !!token,
+    tokenLength: token?.length || 0
+  });
   
   const params = new URLSearchParams({
     folder,
@@ -85,13 +96,18 @@ export const generateSignedUrl = async (file: File, context: string = 'profile')
   const response = await fetch(`${getApiBaseUrl()}/upload/get-signed-url?${params}`, {
     method: 'GET',
     headers: {
-      'Authorization': `Bearer ${getJwtToken()}`
+      'Authorization': `Bearer ${token}`
     }
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to generate signed URL');
+    console.error('❌ Signed URL Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorData
+    });
+    throw new Error(errorData.message || `Failed to generate signed URL (${response.status})`);
   }
 
   return response.json();
