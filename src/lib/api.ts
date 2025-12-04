@@ -142,14 +142,30 @@ export const uploadFileToSignedUrl = async (file: File, signedUrlData: SignedUrl
 
 // Verify and publish uploaded file
 export const verifyAndPublish = async (relativePath: string): Promise<{ success: boolean; publicUrl: string }> => {
+  const token = getJwtToken();
+  
+  console.log('🔓 Verify & Publish Request:', {
+    relativePath,
+    tokenPresent: !!token,
+    tokenLength: token?.length || 0
+  });
+
   const response = await fetch(`${getApiBaseUrl()}/upload/verify-and-publish`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
     body: JSON.stringify({ relativePath })
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    console.error('❌ Verify & Publish Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorData
+    });
     throw new Error(errorData.message || 'Failed to verify upload');
   }
 
