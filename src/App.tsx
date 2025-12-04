@@ -1,53 +1,47 @@
-import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import { OrganizationLayout } from "./components/layouts/OrganizationLayout";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import GlobalOrganizations from "./pages/GlobalOrganizations";
-import DashboardCourses from "./pages/DashboardCourses";
-import DashboardLectures from "./pages/DashboardLectures";
-import OrganizationDetail from "./pages/OrganizationDetail";
-import OrganizationCourses from "./pages/OrganizationCourses";
-import OrganizationMembers from "./pages/OrganizationMembers";
-import OrganizationUnverified from "./pages/OrganizationUnverified";
-import CourseDetail from "./pages/CourseDetail";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import TermsConditions from "./pages/TermsConditions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import RefundPolicy from "./pages/RefundPolicy";
+import RegisterInstituteAdmin from "./pages/RegisterInstituteAdmin";
+import RegisterTeacher from "./pages/RegisterTeacher";
+import RegisterStudent from "./pages/RegisterStudent";
+import RegisterParent from "./pages/RegisterParent";
+import RegisterBookHireOwner from "./pages/RegisterBookHireOwner";
+import BotPrivacyPolicy from "./pages/BotPrivacyPolicy";
+import Register from "./pages/Register";
 
 const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
       <BrowserRouter>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Routes>
-            <Route path="/" element={<Auth />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            {/* Global Organizations - view all available organizations */}
-            <Route path="/dashboard/global" element={<ProtectedRoute><GlobalOrganizations /></ProtectedRoute>} />
-            <Route path="/dashboard/courses" element={<ProtectedRoute><DashboardCourses /></ProtectedRoute>} />
-            <Route path="/dashboard/lectures" element={<ProtectedRoute><DashboardLectures /></ProtectedRoute>} />
-            <Route path="/organization/:id" element={<ProtectedRoute><OrganizationLayout /></ProtectedRoute>}>
-              <Route index element={<OrganizationDetail />} />
-              <Route path="courses" element={<OrganizationCourses />} />
-              <Route path="members" element={<OrganizationMembers />} />
-              <Route path="unverified" element={<OrganizationUnverified />} />
-            </Route>
-            <Route path="/course/:id" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </TooltipProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/terms" element={<TermsConditions />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/refund" element={<RefundPolicy />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/register/institute-admin" element={<RegisterInstituteAdmin />} />
+          <Route path="/register/teacher" element={<RegisterTeacher />} />
+          <Route path="/register/student" element={<RegisterStudent />} />
+          <Route path="/register/parent" element={<RegisterParent />} />
+          <Route path="/register/book-hire-owner" element={<RegisterBookHireOwner />} />
+          <Route path="/bot-privacy" element={<BotPrivacyPolicy />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
-    </QueryClientProvider>
-  );
-}
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
