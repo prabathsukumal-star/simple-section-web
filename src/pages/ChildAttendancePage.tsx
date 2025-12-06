@@ -225,65 +225,65 @@ const ChildAttendancePage = () => {
       {/* Summary Cards */}
       {attendanceData?.summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="border-l-4 border-l-emerald-500 hover:shadow-lg transition-shadow">
+          <Card className="bg-card">
             <CardContent className="pt-4 pb-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                  <UserCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Present</p>
-                  <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                  <p className="text-xs text-muted-foreground">Present</p>
+                  <p className="text-xl font-semibold text-foreground">
                     {attendanceData.summary.totalPresent}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                  <UserCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-red-500 hover:shadow-lg transition-shadow">
+          <Card className="bg-card">
             <CardContent className="pt-4 pb-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <UserX className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Absent</p>
-                  <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+                  <p className="text-xs text-muted-foreground">Absent</p>
+                  <p className="text-xl font-semibold text-foreground">
                     {attendanceData.summary.totalAbsent}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                  <UserX className="h-6 w-6 text-red-600 dark:text-red-400" />
-                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-amber-500 hover:shadow-lg transition-shadow">
+          <Card className="bg-card">
             <CardContent className="pt-4 pb-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Late</p>
-                  <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">
+                  <p className="text-xs text-muted-foreground">Late</p>
+                  <p className="text-xl font-semibold text-foreground">
                     {attendanceData.summary.totalLate}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-primary hover:shadow-lg transition-shadow">
+          <Card className="bg-card">
             <CardContent className="pt-4 pb-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Rate</p>
-                  <p className="text-3xl font-bold text-primary">
+                  <p className="text-xs text-muted-foreground">Rate</p>
+                  <p className="text-xl font-semibold text-foreground">
                     {attendanceData.summary.attendanceRate}%
                   </p>
-                </div>
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-primary" />
                 </div>
               </div>
             </CardContent>
