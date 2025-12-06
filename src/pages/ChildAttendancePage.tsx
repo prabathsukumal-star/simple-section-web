@@ -324,11 +324,11 @@ const ChildAttendancePage = () => {
                     <TableBody>
                       {attendanceData.data
                         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                        .map((record) => (
-                          <TableRow hover key={record.attendanceId}>
+                        .map((record, index) => (
+                          <TableRow hover key={record.attendanceId || `${record.studentId}-${record.date}-${index}`}>
                             <TableCell>
                               <span className="font-medium">
-                                {new Date(record.markedAt).toLocaleDateString()}
+                                {new Date(record.date || record.markedAt || '').toLocaleDateString()}
                               </span>
                             </TableCell>
                             <TableCell>
@@ -339,10 +339,10 @@ const ChildAttendancePage = () => {
                                 </div>
                               </Badge>
                             </TableCell>
-                            <TableCell>{record.instituteName}</TableCell>
-                            <TableCell>{record.className}</TableCell>
-                            <TableCell>{record.subjectName}</TableCell>
-                            <TableCell className="text-muted-foreground">{record.address}</TableCell>
+                            <TableCell>{record.instituteName || '-'}</TableCell>
+                            <TableCell>{record.className || '-'}</TableCell>
+                            <TableCell>{record.subjectName || '-'}</TableCell>
+                            <TableCell className="text-muted-foreground">{record.location || record.address || '-'}</TableCell>
                             <TableCell>
                               <Badge variant="outline" className="text-xs font-normal">
                                 {record.markingMethod}
