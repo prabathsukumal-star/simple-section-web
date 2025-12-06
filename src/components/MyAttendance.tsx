@@ -431,19 +431,19 @@ const MyAttendance = () => {
                       const statusStyles = getStatusStyles(record.status);
                       return (
                         <TableRow 
-                          key={record.attendanceId} 
+                          key={`${record.studentId}-${record.date}-${index}`} 
                           className="group hover:bg-muted/30 transition-colors"
                         >
                           <TableCell className="py-4">
                             <div className="flex items-center gap-3">
                               <div className={`w-10 h-10 rounded-lg ${statusStyles.bg} border flex items-center justify-center shrink-0`}>
                                 <span className={`text-xs font-bold ${statusStyles.text}`}>
-                                  {new Date(record.markedAt).getDate()}
+                                  {new Date(record.date).getDate()}
                                 </span>
                               </div>
                               <div>
-                                <p className="font-medium text-sm">{formatDate(record.markedAt)}</p>
-                                <p className="text-xs text-muted-foreground">{formatTime(record.markedAt)}</p>
+                                <p className="font-medium text-sm">{formatDate(record.date)}</p>
+                                <p className="text-xs text-muted-foreground">{formatTime(record.date)}</p>
                               </div>
                             </div>
                           </TableCell>
@@ -455,15 +455,15 @@ const MyAttendance = () => {
                           </TableCell>
                           <TableCell>
                             <div>
-                              <p className="font-medium text-sm">{record.className}</p>
-                              <p className="text-xs text-muted-foreground">{record.subjectName}</p>
+                              <p className="font-medium text-sm">{record.className || record.instituteName}</p>
+                              <p className="text-xs text-muted-foreground">{record.subjectName || '-'}</p>
                             </div>
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <MapPin className="h-3.5 w-3.5 shrink-0" />
-                              <span className="max-w-[150px] truncate" title={record.address}>
-                                {record.address || 'N/A'}
+                              <span className="max-w-[150px] truncate" title={record.location}>
+                                {record.location || 'N/A'}
                               </span>
                             </div>
                           </TableCell>
