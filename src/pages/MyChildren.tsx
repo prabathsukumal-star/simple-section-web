@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import PageContainer from '@/components/layout/PageContainer';
 import AppLayout from '@/components/layout/AppLayout';
+import { getImageUrl } from '@/utils/imageUrlHelper';
 
 const MyChildren = () => {
   const [childrenData, setChildrenData] = useState<ParentChildrenResponse | null>(null);
@@ -167,32 +168,74 @@ const MyChildren = () => {
 
           {/* Children Grid */}
           {childrenData && childrenData.children.length > 0 && (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {childrenData.children.map((child, index) => (
                 <Card 
                   key={`${child.id}-${child.relationship}-${index}`} 
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => handleSelectChild(child)}
+                  className="group relative overflow-hidden border border-blue-400/50 bg-gradient-to-br from-card to-card/80 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1"
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-14 w-14">
+                  {/* Decorative gradient */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/10 transition-colors" />
+                  
+                  <CardContent className="p-6 relative">
+                    {/* Header with Avatar and Relationship Badge */}
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="h-20 w-20 rounded-full ring-4 ring-primary/10 group-hover:ring-primary/20 transition-all overflow-hidden flex-shrink-0">
                         {child.imageUrl ? (
-                          <AvatarImage src={child.imageUrl} alt={child.name} />
-                        ) : null}
-                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                          {getInitials(child.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground truncate">{child.name}</h3>
-                        <p className="text-sm text-muted-foreground">{child.phoneNumber || 'No phone'}</p>
-                        <Badge variant="outline" className={`mt-1 text-xs ${getRelationshipColor(child.relationship)}`}>
+                          <img 
+                            src={getImageUrl(child.imageUrl)} 
+                            alt={child.name} 
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-bold text-xl">
+                            {getInitials(child.name)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 pt-1">
+                        <Badge variant="outline" className={`mb-2 text-xs font-medium ${getRelationshipColor(child.relationship)}`}>
+                          <Heart className="h-3 w-3 mr-1" />
                           {getRelationshipIcon(child.relationship)}
                         </Badge>
+                        <h3 className="text-lg font-bold text-foreground truncate">{child.name}</h3>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </div>
+
+                    {/* Contact Details */}
+                    <div className="space-y-3 mb-5">
+                      <div className="flex items-center gap-3 text-sm">
+                        <div className="p-2 rounded-lg bg-muted/50">
+                          <Phone className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="text-foreground font-medium">{child.phoneNumber || 'No phone number'}</span>
+                      </div>
+                      {child.email && (
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="p-2 rounded-lg bg-muted/50">
+                            <Mail className="h-4 w-4 text-primary" />
+                          </div>
+                          <span className="text-muted-foreground truncate">{child.email}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 text-sm">
+                        <div className="p-2 rounded-lg bg-muted/50">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="text-muted-foreground">Child ID: {child.id.slice(0, 8)}...</span>
+                      </div>
+                    </div>
+
+                    {/* Select Child Button */}
+                    <Button 
+                      onClick={() => handleSelectChild(child)}
+                      className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                      size="lg"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Select Child
+                      <ChevronRight className="h-4 w-4 ml-auto" />
+                    </Button>
                   </CardContent>
                 </Card>
               ))}

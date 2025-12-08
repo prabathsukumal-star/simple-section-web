@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import * as MUI from '@mui/material';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -40,6 +40,8 @@ import ImagePreviewModal from '@/components/ImagePreviewModal';
 import StudentDetailsDialog from '@/components/forms/StudentDetailsDialog';
 import { uploadWithSignedUrl } from '@/utils/signedUploadHelper';
 import InstituteUsersFilters, { InstituteUserFilterParams } from '@/components/InstituteUsersFilters';
+import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 interface InstituteUserData {
   id: string;
@@ -122,6 +124,15 @@ const InstituteUsers = () => {
     open: false,
     student: null
   });
+  
+  // Crop state for image upload
+  const [cropImgSrc, setCropImgSrc] = useState('');
+  const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const imgRef = useRef<HTMLImageElement>(null);
+  
+  // 35mm x 45mm = 7:9 aspect ratio
+  const PASSPORT_ASPECT_RATIO = 7 / 9;
   
   // Loading states for individual button actions
   const [activatingUserId, setActivatingUserId] = useState<string | null>(null);
@@ -271,15 +282,92 @@ const InstituteUsers = () => {
     studentsTable.actions.refresh();
   };
 
+  const centerAspectCrop = useCallback((mediaWidth: number, mediaHeight: number, aspect: number) => {
+    return centerCrop(
+      makeAspectCrop(
+        { unit: '%', width: 70 },
+        aspect,
+        mediaWidth,
+        mediaHeight,
+      ),
+      mediaWidth,
+      mediaHeight,
+    );
+  }, []);
+
+  const onCropImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget;
+    setCrop(centerAspectCrop(width, height, PASSPORT_ASPECT_RATIO));
+  }, [centerAspectCrop, PASSPORT_ASPECT_RATIO]);
+
+  const getCroppedImg = useCallback(
+    (image: HTMLImageElement, cropData: PixelCrop): Promise<Blob> => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) throw new Error('No 2d context');
+
+      const scaleX = image.naturalWidth / image.width;
+      const scaleY = image.naturalHeight / image.height;
+      const pixelRatio = window.devicePixelRatio;
+
+      canvas.width = Math.floor(cropData.width * scaleX * pixelRatio);
+      canvas.height = Math.floor(cropData.height * scaleY * pixelRatio);
+
+      ctx.scale(pixelRatio, pixelRatio);
+      ctx.imageSmoothingQuality = 'high';
+
+      const cropX = cropData.x * scaleX;
+      const cropY = cropData.y * scaleY;
+
+      ctx.save();
+      ctx.translate(-cropX, -cropY);
+      ctx.drawImage(
+        image,
+        0, 0,
+        image.naturalWidth, image.naturalHeight,
+        0, 0,
+        image.naturalWidth, image.naturalHeight,
+      );
+      ctx.restore();
+
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (!blob) { reject(new Error('Canvas is empty')); return; }
+          resolve(blob);
+        }, 'image/png');
+      });
+    },
+    [],
+  );
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      setCrop(undefined);
+      setCompletedCrop(undefined);
+      const reader = new FileReader();
+      reader.addEventListener('load', () => setCropImgSrc(reader.result?.toString() || ''));
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleImageUpload = async (userId: string) => {
-    if (!selectedImage || !currentInstituteId) return;
+    if (!completedCrop || !imgRef.current || !currentInstituteId) return;
 
     setUploading(true);
     try {
+      // Get cropped image blob
+      const croppedBlob = await getCroppedImg(imgRef.current, completedCrop);
+      
+      // Create file from blob
+      const croppedFile = new File([croppedBlob], 'cropped-image.png', { type: 'image/png' });
+      
       // Step 1: Upload file using signed URL and get relativePath
       console.log('Step 1: Getting signed URL and uploading file...');
       const relativePath = await uploadWithSignedUrl(
-        selectedImage,
+        croppedFile,
         'institute-user-images',
         (message, progress) => {
           console.log(`Upload progress: ${progress}% - ${message}`);
@@ -328,8 +416,7 @@ const InstituteUsers = () => {
         duration: 1500
       });
 
-      setUploadingUserId(null);
-      setSelectedImage(null);
+      handleCloseUploadDialog();
       getCurrentTable().actions.refresh();
     } catch (error: any) {
       console.error('Error uploading image:', error);
@@ -342,6 +429,14 @@ const InstituteUsers = () => {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleCloseUploadDialog = () => {
+    setUploadingUserId(null);
+    setSelectedImage(null);
+    setCropImgSrc('');
+    setCrop(undefined);
+    setCompletedCrop(undefined);
   };
 
   const handleActivateUser = async (userId: string) => {
@@ -894,9 +989,6 @@ const InstituteUsers = () => {
                       </Badge>
                     ) : (
                       <div className="flex flex-col items-center gap-1">
-                        <Badge variant="secondary" className="text-xs">
-                          No Image
-                        </Badge>
                         <Button
                           size="sm"
                           variant="outline"
@@ -1272,11 +1364,11 @@ const InstituteUsers = () => {
         />
       )}
 
-      {/* Upload Image Dialog */}
-      <Dialog open={!!uploadingUserId} onOpenChange={() => { setUploadingUserId(null); setSelectedImage(null); }}>
-        <DialogContent>
+      {/* Upload Image Dialog with Crop */}
+      <Dialog open={!!uploadingUserId} onOpenChange={handleCloseUploadDialog}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Upload User Image</DialogTitle>
+            <DialogTitle>Upload User Image (35mm × 45mm)</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -1284,27 +1376,63 @@ const InstituteUsers = () => {
               <Input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
+                onChange={handleFileSelect}
               />
             </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => uploadingUserId && handleImageUpload(uploadingUserId)}
-                disabled={!selectedImage || uploading}
-                className="flex-1"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {uploading ? 'Uploading...' : 'Upload Image'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => { setUploadingUserId(null); setSelectedImage(null); }}
-                className="flex-1"
-              >
-                Close
-              </Button>
-            </div>
+            
+            {cropImgSrc && (
+              <div className="max-h-80 overflow-auto rounded-lg flex justify-center">
+                <ReactCrop
+                  crop={crop}
+                  onChange={(_, percentCrop) => setCrop(percentCrop)}
+                  onComplete={(c) => setCompletedCrop(c)}
+                  aspect={PASSPORT_ASPECT_RATIO}
+                  minWidth={50}
+                  minHeight={50}
+                  keepSelection
+                  ruleOfThirds
+                  style={{ maxHeight: '300px' }}
+                >
+                  <img
+                    ref={imgRef}
+                    alt="Crop preview"
+                    src={cropImgSrc}
+                    onLoad={onCropImageLoad}
+                    style={{ maxHeight: '300px', maxWidth: '100%' }}
+                  />
+                </ReactCrop>
+              </div>
+            )}
+            
+            <p className="text-xs text-muted-foreground text-center">
+              Passport photo size: 35mm × 45mm (7:9 aspect ratio)
+            </p>
           </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCloseUploadDialog}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => uploadingUserId && handleImageUpload(uploadingUserId)}
+              disabled={!completedCrop || uploading}
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

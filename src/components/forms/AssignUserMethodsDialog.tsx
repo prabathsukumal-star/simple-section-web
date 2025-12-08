@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import React, { useState, useRef, useCallback } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,8 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/api/client';
-import { UserPlus, Phone, CreditCard, User, Eye, Mail, Upload, Camera, X } from 'lucide-react';
+import { UserPlus, Phone, CreditCard, User, Eye, Mail, Upload, Camera, X, Loader2 } from 'lucide-react';
 import { uploadWithSignedUrl, detectFolder } from '@/utils/signedUploadHelper';
+import PassportImageCropUpload from '@/components/common/PassportImageCropUpload';
 
 interface AssignUserMethodsDialogProps {
   open: boolean;
@@ -41,13 +42,13 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
 
-  // Form states for different methods
+  // Form states for different methods - changed image to imageUrl string
   const [idFormData, setIdFormData] = useState({
     userId: '',
     instituteUserType: 'STUDENT',
     userIdByInstitute: '',
     instituteCardId: '',
-    image: null as File | null
+    imageUrl: ''
   });
 
   const [phoneFormData, setPhoneFormData] = useState({
@@ -55,7 +56,7 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
     instituteUserType: 'STUDENT',
     userIdByInstitute: '',
     instituteCardId: '',
-    image: null as File | null
+    imageUrl: ''
   });
 
   const [rfidFormData, setRfidFormData] = useState({
@@ -63,7 +64,7 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
     instituteUserType: 'STUDENT',
     userIdByInstitute: '',
     instituteCardId: '',
-    image: null as File | null
+    imageUrl: ''
   });
 
   const [emailFormData, setEmailFormData] = useState({
@@ -71,7 +72,7 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
     instituteUserType: 'STUDENT',
     userIdByInstitute: '',
     instituteCardId: '',
-    image: null as File | null
+    imageUrl: ''
   });
 
   const handleAssignById = async () => {
@@ -86,27 +87,12 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
 
     setIsLoading(true);
     try {
-      let imageUrl = '';
-      
-      // Upload image if provided using signed URL
-      if (idFormData.image) {
-        const folder = detectFolder(idFormData.image);
-        const relativePath = await uploadWithSignedUrl(
-          idFormData.image,
-          folder,
-          (message, progress) => {
-            console.log(`Upload: ${message} - ${progress}%`);
-          }
-        );
-        imageUrl = relativePath;
-      }
-
       const payload = {
         userId: idFormData.userId,
         instituteUserType: idFormData.instituteUserType,
         userIdByInstitute: idFormData.userIdByInstitute,
         ...(idFormData.instituteCardId && { instituteCardId: idFormData.instituteCardId }),
-        ...(imageUrl && { instituteImage: imageUrl })
+        ...(idFormData.imageUrl && { instituteImage: idFormData.imageUrl })
       };
 
       const response = await apiClient.post(
@@ -148,16 +134,8 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
       let imageUrl = '';
       
       // Upload image if provided using signed URL
-      if (phoneFormData.image) {
-        const folder = detectFolder(phoneFormData.image);
-        const relativePath = await uploadWithSignedUrl(
-          phoneFormData.image,
-          folder,
-          (message, progress) => {
-            console.log(`Upload: ${message} - ${progress}%`);
-          }
-        );
-        imageUrl = relativePath;
+      if (phoneFormData.imageUrl) {
+        imageUrl = phoneFormData.imageUrl;
       }
 
       const payload = {
@@ -207,16 +185,8 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
       let instituteImage = '';
       
       // Upload image if provided using signed URL
-      if (rfidFormData.image) {
-        const folder = detectFolder(rfidFormData.image);
-        const relativePath = await uploadWithSignedUrl(
-          rfidFormData.image,
-          folder,
-          (message, progress) => {
-            console.log(`Upload: ${message} - ${progress}%`);
-          }
-        );
-        instituteImage = relativePath;
+      if (rfidFormData.imageUrl) {
+        instituteImage = rfidFormData.imageUrl;
       }
 
       const payload = {
@@ -266,16 +236,8 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
       let imageUrl = '';
       
       // Upload image if provided using signed URL
-      if (emailFormData.image) {
-        const folder = detectFolder(emailFormData.image);
-        const relativePath = await uploadWithSignedUrl(
-          emailFormData.image,
-          folder,
-          (message, progress) => {
-            console.log(`Upload: ${message} - ${progress}%`);
-          }
-        );
-        imageUrl = relativePath;
+      if (emailFormData.imageUrl) {
+        imageUrl = emailFormData.imageUrl;
       }
 
       const payload = {
@@ -417,10 +379,10 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
 
   const resetForm = () => {
     setSelectedMethod(null);
-    setIdFormData({ userId: '', instituteUserType: 'STUDENT', userIdByInstitute: '', instituteCardId: '', image: null });
-    setPhoneFormData({ phoneNumber: '+94', instituteUserType: 'STUDENT', userIdByInstitute: '', instituteCardId: '', image: null });
-    setRfidFormData({ rfid: '', instituteUserType: 'STUDENT', userIdByInstitute: '', instituteCardId: '', image: null });
-    setEmailFormData({ email: '', instituteUserType: 'STUDENT', userIdByInstitute: '', instituteCardId: '', image: null });
+    setIdFormData({ userId: '', instituteUserType: 'STUDENT', userIdByInstitute: '', instituteCardId: '', imageUrl: '' });
+    setPhoneFormData({ phoneNumber: '+94', instituteUserType: 'STUDENT', userIdByInstitute: '', instituteCardId: '', imageUrl: '' });
+    setRfidFormData({ rfid: '', instituteUserType: 'STUDENT', userIdByInstitute: '', instituteCardId: '', imageUrl: '' });
+    setEmailFormData({ email: '', instituteUserType: 'STUDENT', userIdByInstitute: '', instituteCardId: '', imageUrl: '' });
   };
 
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -689,31 +651,15 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
                 </div>
 
                 <div>
-                  <Label htmlFor="idImage">Profile Image</Label>
-                  <div className="mt-1 flex gap-2">
-                    <Input
-                      id="idImage"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setIdFormData(prev => ({ ...prev, image: e.target.files?.[0] || null }))}
-                      className="cursor-pointer flex-1"
+                  <Label>Profile Image (35mm × 45mm)</Label>
+                  <div className="mt-2">
+                    <PassportImageCropUpload
+                      currentImageUrl={idFormData.imageUrl || null}
+                      onImageUpdate={(url) => setIdFormData(prev => ({ ...prev, imageUrl: url }))}
+                      folder="institute-user-images"
+                      label="Profile Image"
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={openCamera}
-                      title="Take photo with camera"
-                    >
-                      <Camera className="h-4 w-4" />
-                    </Button>
                   </div>
-                  {idFormData.image && (
-                    <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                      <Upload className="h-3 w-3" />
-                      {idFormData.image.name}
-                    </p>
-                  )}
                 </div>
 
                 <Button
@@ -801,31 +747,15 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
                 </div>
 
                 <div>
-                  <Label htmlFor="phoneImage">Profile Image</Label>
-                  <div className="mt-1 flex gap-2">
-                    <Input
-                      id="phoneImage"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setPhoneFormData(prev => ({ ...prev, image: e.target.files?.[0] || null }))}
-                      className="cursor-pointer flex-1"
+                  <Label>Profile Image (35mm × 45mm)</Label>
+                  <div className="mt-2">
+                    <PassportImageCropUpload
+                      currentImageUrl={phoneFormData.imageUrl || null}
+                      onImageUpdate={(url) => setPhoneFormData(prev => ({ ...prev, imageUrl: url }))}
+                      folder="institute-user-images"
+                      label="Profile Image"
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={openCamera}
-                      title="Take photo with camera"
-                    >
-                      <Camera className="h-4 w-4" />
-                    </Button>
                   </div>
-                  {phoneFormData.image && (
-                    <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                      <Upload className="h-3 w-3" />
-                      {phoneFormData.image.name}
-                    </p>
-                  )}
                 </div>
 
                 <Button
@@ -909,31 +839,15 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
                 </div>
 
                 <div>
-                  <Label htmlFor="rfidImage">Profile Image</Label>
-                  <div className="mt-1 flex gap-2">
-                    <Input
-                      id="rfidImage"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setRfidFormData(prev => ({ ...prev, image: e.target.files?.[0] || null }))}
-                      className="cursor-pointer flex-1"
+                  <Label>Profile Image (35mm × 45mm)</Label>
+                  <div className="mt-2">
+                    <PassportImageCropUpload
+                      currentImageUrl={rfidFormData.imageUrl || null}
+                      onImageUpdate={(url) => setRfidFormData(prev => ({ ...prev, imageUrl: url }))}
+                      folder="institute-user-images"
+                      label="Profile Image"
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={openCamera}
-                      title="Take photo with camera"
-                    >
-                      <Camera className="h-4 w-4" />
-                    </Button>
                   </div>
-                  {rfidFormData.image && (
-                    <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                      <Upload className="h-3 w-3" />
-                      {rfidFormData.image.name}
-                    </p>
-                  )}
                 </div>
 
                 <Button
@@ -1018,31 +932,15 @@ const AssignUserMethodsDialog = ({ open, onClose, instituteId, onSuccess }: Assi
                 </div>
 
                 <div>
-                  <Label htmlFor="emailImage">Profile Image</Label>
-                  <div className="mt-1 flex gap-2">
-                    <Input
-                      id="emailImage"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setEmailFormData(prev => ({ ...prev, image: e.target.files?.[0] || null }))}
-                      className="cursor-pointer flex-1"
+                  <Label>Profile Image (35mm × 45mm)</Label>
+                  <div className="mt-2">
+                    <PassportImageCropUpload
+                      currentImageUrl={emailFormData.imageUrl || null}
+                      onImageUpdate={(url) => setEmailFormData(prev => ({ ...prev, imageUrl: url }))}
+                      folder="institute-user-images"
+                      label="Profile Image"
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={openCamera}
-                      title="Take photo with camera"
-                    >
-                      <Camera className="h-4 w-4" />
-                    </Button>
                   </div>
-                  {emailFormData.image && (
-                    <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                      <Upload className="h-3 w-3" />
-                      {emailFormData.image.name}
-                    </p>
-                  )}
                 </div>
 
                 <Button

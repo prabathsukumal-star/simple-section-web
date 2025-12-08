@@ -17,7 +17,7 @@ const OrganizationImageUpload: React.FC<OrganizationImageUploadProps> = ({
       currentImageUrl={currentImageUrl}
       onImageUpdate={onImageUpdate}
       folder="institute-images"
-      aspectRatio={16/9}
+      aspectRatio={4/3}
       label="Organization Image"
     />
   );

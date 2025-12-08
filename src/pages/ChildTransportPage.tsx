@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Bus, RefreshCw, MapPin, Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { transportApi, type TransportEnrollment } from '@/api/transport.api';
+import SafeImage from '@/components/ui/SafeImage';
 
 const ChildTransportPage = () => {
   const navigate = useNavigate();
@@ -98,19 +99,16 @@ const ChildTransportPage = () => {
               {enrollments.map((enrollment) => (
                 <div key={enrollment.id} className="relative flex w-80 flex-col rounded-xl bg-white dark:bg-card bg-clip-border text-gray-700 dark:text-foreground shadow-md">
                   <div className="relative mx-4 -mt-6 h-40 overflow-hidden rounded-xl bg-blue-gray-500 bg-clip-border text-white shadow-lg shadow-blue-gray-500/40 bg-gradient-to-r from-blue-500 to-blue-600">
-                    {enrollment.imageUrl ? (
-                      <img
-                        src={enrollment.imageUrl}
-                        alt={enrollment.bookhireTitle || 'Transport vehicle'}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Bus className="h-16 w-16 text-white/90" />
-                      </div>
-                    )}
+                    <SafeImage
+                      src={enrollment.imageUrl || ''}
+                      alt={enrollment.bookhireTitle || 'Transport vehicle'}
+                      className="w-full h-full object-cover"
+                      fallback={
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Bus className="h-16 w-16 text-white/90" />
+                        </div>
+                      }
+                    />
                   </div>
                   <div className="p-6">
                     <h5 className="mb-2 block font-sans text-xl font-semibold leading-snug tracking-normal text-blue-gray-900 dark:text-foreground antialiased">

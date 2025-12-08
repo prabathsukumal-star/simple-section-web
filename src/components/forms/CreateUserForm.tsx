@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { usersApi, UserCreateData } from '@/api';
 import { toast } from 'sonner';
-import { CalendarIcon, Camera, Upload } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
+import PassportImageCropUpload from '@/components/common/PassportImageCropUpload';
 
 interface CreateUserFormProps {
   onSubmit: (data: any) => void;
@@ -79,10 +80,6 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>(initialData?.imageUrl || '');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
@@ -91,25 +88,8 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
     }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-        handleInputChange('imageUrl', reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleCameraClick = () => {
-    cameraInputRef.current?.click();
-  };
-
-  const handleFileClick = () => {
-    fileInputRef.current?.click();
+  const handleImageUpdate = (imageUrl: string) => {
+    handleInputChange('imageUrl', imageUrl);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -189,41 +169,16 @@ const CreateUserForm = ({ onSubmit, onCancel, loading = false, initialData }: Cr
                   <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
                     <span className="text-primary font-bold">1</span>
                   </div>
-                  Photo Upload
+                  Photo Upload (35mm × 45mm)
                 </h3>
                 
-                <div className="flex flex-col items-center gap-4">
-                  {imagePreview && (
-                    <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20">
-                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                  <div className="flex gap-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="hidden"
-                    />
-                    <input
-                      ref={cameraInputRef}
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={handleImageChange}
-                      className="hidden"
-                    />
-                    <Button type="button" onClick={handleCameraClick} variant="outline" className="gap-2">
-                      <Camera className="h-4 w-4" />
-                      Take Photo
-                    </Button>
-                    <Button type="button" onClick={handleFileClick} variant="outline" className="gap-2">
-                      <Upload className="h-4 w-4" />
-                      Upload Photo
-                    </Button>
-                  </div>
-                </div>
+                <PassportImageCropUpload
+                  currentImageUrl={formData.imageUrl}
+                  onImageUpdate={handleImageUpdate}
+                  folder="profile-images"
+                  label="Profile Photo"
+                  showCamera={true}
+                />
               </div>
 
               {/* Personal Information Section */}

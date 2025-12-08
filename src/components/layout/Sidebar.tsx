@@ -369,13 +369,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             permission: 'view-students',
             alwaysShow: false
           },
-          {
-            id: 'parents',
-            label: 'Parents',
-            icon: Users,
-            permission: 'view-parents',
-            alwaysShow: false
-          },
         ];
       }
 
@@ -401,13 +394,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             label: 'Students',
             icon: GraduationCap,
             permission: 'view-students',
-            alwaysShow: false
-          },
-          {
-            id: 'parents',
-            label: 'Parents',
-            icon: Users,
-            permission: 'view-parents',
             alwaysShow: false
           },
           {
@@ -483,13 +469,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             alwaysShow: false
           },
           {
-            id: 'parents',
-            label: 'Parents',
-            icon: Users,
-            permission: 'view-parents',
-            alwaysShow: false
-          },
-          {
             id: 'classes',
             label: 'All Classes',
             icon: School,
@@ -545,13 +524,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             alwaysShow: false
           },
           {
-            id: 'parents',
-            label: 'Parents',
-            icon: Users,
-            permission: 'view-parents',
-            alwaysShow: false
-          },
-          {
             id: 'subjects',
             label: 'All Subjects',
             icon: BookOpen,
@@ -583,13 +555,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             label: 'Students',
             icon: GraduationCap,
             permission: 'view-students',
-            alwaysShow: false
-          },
-          {
-            id: 'parents',
-            label: 'Parents',
-            icon: Users,
-            permission: 'view-parents',
             alwaysShow: false
           },
           // Hide "All Subjects" when a subject is selected
@@ -1745,22 +1710,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
           {!isCollapsed && (
             <div className="flex items-center space-x-2 min-w-0">
-              {selectedInstitute?.logo ? (
-                <img 
-                  src={selectedInstitute.logo} 
-                  alt="Institute logo"
-                  className="h-12 w-12 object-contain rounded flex-shrink-0"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              ) : (
-                <img 
-                  src={surakshaLogoSidebar} 
-                  alt="SurakshaLMS logo"
-                  className="h-12 w-12 object-contain rounded flex-shrink-0"
-                />
-              )}
+              <img 
+                src={selectedInstitute?.logo || surakshaLogoSidebar} 
+                alt={selectedInstitute?.logo ? "Institute logo" : "SurakshaLMS logo"}
+                className="h-12 w-12 object-contain rounded flex-shrink-0"
+              />
               <span className="font-bold text-base sm:text-lg text-gray-900 dark:text-white truncate">
                 {selectedInstitute?.shortName || 'SurakshaLMS'}
               </span>
@@ -1953,7 +1907,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             variant="outline"
             size="sm"
             onClick={handleLogout}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-center gap-2'} text-sm hover:bg-gray-100 dark:hover:bg-gray-700 h-8 sm:h-9`}
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-center gap-2'} text-sm hover:bg-destructive hover:text-destructive-foreground hover:border-destructive h-8 sm:h-9 transition-colors`}
           >
             <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
             {!isCollapsed && <span className="text-xs sm:text-sm">Logout</span>}

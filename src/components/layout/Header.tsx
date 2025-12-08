@@ -14,6 +14,7 @@ import {
 import ProfileImageUpload from '@/components/ProfileImageUpload';
 import surakshaLogo from '@/assets/suraksha-logo.png';
 import { enhancedCachedClient } from '@/api/enhancedCachedClient';
+import SafeImage from '@/components/ui/SafeImage';
 interface HeaderProps {
   onMenuClick: () => void;
 }
@@ -100,13 +101,10 @@ const Header = ({ onMenuClick }: HeaderProps) => {
         </Button>
         
         <div className="flex items-center gap-2">
-          <img 
+          <SafeImage 
             src={selectedInstitute?.logo || surakshaLogo} 
             alt={selectedInstitute?.shortName ? "Institute logo" : "SurakshaLMS logo"}
             className="h-8 w-8 object-contain rounded"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = 'none';
-            }}
           />
           <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">
             {selectedInstitute?.shortName || 'SurakshaLMS'}
@@ -123,12 +121,13 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                 aria-label="User menu"
               >
                 <Avatar className="h-9 w-9 border-2 border-border transition-all group-hover:border-primary">
-                  <AvatarImage 
-                    src={instituteAvatarUrl || ''}
-                    alt={user?.name}
-                    className="object-cover"
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                  />
+                  {instituteAvatarUrl ? (
+                    <AvatarImage 
+                      src={instituteAvatarUrl}
+                      alt={user?.name}
+                      className="object-cover"
+                    />
+                  ) : null}
                   <AvatarFallback className="bg-muted">
                     <User className="h-5 w-5" />
                   </AvatarFallback>

@@ -487,11 +487,6 @@ const Subjects = () => {
                 <span className="hidden sm:inline">Refresh</span>
               </Button>
               
-              {canCreate && <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2" size="sm">
-                   <Plus className="h-4 w-4" />
-                   <span className="hidden sm:inline">Create Subject</span>
-                   <span className="sm:hidden">Create</span>
-                 </Button>}
                 
                 {(userRole === 'InstituteAdmin' || canAssignSubjects) && (
                   <Button onClick={() => setIsAssignDialogOpen(true)} style={{ backgroundColor: '#06923E' }} className="hover:opacity-90 text-white flex items-center gap-2" size="sm">

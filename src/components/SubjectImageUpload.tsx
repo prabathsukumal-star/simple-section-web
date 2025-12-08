@@ -85,7 +85,7 @@ const SubjectImageUpload: React.FC<SubjectImageUploadProps> = ({ value, onChange
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget;
-    setCrop(centerAspectCrop(width, height, 16 / 9));
+    setCrop(centerAspectCrop(width, height, 4 / 3));
   };
 
   const getCroppedImg = useCallback(
@@ -249,7 +249,7 @@ const SubjectImageUpload: React.FC<SubjectImageUploadProps> = ({ value, onChange
       </div>
 
       {previewUrl && (
-        <div className="relative w-full aspect-video rounded-lg overflow-hidden border">
+        <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden border">
           <img
             src={previewUrl}
             alt="Subject preview"
@@ -261,23 +261,26 @@ const SubjectImageUpload: React.FC<SubjectImageUploadProps> = ({ value, onChange
       <Dialog open={showCropDialog} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Crop Subject Image (16:9)</DialogTitle>
+            <DialogTitle>Crop Subject Image (4:3)</DialogTitle>
           </DialogHeader>
-          <div className="max-h-[60vh] overflow-auto">
+          <div className="max-h-[60vh] overflow-auto flex justify-center">
             {imageToCrop && (
               <ReactCrop
                 crop={crop}
-                onChange={(_, percentCrop) => setCrop(percentCrop)}
+                onChange={(pixelCrop, percentCrop) => setCrop(percentCrop)}
                 onComplete={(c) => setCompletedCrop(c)}
-                aspect={16 / 9}
-                minWidth={100}
-                minHeight={56}
+                aspect={4 / 3}
+                minWidth={50}
+                minHeight={50}
+                keepSelection
+                ruleOfThirds
+                style={{ maxHeight: '55vh' }}
               >
                 <img
                   ref={imgRef}
                   src={imageToCrop}
                   alt="Crop preview"
-                  style={{ maxHeight: '60vh' }}
+                  style={{ maxHeight: '55vh', maxWidth: '100%' }}
                   onLoad={onImageLoad}
                 />
               </ReactCrop>

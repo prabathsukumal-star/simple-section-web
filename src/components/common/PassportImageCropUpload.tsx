@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Upload, ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, ImageIcon, Loader2, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ReactCrop, { 
   type Crop, 
@@ -13,14 +13,17 @@ import 'react-image-crop/dist/ReactCrop.css';
 import { getSignedUrl, uploadToSignedUrl, verifyAndPublish } from '@/utils/imageUploadHelper';
 import { getImageUrl } from '@/utils/imageUrlHelper';
 
-interface ImageCropUploadProps {
+interface PassportImageCropUploadProps {
   currentImageUrl?: string | null;
   onImageUpdate: (publicUrl: string) => void;
   folder: string;
-  aspectRatio?: number;
   label?: string;
   className?: string;
+  showCamera?: boolean;
 }
+
+// 35mm x 45mm = 7:9 aspect ratio (portrait)
+const PASSPORT_ASPECT_RATIO = 7 / 9;
 
 function centerAspectCrop(
   mediaWidth: number,
@@ -42,13 +45,13 @@ function centerAspectCrop(
   )
 }
 
-const ImageCropUpload: React.FC<ImageCropUploadProps> = ({
+const PassportImageCropUpload: React.FC<PassportImageCropUploadProps> = ({
   currentImageUrl,
   onImageUpdate,
   folder,
-  aspectRatio = 1,
-  label = "Image",
-  className = ""
+  label = "Profile Image",
+  className = "",
+  showCamera = true
 }) => {
   const [open, setOpen] = useState(false);
   const [imgSrc, setImgSrc] = useState('');
@@ -58,6 +61,7 @@ const ImageCropUpload: React.FC<ImageCropUploadProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const hiddenFileInput = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,7 +99,7 @@ const ImageCropUpload: React.FC<ImageCropUploadProps> = ({
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget;
-    setCrop(centerAspectCrop(width, height, aspectRatio));
+    setCrop(centerAspectCrop(width, height, PASSPORT_ASPECT_RATIO));
   };
 
   const getCroppedImg = useCallback(
@@ -214,16 +218,27 @@ const ImageCropUpload: React.FC<ImageCropUploadProps> = ({
     if (hiddenFileInput.current) {
       hiddenFileInput.current.value = '';
     }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+    }
   };
 
-  const handleChangePhoto = () => {
+  const handleUploadClick = () => {
     hiddenFileInput.current?.click();
+  };
+
+  const handleCameraClick = () => {
+    cameraInputRef.current?.click();
   };
 
   return (
     <>
       <div className={`space-y-4 ${className}`}>
-        <div className="relative w-full h-48 sm:h-56 md:h-64 bg-muted rounded-lg border-2 border-dashed border-border overflow-hidden">
+        {/* Preview area - 35mm x 45mm aspect ratio */}
+        <div 
+          className="relative mx-auto bg-muted rounded-lg border-2 border-dashed border-border overflow-hidden"
+          style={{ width: '105px', height: '135px' }} // 35mm x 45mm scaled
+        >
           {currentImageUrl ? (
             <img
               src={getImageUrl(currentImageUrl)}
@@ -232,30 +247,45 @@ const ImageCropUpload: React.FC<ImageCropUploadProps> = ({
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-              <ImageIcon className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mb-2" />
-              <p className="text-sm">No image uploaded</p>
+              <ImageIcon className="h-8 w-8 mb-1" />
+              <p className="text-xs text-center px-1">35×45mm</p>
             </div>
           )}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 justify-center">
           <Button 
             type="button"
-            onClick={handleChangePhoto}
-            className="flex items-center gap-2 w-full sm:w-auto"
+            variant="outline"
+            size="sm"
+            onClick={handleUploadClick}
+            className="flex items-center gap-2"
           >
             <Upload className="h-4 w-4" />
-            {currentImageUrl ? 'Change Image' : 'Upload Image'}
+            {currentImageUrl ? 'Change' : 'Upload'}
           </Button>
+          
+          {showCamera && (
+            <Button 
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleCameraClick}
+              className="flex items-center gap-2"
+            >
+              <Camera className="h-4 w-4" />
+              Camera
+            </Button>
+          )}
           
           {currentImageUrl && (
             <Button 
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => onImageUpdate('')}
-              className="w-full sm:w-auto"
             >
-              Remove Image
+              Remove
             </Button>
           )}
         </div>
@@ -267,12 +297,21 @@ const ImageCropUpload: React.FC<ImageCropUploadProps> = ({
           onChange={onSelectFile}
           className="hidden"
         />
+        
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={onSelectFile}
+          className="hidden"
+        />
       </div>
 
       <Dialog open={open} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Crop {label}</DialogTitle>
+            <DialogTitle>Crop {label} (35mm × 45mm)</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
@@ -282,11 +321,10 @@ const ImageCropUpload: React.FC<ImageCropUploadProps> = ({
                   crop={crop}
                   onChange={(pixelCrop, percentCrop) => setCrop(percentCrop)}
                   onComplete={(c) => setCompletedCrop(c)}
-                  aspect={aspectRatio}
-                  minWidth={100}
-                  minHeight={75}
+                  aspect={PASSPORT_ASPECT_RATIO}
+                  minWidth={50}
+                  minHeight={50}
                   keepSelection
-                  locked
                   ruleOfThirds
                   style={{ maxHeight: '380px' }}
                 >
@@ -300,6 +338,10 @@ const ImageCropUpload: React.FC<ImageCropUploadProps> = ({
                 </ReactCrop>
               </div>
             )}
+            
+            <p className="text-xs text-muted-foreground text-center">
+              Passport photo size: 35mm × 45mm (7:9 aspect ratio)
+            </p>
           </div>
 
           <DialogFooter>
@@ -326,4 +368,4 @@ const ImageCropUpload: React.FC<ImageCropUploadProps> = ({
   );
 };
 
-export default ImageCropUpload;
+export default PassportImageCropUpload;

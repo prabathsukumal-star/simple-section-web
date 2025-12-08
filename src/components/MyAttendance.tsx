@@ -421,7 +421,13 @@ const MyAttendance = () => {
                     <TableRow className="bg-muted/30 hover:bg-muted/30">
                       <TableHead className="font-semibold">Date & Time</TableHead>
                       <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold">Class & Subject</TableHead>
+                      <TableHead className="font-semibold">Institute</TableHead>
+                      {contextLevel === 'class' || contextLevel === 'subject' ? (
+                        <TableHead className="font-semibold">Class</TableHead>
+                      ) : null}
+                      {contextLevel === 'subject' ? (
+                        <TableHead className="font-semibold">Subject</TableHead>
+                      ) : null}
                       <TableHead className="font-semibold hidden md:table-cell">Location</TableHead>
                       <TableHead className="font-semibold hidden lg:table-cell">Method</TableHead>
                     </TableRow>
@@ -454,11 +460,18 @@ const MyAttendance = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <div>
-                              <p className="font-medium text-sm">{record.className || record.instituteName}</p>
-                              <p className="text-xs text-muted-foreground">{record.subjectName || '-'}</p>
-                            </div>
+                            <p className="font-medium text-sm">{record.instituteName || 'N/A'}</p>
                           </TableCell>
+                          {contextLevel === 'class' || contextLevel === 'subject' ? (
+                            <TableCell>
+                              <p className="font-medium text-sm">{record.className || 'N/A'}</p>
+                            </TableCell>
+                          ) : null}
+                          {contextLevel === 'subject' ? (
+                            <TableCell>
+                              <p className="font-medium text-sm">{record.subjectName || 'N/A'}</p>
+                            </TableCell>
+                          ) : null}
                           <TableCell className="hidden md:table-cell">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <MapPin className="h-3.5 w-3.5 shrink-0" />
