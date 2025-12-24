@@ -158,6 +158,10 @@ export function CreateInstituteForm({
         ...data,
         logoUrl: logoUrl || undefined,
         imageUrl: imageUrl || undefined,
+        // Remove empty URL strings - API requires valid URLs or undefined
+        websiteUrl: data.websiteUrl || undefined,
+        facebookPageUrl: data.facebookPageUrl || undefined,
+        youtubeChannelUrl: data.youtubeChannelUrl || undefined,
       };
 
       await api.createInstitute(payload);
