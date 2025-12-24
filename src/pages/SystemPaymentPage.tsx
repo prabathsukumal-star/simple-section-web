@@ -2,11 +2,14 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/shared/PageComponents";
 import { CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { api } from "@/lib/api";
 import { DataTable, Column, PaginationMeta } from "@/components/shared/DataTable";
 import { ViewDetailsDialog } from "@/components/shared/ViewDetailsDialog";
 import { VerifySystemPaymentDialog } from "@/components/forms/VerifySystemPaymentDialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+type StatusFilter = "PENDING" | "VERIFIED" | "REJECTED";
 
 interface Payment {
   id: string;
@@ -37,10 +40,28 @@ export default function SystemPaymentPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("PENDING");
 
   useEffect(() => {
     fetchPayments();
   }, [page, limit]);
+
+  // Filter payments by status on the frontend
+  const filteredPayments = useMemo(() => {
+    return payments.filter(
+      (payment) => payment.status?.toUpperCase() === statusFilter
+    );
+  }, [payments, statusFilter]);
+
+  // Update pagination for filtered results
+  const filteredPagination = useMemo(() => {
+    if (!pagination) return undefined;
+    return {
+      ...pagination,
+      total: filteredPayments.length,
+      totalPages: Math.ceil(filteredPayments.length / limit),
+    };
+  }, [pagination, filteredPayments.length, limit]);
 
   const fetchPayments = async () => {
     try {
@@ -101,16 +122,34 @@ export default function SystemPaymentPage() {
         description="Manage system-wide payment configurations"
         icon={CreditCard}
       />
+
+      <Tabs
+        value={statusFilter}
+        onValueChange={(value) => setStatusFilter(value as StatusFilter)}
+        className="mb-6"
+      >
+        <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsTrigger value="PENDING" className="data-[state=active]:bg-yellow-500 data-[state=active]:text-white">
+            Pending
+          </TabsTrigger>
+          <TabsTrigger value="VERIFIED" className="data-[state=active]:bg-green-500 data-[state=active]:text-white">
+            Verified
+          </TabsTrigger>
+          <TabsTrigger value="REJECTED" className="data-[state=active]:bg-red-500 data-[state=active]:text-white">
+            Rejected
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
       
       <DataTable
         columns={columns}
-        data={payments}
+        data={filteredPayments}
         isLoading={isLoading}
         onView={handleView}
-        onVerify={handleVerify}
+        onVerify={statusFilter === "PENDING" ? handleVerify : undefined}
         showViewSlip={true}
         slipUrlKey="paymentSlipUrl"
-        pagination={pagination || undefined}
+        pagination={filteredPagination}
         onPageChange={handlePageChange}
         onLimitChange={handleLimitChange}
       />
