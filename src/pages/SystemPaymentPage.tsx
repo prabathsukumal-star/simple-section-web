@@ -1,6 +1,6 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/shared/PageComponents";
-import { CreditCard } from "lucide-react";
+import { CreditCard, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useMemo } from "react";
 import { api } from "@/lib/api";
@@ -8,6 +8,7 @@ import { DataTable, Column, PaginationMeta } from "@/components/shared/DataTable
 import { ViewDetailsDialog } from "@/components/shared/ViewDetailsDialog";
 import { VerifySystemPaymentDialog } from "@/components/forms/VerifySystemPaymentDialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 
 type StatusFilter = "PENDING" | "VERIFIED" | "REJECTED";
 
@@ -41,6 +42,11 @@ export default function SystemPaymentPage() {
   const [limit, setLimit] = useState(10);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("PENDING");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const handleImageClick = (imageUrl: string) => {
+    setImagePreview(imageUrl);
+  };
 
   useEffect(() => {
     fetchPayments();
@@ -152,6 +158,7 @@ export default function SystemPaymentPage() {
         pagination={filteredPagination}
         onPageChange={handlePageChange}
         onLimitChange={handleLimitChange}
+        onImageClick={handleImageClick}
       />
 
       <ViewDetailsDialog
@@ -167,6 +174,29 @@ export default function SystemPaymentPage() {
         payment={selectedPayment}
         onSuccess={fetchPayments}
       />
+
+      {/* Image Preview Modal */}
+      {imagePreview && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setImagePreview(null)}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 text-white hover:bg-white/20"
+            onClick={() => setImagePreview(null)}
+          >
+            <X className="h-6 w-6" />
+          </Button>
+          <img
+            src={imagePreview}
+            alt="Payment Slip Preview"
+            className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </DashboardLayout>
   );
 }
