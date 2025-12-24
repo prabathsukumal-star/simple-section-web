@@ -132,16 +132,15 @@ export const api = {
     }),
 
   // File Upload
-  generateSignedUrl: (folder: string, fileName: string, contentType: string, fileSize: number) =>
-    apiRequest("/upload/generate-signed-url", {
+  getSignedUrl: (folder: string, fileName: string, contentType: string, fileSize: number) =>
+    apiRequest(`/upload/get-signed-url?folder=${encodeURIComponent(folder)}&fileName=${encodeURIComponent(fileName)}&contentType=${encodeURIComponent(contentType)}&fileSize=${fileSize}`, {
+      method: "GET",
+    }),
+
+  verifyAndPublish: (relativePath: string) =>
+    apiRequest("/upload/verify-and-publish", {
       method: "POST",
-      body: JSON.stringify({
-        folder,
-        fileName,
-        contentType,
-        fileSize,
-        expiresIn: 600,
-      }),
+      body: JSON.stringify({ relativePath }),
     }),
 
   // Institute Users

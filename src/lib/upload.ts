@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { validateFile } from "./uploadConfig";
 
 export interface UploadResult {
   relativePath: string;
@@ -10,17 +11,20 @@ export const uploadFile = async (
   folder: string
 ): Promise<UploadResult> => {
   try {
+    // Validate file based on folder config
+    const validation = validateFile(file, folder);
+    if (!validation.valid) {
+      throw new Error(validation.error);
+    }
+
     const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const contentType = file.type === "image/jpeg" ? "image/jpg" : file.type;
 
-    // Backend is sometimes strict about MIME types (e.g. expects image/jpg)
-    const normalizedContentType =
-      file.type === "image/jpeg" ? "image/jpg" : file.type;
-
-    // Step 1: Get signed URL
-    const signedUrlResponse = await api.generateSignedUrl(
+    // Step 1: Get signed URL (GET request)
+    const signedUrlResponse = await api.getSignedUrl(
       folder,
       safeFileName,
-      normalizedContentType,
+      contentType,
       file.size
     );
 
@@ -33,12 +37,12 @@ export const uploadFile = async (
     // Step 2: Upload file using POST with form data
     const formData = new FormData();
     
-    // Add all fields from the signed URL response
-    Object.entries(fields).forEach(([key, value]) => {
-      formData.append(key, value as string);
-    });
+    if (fields) {
+      Object.entries(fields).forEach(([key, value]) => {
+        formData.append(key, value as string);
+      });
+    }
     
-    // Add the file last
     formData.append("file", file);
 
     const uploadResponse = await fetch(uploadUrl, {
@@ -48,6 +52,13 @@ export const uploadFile = async (
 
     if (!uploadResponse.ok && uploadResponse.status !== 204) {
       throw new Error(`Upload failed: ${uploadResponse.status}`);
+    }
+
+    // Step 3: Verify and publish
+    const verifyResponse = await api.verifyAndPublish(relativePath);
+    
+    if (!verifyResponse.success) {
+      throw new Error("Failed to verify and publish file");
     }
 
     return {
