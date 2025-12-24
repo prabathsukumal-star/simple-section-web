@@ -32,7 +32,7 @@ export const uploadFile = async (
       throw new Error("Failed to get signed URL");
     }
 
-    const { uploadUrl, relativePath, fields } = signedUrlResponse.data;
+    const { uploadUrl, relativePath, fields } = signedUrlResponse;
 
     // Step 2: Upload file using POST with form data
     const formData = new FormData();
