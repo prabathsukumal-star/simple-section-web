@@ -34,6 +34,7 @@ const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/dashboard/users", icon: Users, label: "Users" },
   { to: "/dashboard/institute", icon: Building2, label: "Institute" },
+  { to: "/dashboard/organizations", icon: Building2, label: "Organizations" },
   { to: "/dashboard/subjects", icon: BookOpen, label: "Subjects" },
   { to: "/dashboard/transport", icon: Bus, label: "Transport" },
   { to: "/dashboard/system-payment", icon: CreditCard, label: "System Payment" },

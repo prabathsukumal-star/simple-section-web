@@ -199,4 +199,132 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  // Organizations
+  getOrganizations: (params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: string;
+  } = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append("page", String(params.page));
+    if (params.limit) queryParams.append("limit", String(params.limit));
+    if (params.search) queryParams.append("search", params.search);
+    if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+    if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+    return apiRequest(`/organizations?${queryParams.toString()}`);
+  },
+
+  getOrganizationById: (id: string) =>
+    apiRequest(`/organizations/${id}`),
+
+  createOrganization: (data: {
+    name: string;
+    type: string;
+    isPublic?: boolean;
+    enrollmentKey?: string;
+    needEnrollmentVerification?: boolean;
+    enabledEnrollments?: boolean;
+    imageUrl?: string;
+    instituteId?: string;
+  }) =>
+    apiRequest("/organizations", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  updateOrganization: (id: string, data: {
+    name?: string;
+    isPublic?: boolean;
+    enrollmentKey?: string;
+    needEnrollmentVerification?: boolean;
+    enabledEnrollments?: boolean;
+    imageUrl?: string;
+    instituteId?: string;
+  }) =>
+    apiRequest(`/organizations/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  deleteOrganization: (id: string) =>
+    apiRequest(`/organizations/${id}`, {
+      method: "DELETE",
+    }),
+
+  // Organization Members
+  getOrganizationMembers: (id: string, page = 1, limit = 50) =>
+    apiRequest(`/organizations/${id}/members?page=${page}&limit=${limit}`),
+
+  getUnverifiedMembers: (id: string) =>
+    apiRequest(`/organizations/${id}/members/unverified`),
+
+  verifyMember: (id: string, userId: string) =>
+    apiRequest(`/organizations/${id}/verify`, {
+      method: "PUT",
+      body: JSON.stringify({ userId }),
+    }),
+
+  // Organization Management
+  assignRole: (id: string, data: { userId: string; role: string }) =>
+    apiRequest(`/organizations/${id}/management/assign-role`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  changeRole: (id: string, data: { userId: string; newRole: string }) =>
+    apiRequest(`/organizations/${id}/management/change-role`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  removeUserFromOrganization: (id: string, userId: string) =>
+    apiRequest(`/organizations/${id}/management/remove-user`, {
+      method: "DELETE",
+      body: JSON.stringify({ userId }),
+    }),
+
+  transferPresidency: (id: string, newPresidentUserId: string) =>
+    apiRequest(`/organizations/${id}/management/transfer-presidency`, {
+      method: "PUT",
+      body: JSON.stringify({ newPresidentUserId }),
+    }),
+
+  // Enrollment
+  enrollInOrganization: (data: { organizationId: string; enrollmentKey?: string }) =>
+    apiRequest("/organizations/enroll", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  leaveOrganization: (id: string) =>
+    apiRequest(`/organizations/${id}/leave`, {
+      method: "DELETE",
+    }),
+
+  getUserEnrolledOrganizations: (page = 1, limit = 10) =>
+    apiRequest(`/organizations/user/enrolled?page=${page}&limit=${limit}`),
+
+  getUserNotEnrolledOrganizations: (page = 1, limit = 10) =>
+    apiRequest(`/organizations/user/not-enrolled?page=${page}&limit=${limit}`),
+
+  // Institute Operations for Organizations
+  assignInstituteToOrganization: (id: string, instituteId: string) =>
+    apiRequest(`/organizations/${id}/assign-institute`, {
+      method: "PUT",
+      body: JSON.stringify({ instituteId }),
+    }),
+
+  removeInstituteFromOrganization: (id: string) =>
+    apiRequest(`/organizations/${id}/remove-institute`, {
+      method: "DELETE",
+    }),
+
+  getOrganizationsByInstitute: (instituteId: string, page = 1, limit = 10) =>
+    apiRequest(`/organizations/institute/${instituteId}?page=${page}&limit=${limit}`),
+
+  getAvailableInstitutesForOrg: () =>
+    apiRequest("/organizations/institutes/available"),
 };
