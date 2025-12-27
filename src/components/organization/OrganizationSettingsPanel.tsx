@@ -215,7 +215,7 @@ export function OrganizationSettingsPanel({
 
       // Handle institute assignment
       const currentInstituteId = organization.instituteId;
-      const newInstituteId = data.instituteId;
+      const newInstituteId = data.instituteId === "none" ? undefined : data.instituteId;
 
       if (newInstituteId && newInstituteId !== currentInstituteId) {
         // Assign new institute
@@ -345,7 +345,7 @@ export function OrganizationSettingsPanel({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           {institutes.map((institute) => (
                             <SelectItem key={institute.instituteId} value={institute.instituteId}>
                               {institute.name} {institute.shortName && `(${institute.shortName})`}

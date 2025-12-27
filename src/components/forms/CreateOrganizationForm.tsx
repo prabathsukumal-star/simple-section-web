@@ -165,7 +165,7 @@ export function CreateOrganizationForm({ open, onOpenChange, onSuccess }: Create
         enabledEnrollments: data.enabledEnrollments,
         imageUrl: imageUrl || undefined,
         enrollmentKey: data.enrollmentKey || undefined,
-        instituteId: data.instituteId || undefined,
+        instituteId: data.instituteId === "none" ? undefined : data.instituteId || undefined,
       };
 
       await api.createOrganization(payload);
@@ -293,7 +293,7 @@ export function CreateOrganizationForm({ open, onOpenChange, onSuccess }: Create
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {institutes.map((institute) => (
                         <SelectItem key={institute.instituteId} value={institute.instituteId}>
                           {institute.name} {institute.shortName && `(${institute.shortName})`}
