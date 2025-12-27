@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   Megaphone,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +37,7 @@ const navItems = [
   { to: "/dashboard/institute", icon: Building2, label: "Institute" },
   { to: "/dashboard/organizations", icon: Building2, label: "Organizations" },
   { to: "/dashboard/subjects", icon: BookOpen, label: "Subjects" },
+  { to: "/dashboard/structured-lectures", icon: GraduationCap, label: "Structured Lectures" },
   { to: "/dashboard/transport", icon: Bus, label: "Transport" },
   { to: "/dashboard/system-payment", icon: CreditCard, label: "System Payment" },
   { to: "/dashboard/sms", icon: MessageSquare, label: "SMS" },

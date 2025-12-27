@@ -327,4 +327,28 @@ export const api = {
 
   getAvailableInstitutesForOrg: () =>
     apiRequest("/organizations/institutes/available"),
+
+  // Institute Update
+  updateInstitute: (id: string, data: any) =>
+    apiRequest(`/institutes/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  // Subject Update
+  updateSubject: (id: string, data: any) =>
+    apiRequest(`/subjects/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  // Structured Lectures
+  getStructuredLectures: (page = 1, limit = 10) =>
+    apiRequest(`/api/structured-lectures?page=${page}&limit=${limit}`),
+
+  createStructuredLecture: (data: any) =>
+    apiRequest("/api/structured-lectures", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
