@@ -197,7 +197,7 @@ export function OrganizationSettingsPanel({
         setIsUploading(true);
         try {
           const result = await uploadFile(imageFile, "organizations");
-          imageUrl = typeof result === 'string' ? result : result?.url;
+          imageUrl = result?.relativePath;
         } catch (error) {
           console.error("Image upload failed:", error);
           toast({
