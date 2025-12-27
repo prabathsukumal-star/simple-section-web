@@ -65,6 +65,16 @@ export const UPLOAD_FOLDER_CONFIG: Record<string, FolderConfig> = {
     acceptedTypes: ['JPEG', 'PNG', 'WebP'],
     mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
   },
+  'structured-lecture-covers': {
+    maxSizeMB: 10,
+    acceptedTypes: ['JPEG', 'PNG', 'WebP'],
+    mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+  },
+  'structured-lecture-documents': {
+    maxSizeMB: 20,
+    acceptedTypes: ['PDF', 'JPEG', 'PNG'],
+    mimeTypes: ['application/pdf', 'image/jpeg', 'image/png'],
+  },
 };
 
 export const getFolderConfig = (folder: string): FolderConfig => {

@@ -1,13 +1,14 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader, ActionButton } from "@/components/shared/PageComponents";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { DataTable, Column, PaginationMeta } from "@/components/shared/DataTable";
 import { ViewDetailsDialog } from "@/components/shared/ViewDetailsDialog";
 import { CreateSubjectForm } from "@/components/forms/CreateSubjectForm";
-
+import { UpdateSubjectForm } from "@/components/forms/UpdateSubjectForm";
+import { Button } from "@/components/ui/button";
 interface Subject {
   id: string;
   code: string;
@@ -31,6 +32,7 @@ export default function SubjectsPage() {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
@@ -84,6 +86,11 @@ export default function SubjectsPage() {
     setViewDialogOpen(true);
   };
 
+  const handleUpdate = (subject: Subject) => {
+    setSelectedSubject(subject);
+    setUpdateDialogOpen(true);
+  };
+
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
   };
@@ -100,6 +107,23 @@ export default function SubjectsPage() {
     { key: "subjectType", label: "Subject Type", type: "badge" },
     { key: "basketCategory", label: "Basket Category", type: "badge" },
     { key: "instituteType", label: "Institute Type", type: "badge" },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (_, row) => (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleUpdate(row as Subject);
+          }}
+        >
+          <Pencil className="w-4 h-4 mr-1" />
+          Update
+        </Button>
+      ),
+    },
   ];
 
   return (
@@ -133,6 +157,13 @@ export default function SubjectsPage() {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onSuccess={fetchSubjects}
+      />
+
+      <UpdateSubjectForm
+        open={updateDialogOpen}
+        onOpenChange={setUpdateDialogOpen}
+        onSuccess={fetchSubjects}
+        subject={selectedSubject}
       />
     </DashboardLayout>
   );

@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import UsersPage from "./pages/UsersPage";
 import InstitutePage from "./pages/InstitutePage";
 import SubjectsPage from "./pages/SubjectsPage";
+import StructuredLecturesPage from "./pages/StructuredLecturesPage";
 import TransportPage from "./pages/TransportPage";
 import SystemPaymentPage from "./pages/SystemPaymentPage";
 import SMSPage from "./pages/SMSPage";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/dashboard/users" element={<UsersPage />} />
             <Route path="/dashboard/institute" element={<InstitutePage />} />
             <Route path="/dashboard/subjects" element={<SubjectsPage />} />
+            <Route path="/dashboard/structured-lectures" element={<StructuredLecturesPage />} />
             <Route path="/dashboard/transport" element={<TransportPage />} />
             <Route path="/dashboard/system-payment" element={<SystemPaymentPage />} />
             <Route path="/dashboard/sms" element={<SMSPage />} />

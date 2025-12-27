@@ -129,6 +129,14 @@ export enum Gender {
   OTHER = 'OTHER',
 }
 
+export enum InstituteUserType {
+  INSTITUTE_ADMIN = 'INSTITUTE_ADMIN',
+  TEACHER = 'TEACHER',
+  STUDENT = 'STUDENT',
+  ATTENDANCE_MARKER = 'ATTENDANCE_MARKER',
+  PARENT = 'PARENT',
+}
+
 export enum Occupation {
   TEACHER = 'TEACHER',
   LECTURER = 'LECTURER',

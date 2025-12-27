@@ -1,6 +1,6 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader, ActionButton } from "@/components/shared/PageComponents";
-import { Building2, UserPlus, Tag, Eye } from "lucide-react";
+import { Building2, UserPlus, Tag, Eye, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import { DataTable, Column, PaginationMeta } from "@/components/shared/DataTable";
 import { ViewDetailsDialog } from "@/components/shared/ViewDetailsDialog";
 import { CreateInstituteForm } from "@/components/forms/CreateInstituteForm";
+import { UpdateInstituteForm } from "@/components/forms/UpdateInstituteForm";
 import { AssignUserToInstituteForm } from "@/components/forms/AssignUserToInstituteForm";
 import { CreateSenderMaskForm } from "@/components/forms/CreateSenderMaskForm";
 import { ViewSenderMasksDialog } from "@/components/forms/ViewSenderMasksDialog";
@@ -47,6 +48,7 @@ export default function InstitutePage() {
   const [assignUserDialogOpen, setAssignUserDialogOpen] = useState(false);
   const [createMaskDialogOpen, setCreateMaskDialogOpen] = useState(false);
   const [viewMasksDialogOpen, setViewMasksDialogOpen] = useState(false);
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
@@ -106,6 +108,11 @@ export default function InstitutePage() {
     setViewDialogOpen(true);
   };
 
+  const handleUpdateInstitute = (institute: Institute) => {
+    setSelectedInstitute(institute);
+    setUpdateDialogOpen(true);
+  };
+
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
   };
@@ -135,6 +142,23 @@ export default function InstitutePage() {
         >
           <UserPlus className="w-4 h-4 mr-1" />
           Assign
+        </Button>
+      ),
+    },
+    {
+      key: "update",
+      label: "Update",
+      render: (_, row) => (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleUpdateInstitute(row as Institute);
+          }}
+        >
+          <Pencil className="w-4 h-4 mr-1" />
+          Update
         </Button>
       ),
     },
@@ -203,6 +227,13 @@ export default function InstitutePage() {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onSuccess={fetchInstitutes}
+      />
+
+      <UpdateInstituteForm
+        open={updateDialogOpen}
+        onOpenChange={setUpdateDialogOpen}
+        onSuccess={fetchInstitutes}
+        institute={selectedInstitute
       />
 
       {selectedInstitute && (
