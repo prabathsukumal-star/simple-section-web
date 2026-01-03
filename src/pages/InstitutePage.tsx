@@ -233,7 +233,7 @@ export default function InstitutePage() {
         open={updateDialogOpen}
         onOpenChange={setUpdateDialogOpen}
         onSuccess={fetchInstitutes}
-        institute={selectedInstitute
+        institute={selectedInstitute}
       />
 
       {selectedInstitute && (
