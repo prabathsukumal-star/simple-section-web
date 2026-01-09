@@ -103,12 +103,23 @@ const AssignSubjectToClassForm: React.FC<AssignSubjectToClassFormProps> = ({
   };
 
   const handleLoadSubjects = async (forceRefresh = false) => {
+    if (!currentInstituteId) {
+      toast({
+        title: "Error",
+        description: "Please select an institute first.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setSubjectsLoading(true);
     try {
-      const params: Record<string, any> = { page: '1', limit: '50' };
-      if (selectedInstituteType) {
-        params.instituteType = selectedInstituteType;
-      }
+      // Use instituteId (REQUIRED) instead of deprecated instituteType
+      const params: Record<string, any> = { 
+        page: '1', 
+        limit: '50',
+        instituteId: currentInstituteId
+      };
       
       // Use enhanced cached client
       const result: Subject[] = await enhancedCachedClient.get(
