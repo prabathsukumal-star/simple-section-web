@@ -73,12 +73,91 @@ const InstituteSelector = ({
   }, []);
 
   // Auto-load institutes on mount (will use cache if available)
+  const hasAutoLoaded = React.useRef(false);
   React.useEffect(() => {
     const userId = useChildId && selectedChild ? selectedChild.id : user?.id;
-    if (userId && institutes.length === 0 && !isLoading) {
-      handleLoadInstitutes();
+    // Only auto-load once when component mounts and user is available
+    if (userId && !hasAutoLoaded.current) {
+      hasAutoLoaded.current = true;
+      // Small delay to ensure component is fully mounted
+      const loadData = async () => {
+        setIsLoading(true);
+        try {
+          console.log('🔄 Auto-loading institutes for user ID:', userId);
+          
+          const endpoints = useChildId 
+            ? [`/children/${userId}/institutes`, `/users/${userId}/institutes`] 
+            : [`/users/${userId}/institutes`];
+          
+          let result: InstituteApiResponse[] | null = null;
+          
+          for (const ep of endpoints) {
+            try {
+              const data = await cachedApiClient.get(ep, { page: 1, limit: 10 }, {
+                ttl: 30,
+                forceRefresh: false,
+                userId: userId,
+                role: userRole || 'User'
+              });
+              
+              if (Array.isArray(data)) {
+                result = data;
+                break;
+              }
+              if (data?.data && Array.isArray(data.data)) {
+                result = data.data;
+                break;
+              }
+            } catch (e) {
+              console.error(`Error calling ${ep}:`, e);
+            }
+          }
+          
+          if (result) {
+            const normalized = result.map((raw: any) => ({
+              id: raw.id || raw.instituteId || '',
+              name: raw.name || raw.instituteName || '',
+              shortName: raw.shortName || '',
+              code: raw.code || '',
+              email: raw.email || raw.instituteEmail || '',
+              phone: raw.phone || raw.institutePhone || '',
+              address: raw.address || raw.instituteAddress || '',
+              city: raw.city || raw.instituteCity || '',
+              state: raw.state || raw.instituteState || '',
+              country: raw.country || raw.instituteCountry || '',
+              district: raw.district || '',
+              province: raw.province || '',
+              pinCode: raw.pinCode || '',
+              type: raw.type || raw.instituteType || '',
+              isActive: raw.isActive !== undefined ? raw.isActive : true,
+              createdAt: raw.createdAt || '',
+              imageUrl: raw.imageUrl || '',
+              logoUrl: raw.logoUrl || raw.instituteLogo || '',
+              userImageUrl: raw.instituteUserImageUrl || '',
+              websiteUrl: raw.websiteUrl || '',
+              facebookPageUrl: raw.facebookPageUrl || '',
+              youtubeChannelUrl: raw.youtubeChannelUrl || '',
+              vision: raw.vision || '',
+              mission: raw.mission || '',
+              instituteUserType: raw.instituteUserType || '',
+              userIdByInstitute: raw.userIdByInstitute || '',
+              status: raw.status || ''
+            }));
+            
+            const validInstitutes = normalized.filter(inst => inst && inst.id && inst.name);
+            setInstitutes(validInstitutes);
+            console.log('✅ Auto-loaded', validInstitutes.length, 'institutes');
+          }
+        } catch (error) {
+          console.error('Error auto-loading institutes:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      loadData();
     }
-  }, [user?.id, selectedChild?.id, useChildId]);
+  }, [user?.id, selectedChild?.id, useChildId, userRole]);
   const handleLoadInstitutes = async () => {
     // For Parent role, use the selected child's ID instead of the parent's ID
     const userId = useChildId && selectedChild ? selectedChild.id : user?.id;
