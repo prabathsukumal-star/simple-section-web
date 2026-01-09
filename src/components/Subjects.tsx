@@ -96,8 +96,9 @@ const Subjects = () => {
   const tableData = useTableData<SubjectData>({
     endpoint,
     defaultParams: isClassLevel ? {} : {
-      ...(selectedInstituteType && {
-        instituteType: selectedInstituteType
+      // Use instituteId (REQUIRED) instead of deprecated instituteType
+      ...(currentInstituteId && {
+        instituteId: currentInstituteId
       })
     },
     cacheOptions: {
@@ -112,7 +113,7 @@ const Subjects = () => {
       defaultLimit: 50,
       availableLimits: [25, 50, 100]
     },
-    autoLoad: true,
+    autoLoad: !!currentInstituteId, // Only auto-load when instituteId is available
   });
   const {
     state: {
@@ -162,11 +163,9 @@ const Subjects = () => {
       return;
     }
 
-    // Update filters and reload data
+    // Update filters and reload data with instituteId (REQUIRED)
     const newFilters = {
-      ...(selectedInstituteType && {
-        instituteType: selectedInstituteType
-      })
+      instituteId: currentInstituteId
     };
     actions.updateFilters(newFilters);
     actions.refresh();
