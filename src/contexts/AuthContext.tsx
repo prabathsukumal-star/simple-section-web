@@ -243,6 +243,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setCurrentTransportId(null);
     
     console.log('✅ User logged out successfully and cache cleared');
+    
+    // 🔄 CRITICAL: Redirect to login page after logout
+    // Using window.location to ensure complete navigation and clear any cached route state
+    window.location.href = '/login';
   };
 
   const setSelectedInstitute = (institute: Institute | any | null) => {
