@@ -71,6 +71,14 @@ const InstituteSelector = ({
     window.addEventListener('sidebar:state', handler as any);
     return () => window.removeEventListener('sidebar:state', handler as any);
   }, []);
+
+  // Auto-load institutes on mount (will use cache if available)
+  React.useEffect(() => {
+    const userId = useChildId && selectedChild ? selectedChild.id : user?.id;
+    if (userId && institutes.length === 0 && !isLoading) {
+      handleLoadInstitutes();
+    }
+  }, [user?.id, selectedChild?.id, useChildId]);
   const handleLoadInstitutes = async () => {
     // For Parent role, use the selected child's ID instead of the parent's ID
     const userId = useChildId && selectedChild ? selectedChild.id : user?.id;
