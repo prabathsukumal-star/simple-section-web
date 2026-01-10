@@ -18,11 +18,28 @@ export const mapUserTypeToRole = (userType: string): UserRole => {
   return typeMapping[userType.toUpperCase()] || 'User';
 };
 
+// Helper to get display name from various sources
+const getDisplayName = (apiUser: any): string => {
+  // Prefer nameWithInitials (new format)
+  if (apiUser.nameWithInitials) {
+    return apiUser.nameWithInitials;
+  }
+  // Fallback to firstName + lastName (old format or profile endpoints)
+  if (apiUser.firstName && apiUser.lastName) {
+    return `${apiUser.firstName} ${apiUser.lastName}`;
+  }
+  if (apiUser.firstName) {
+    return apiUser.firstName;
+  }
+  return 'User';
+};
+
 export const mapUserData = (apiUser: any, institutes: any[] = []): User => ({
   id: apiUser.id,
-  firstName: apiUser.firstName,
-  lastName: apiUser.lastName,
-  name: `${apiUser.firstName} ${apiUser.lastName}`, // Compute full name
+  firstName: apiUser.firstName || '',
+  lastName: apiUser.lastName || '',
+  nameWithInitials: apiUser.nameWithInitials || '',
+  name: getDisplayName(apiUser),
   email: apiUser.email,
   phone: apiUser.phone || '',
   userType: apiUser.userType,

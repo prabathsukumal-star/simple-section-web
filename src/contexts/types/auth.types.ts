@@ -1,8 +1,9 @@
 export interface User {
   id: string;
-  firstName: string;
-  lastName: string;
-  name: string; // Computed from firstName + lastName
+  firstName?: string; // Optional - may not be in auth response
+  lastName?: string; // Optional - may not be in auth response
+  nameWithInitials?: string; // New field from auth endpoints
+  name: string; // Display name (from nameWithInitials or computed)
   email: string;
   phone: string;
   userType: string;
