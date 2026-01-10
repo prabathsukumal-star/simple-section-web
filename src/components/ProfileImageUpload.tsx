@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,6 +8,7 @@ import { Camera, Upload, User, X, Check } from 'lucide-react';
 import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { fileUploader, UploadProgress } from '@/utils/uploadHelper';
+import { userProfileApi } from '@/api/userProfile.api';
 
 interface ProfileImageUploadProps {
   currentImageUrl?: string | null;
@@ -64,21 +64,23 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       
-      // Check file type
-      if (!file.type.includes('png')) {
+      // Check file type - now accepts JPG, JPEG, PNG, WEBP per API spec
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
         toast({
           title: "Invalid file type",
-          description: "Only PNG files are supported.",
+          description: "Only JPG, PNG, and WebP images are allowed.",
           variant: "destructive"
         });
         return;
       }
 
-      // Check file size (1MB = 1048576 bytes)
-      if (file.size > 1048576) {
+      // Check file size (5MB max per API spec)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
         toast({
           title: "File too large",
-          description: "Maximum file size is 1MB.",
+          description: "Image size must be less than 5MB.",
           variant: "destructive"
         });
         return;
@@ -172,24 +174,9 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
 
       console.log('Upload successful, received URL:', publicUrl);
       
-      // Update profile image URL in backend
-      const baseUrl = import.meta.env.VITE_LMS_BASE_URL || 'https://lms.api.suraksha.lk';
-      const token = localStorage.getItem('access_token');
-      
-      const response = await fetch(`${baseUrl}/users/${user.id}/profile`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          profileImageUrl: publicUrl
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update profile image');
-      }
+      // Update profile image URL in backend using new API endpoint
+      // POST /users/:id/profile-image per API spec
+      await userProfileApi.updateProfileImage(user.id, publicUrl);
 
       onImageUpdate(publicUrl);
       toast({
@@ -281,7 +268,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
       <input
         ref={fileInputRef}
         type="file"
-        accept=".png,image/png"
+        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
         onChange={onSelectFile}
         className="hidden"
       />
