@@ -682,7 +682,6 @@ const NotificationDashboard = () => {
                                   id={type}
                                   checked={newNotification.targetUserTypes.includes(type)}
                                   onCheckedChange={(checked) => handleTargetTypeChange(type, !!checked)}
-                                  disabled={type !== NotificationTargetUserType.ALL && newNotification.targetUserTypes.includes(NotificationTargetUserType.ALL)}
                                 />
                                 <div className="grid gap-0.5 leading-none">
                                   <label htmlFor={type} className="text-sm font-medium cursor-pointer">
@@ -710,7 +709,6 @@ const NotificationDashboard = () => {
                                     id={type}
                                     checked={newNotification.targetUserTypes.includes(type)}
                                     onCheckedChange={(checked) => handleTargetTypeChange(type, !!checked)}
-                                    disabled={newNotification.targetUserTypes.includes(NotificationTargetUserType.ALL)}
                                   />
                                   <div className="grid gap-0.5 leading-none">
                                     <label htmlFor={type} className="text-sm font-medium cursor-pointer">
