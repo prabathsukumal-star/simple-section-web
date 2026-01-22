@@ -859,7 +859,11 @@ const NotificationDashboard = () => {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
-                        {new Date(notification.createdAt).toLocaleDateString()}
+                        {notification.createdAt 
+                          ? new Date(notification.createdAt).toLocaleDateString()
+                          : notification.sentAt 
+                            ? new Date(notification.sentAt).toLocaleDateString()
+                            : "N/A"}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
