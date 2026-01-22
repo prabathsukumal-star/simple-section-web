@@ -62,7 +62,39 @@ import { api } from "@/lib/api";
 type NotificationScope = 'GLOBAL' | 'INSTITUTE' | 'CLASS' | 'SUBJECT';
 type NotificationStatus = 'DRAFT' | 'SCHEDULED' | 'SENDING' | 'SENT' | 'FAILED';
 type NotificationPriority = 'LOW' | 'NORMAL' | 'HIGH';
-type TargetUserType = 'STUDENTS' | 'PARENTS' | 'TEACHERS' | 'ADMINS';
+
+// Target user types enum based on backend API
+enum NotificationTargetUserType {
+  ALL = 'ALL',
+  STUDENTS = 'STUDENTS',
+  TEACHERS = 'TEACHERS',
+  PARENTS = 'PARENTS',
+  ATTENDANCE_MARKERS = 'ATTENDANCE_MARKERS',
+  INSTITUTE_ADMINS = 'INSTITUTE_ADMINS',
+  // Advanced filters for global notifications
+  USERS_WITHOUT_INSTITUTE = 'USERS_WITHOUT_INSTITUTE',
+  USERS_WITHOUT_PARENT = 'USERS_WITHOUT_PARENT',
+  USERS_WITHOUT_STUDENT = 'USERS_WITHOUT_STUDENT',
+  VERIFIED_USERS_ONLY = 'VERIFIED_USERS_ONLY',
+  UNVERIFIED_USERS_ONLY = 'UNVERIFIED_USERS_ONLY'
+}
+
+type TargetUserType = NotificationTargetUserType;
+
+// Target user type display configuration
+const TARGET_USER_TYPE_CONFIG: Record<NotificationTargetUserType, { label: string; description: string; category: 'basic' | 'advanced' }> = {
+  [NotificationTargetUserType.ALL]: { label: 'All Users', description: 'Send to everyone', category: 'basic' },
+  [NotificationTargetUserType.STUDENTS]: { label: 'Students', description: 'All student accounts', category: 'basic' },
+  [NotificationTargetUserType.TEACHERS]: { label: 'Teachers', description: 'All teacher accounts', category: 'basic' },
+  [NotificationTargetUserType.PARENTS]: { label: 'Parents', description: 'All parent accounts', category: 'basic' },
+  [NotificationTargetUserType.ATTENDANCE_MARKERS]: { label: 'Attendance Markers', description: 'Users who mark attendance', category: 'basic' },
+  [NotificationTargetUserType.INSTITUTE_ADMINS]: { label: 'Institute Admins', description: 'Institute administrators', category: 'basic' },
+  [NotificationTargetUserType.USERS_WITHOUT_INSTITUTE]: { label: 'Users Without Institute', description: 'Not enrolled in any institute', category: 'advanced' },
+  [NotificationTargetUserType.USERS_WITHOUT_PARENT]: { label: 'Users Without Parent', description: 'Cannot be assigned as parent', category: 'advanced' },
+  [NotificationTargetUserType.USERS_WITHOUT_STUDENT]: { label: 'Users Without Student', description: 'Cannot play student role', category: 'advanced' },
+  [NotificationTargetUserType.VERIFIED_USERS_ONLY]: { label: 'Verified Users Only', description: 'Email verified users', category: 'advanced' },
+  [NotificationTargetUserType.UNVERIFIED_USERS_ONLY]: { label: 'Unverified Users Only', description: 'Not email verified', category: 'advanced' },
+};
 
 interface AdminNotification {
   id: string;
@@ -103,7 +135,7 @@ const NotificationDashboard = () => {
     title: "",
     body: "",
     scope: "GLOBAL" as NotificationScope,
-    targetUserTypes: ["STUDENTS"] as TargetUserType[],
+    targetUserTypes: [NotificationTargetUserType.ALL] as TargetUserType[],
     priority: "NORMAL" as NotificationPriority,
     instituteId: "",
     classId: "",
@@ -237,16 +269,32 @@ const NotificationDashboard = () => {
   };
 
   const handleTargetTypeChange = (type: TargetUserType, checked: boolean) => {
-    if (checked) {
-      setNewNotification({
-        ...newNotification,
-        targetUserTypes: [...newNotification.targetUserTypes, type],
-      });
+    if (type === NotificationTargetUserType.ALL) {
+      // If ALL is selected, clear other selections
+      if (checked) {
+        setNewNotification({
+          ...newNotification,
+          targetUserTypes: [NotificationTargetUserType.ALL],
+        });
+      } else {
+        setNewNotification({
+          ...newNotification,
+          targetUserTypes: [],
+        });
+      }
     } else {
-      setNewNotification({
-        ...newNotification,
-        targetUserTypes: newNotification.targetUserTypes.filter((t) => t !== type),
-      });
+      // If a specific type is selected, remove ALL
+      if (checked) {
+        setNewNotification({
+          ...newNotification,
+          targetUserTypes: [...newNotification.targetUserTypes.filter(t => t !== NotificationTargetUserType.ALL), type],
+        });
+      } else {
+        setNewNotification({
+          ...newNotification,
+          targetUserTypes: newNotification.targetUserTypes.filter((t) => t !== type),
+        });
+      }
     }
   };
 
@@ -324,7 +372,7 @@ const NotificationDashboard = () => {
         title: "",
         body: "",
         scope: "GLOBAL",
-        targetUserTypes: ["STUDENTS"],
+        targetUserTypes: [NotificationTargetUserType.ALL],
         priority: "NORMAL",
         instituteId: "",
         classId: "",
@@ -621,20 +669,68 @@ const NotificationDashboard = () => {
                   {/* Target Audience */}
                   <div className="grid gap-2">
                     <Label>Target Audience *</Label>
-                    <div className="flex flex-wrap gap-4 p-3 border rounded-md">
-                      {(["STUDENTS", "PARENTS", "TEACHERS", "ADMINS"] as TargetUserType[]).map((type) => (
-                        <div key={type} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={type}
-                            checked={newNotification.targetUserTypes.includes(type)}
-                            onCheckedChange={(checked) => handleTargetTypeChange(type, !!checked)}
-                          />
-                          <label htmlFor={type} className="text-sm font-medium">
-                            {type.charAt(0) + type.slice(1).toLowerCase()}
-                          </label>
+                    <div className="space-y-4 p-4 border rounded-md">
+                      {/* Basic User Types */}
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground mb-2">Basic Roles</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {Object.values(NotificationTargetUserType)
+                            .filter(type => TARGET_USER_TYPE_CONFIG[type].category === 'basic')
+                            .map((type) => (
+                              <div key={type} className="flex items-start space-x-2">
+                                <Checkbox
+                                  id={type}
+                                  checked={newNotification.targetUserTypes.includes(type)}
+                                  onCheckedChange={(checked) => handleTargetTypeChange(type, !!checked)}
+                                  disabled={type !== NotificationTargetUserType.ALL && newNotification.targetUserTypes.includes(NotificationTargetUserType.ALL)}
+                                />
+                                <div className="grid gap-0.5 leading-none">
+                                  <label htmlFor={type} className="text-sm font-medium cursor-pointer">
+                                    {TARGET_USER_TYPE_CONFIG[type].label}
+                                  </label>
+                                  <span className="text-xs text-muted-foreground">
+                                    {TARGET_USER_TYPE_CONFIG[type].description}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
                         </div>
-                      ))}
+                      </div>
+                      
+                      {/* Advanced Filters - Only show for GLOBAL scope */}
+                      {newNotification.scope === "GLOBAL" && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground mb-2">Advanced Filters (Global Only)</p>
+                          <div className="grid grid-cols-2 gap-3">
+                            {Object.values(NotificationTargetUserType)
+                              .filter(type => TARGET_USER_TYPE_CONFIG[type].category === 'advanced')
+                              .map((type) => (
+                                <div key={type} className="flex items-start space-x-2">
+                                  <Checkbox
+                                    id={type}
+                                    checked={newNotification.targetUserTypes.includes(type)}
+                                    onCheckedChange={(checked) => handleTargetTypeChange(type, !!checked)}
+                                    disabled={newNotification.targetUserTypes.includes(NotificationTargetUserType.ALL)}
+                                  />
+                                  <div className="grid gap-0.5 leading-none">
+                                    <label htmlFor={type} className="text-sm font-medium cursor-pointer">
+                                      {TARGET_USER_TYPE_CONFIG[type].label}
+                                    </label>
+                                    <span className="text-xs text-muted-foreground">
+                                      {TARGET_USER_TYPE_CONFIG[type].description}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
+                    {newNotification.targetUserTypes.includes(NotificationTargetUserType.ALL) && (
+                      <p className="text-xs text-muted-foreground">
+                        "All Users" is selected - notification will be sent to everyone.
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
