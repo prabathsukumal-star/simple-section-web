@@ -6,11 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Badge } from '@/components/ui/badge';
-import { Eye, EyeOff, Phone, Mail, CheckCircle2, ArrowLeft, User, Shield, Lock, ChevronRight, Loader2, Hash } from 'lucide-react';
+import { Eye, EyeOff, Phone, Mail, CheckCircle2, ArrowLeft, User, Shield, Lock, ChevronRight, Loader2, Hash, Camera, X, Upload } from 'lucide-react';
 import surakshaLogo from '@/assets/suraksha-logo.png';
 import loginIllustration from '@/assets/login-illustration.png';
 import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
 import { tokenStorageService } from '@/services/tokenStorageService';
+import { getBaseUrl } from '@/contexts/utils/auth.api';
 import {
   type AnnotatedField,
   type VerifyOtpResponse,
@@ -79,6 +81,14 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // ── Profile image upload ──
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const [profileImageRelativePath, setProfileImageRelativePath] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadProgress, setImageUploadProgress] = useState(0);
+  const [imageUploadMessage, setImageUploadMessage] = useState('');
 
   // ── Inline email verification on profile step (when email exists but unverified) ──
   const [inlineEmailOtp, setInlineEmailOtp] = useState('');
@@ -416,7 +426,10 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
 
     setIsLoading(true);
     try {
-      const submitData = { ...formData, password, confirmPassword };
+      const submitData: Record<string, any> = { ...formData, password, confirmPassword };
+      if (profileImageRelativePath) {
+        submitData.imageUrl = profileImageRelativePath;
+      }
       const data = await completeFirstLogin(submitData, firstLoginToken);
 
       // Store real tokens
@@ -438,6 +451,101 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // ============= PROFILE IMAGE UPLOAD =============
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Invalid image type. Allowed: JPEG, PNG, WebP, GIF');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image too large. Maximum size: 5MB');
+      return;
+    }
+
+    setProfileImage(file);
+    setProfileImagePreview(URL.createObjectURL(file));
+    setProfileImageRelativePath(null);
+    // Auto-upload
+    handleImageUpload(file);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!firstLoginToken) return;
+    setImageUploading(true);
+    setImageUploadProgress(0);
+    setImageUploadMessage('Getting upload URL...');
+    try {
+      const baseUrl = getBaseUrl();
+
+      // Step 1: Generate signed URL
+      setImageUploadProgress(20);
+      const signedRes = await fetch(
+        `${baseUrl}/upload/generate-signed-url`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${firstLoginToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            folder: 'profile-images',
+            fileName: file.name,
+            contentType: file.type,
+            fileSize: file.size,
+          }),
+        }
+      );
+      if (!signedRes.ok) {
+        const err = await signedRes.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to get upload URL');
+      }
+      const signedData = await signedRes.json();
+      const { uploadUrl, relativePath } = signedData.data;
+      const headers = signedData.instructions?.headers || {};
+
+      // Step 2: Upload to cloud storage
+      setImageUploadProgress(50);
+      setImageUploadMessage('Uploading image...');
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': headers['Content-Type'] || file.type,
+          'x-goog-content-length-range': headers['x-goog-content-length-range'] || '0,5242880',
+        },
+        body: file,
+      });
+      if (!uploadRes.ok) {
+        throw new Error('Upload failed: ' + uploadRes.statusText);
+      }
+
+      setImageUploadProgress(100);
+      setImageUploadMessage('Upload complete!');
+      setProfileImageRelativePath(relativePath);
+      toast({ title: 'Image Uploaded', description: 'Profile image uploaded successfully.' });
+    } catch (err: any) {
+      setError(err.message || 'Image upload failed');
+      setProfileImage(null);
+      setProfileImagePreview(null);
+      setProfileImageRelativePath(null);
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setProfileImage(null);
+    setProfileImagePreview(null);
+    setProfileImageRelativePath(null);
+    setImageUploadProgress(0);
+    setImageUploadMessage('');
   };
 
   // ============= FORM HELPERS =============
@@ -1034,6 +1142,77 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
                       </div>
                     </div>
                   )}
+
+                  {/* Profile Image Upload */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      <Camera className="h-3.5 w-3.5 text-primary" /> Profile Photo <span className="text-muted-foreground font-normal">(Optional)</span>
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        {profileImagePreview ? (
+                          <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-primary/20">
+                            <img src={profileImagePreview} alt="Profile preview" className="w-full h-full object-cover" />
+                            {!imageUploading && (
+                              <button
+                                type="button"
+                                onClick={handleRemoveImage}
+                                className="absolute top-0 right-0 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
+                            {imageUploading && (
+                              <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <label className="w-20 h-20 rounded-full border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
+                            <Upload className="h-5 w-5 text-muted-foreground" />
+                            <span className="text-[9px] text-muted-foreground mt-0.5">Upload</span>
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              className="hidden"
+                              onChange={handleImageSelect}
+                            />
+                          </label>
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        {profileImageRelativePath && (
+                          <p className="text-xs text-success flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Image uploaded successfully
+                          </p>
+                        )}
+                        {imageUploading && (
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">{imageUploadMessage}</p>
+                            <Progress value={imageUploadProgress} className="h-1.5" />
+                          </div>
+                        )}
+                        {!profileImagePreview && !imageUploading && (
+                          <p className="text-[10px] text-muted-foreground">
+                            JPEG, PNG, WebP, or GIF. Max 5MB.<br />
+                            Image will be reviewed by admin.
+                          </p>
+                        )}
+                        {profileImagePreview && !imageUploading && !profileImageRelativePath && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => profileImage && handleImageUpload(profileImage)}
+                          >
+                            Retry Upload
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
                   {/* Personal Information */}
                   <div className="space-y-2">
