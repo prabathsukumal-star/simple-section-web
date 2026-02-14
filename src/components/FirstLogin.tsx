@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,8 +43,46 @@ interface FirstLoginProps {
 // ============= COMPONENT =============
 
 const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // ── Derive step from URL ──
+  const getStepFromPath = useCallback((): FlowStep => {
+    const path = location.pathname;
+    if (path.includes('/activate/verify')) return 'verify-otp';
+    if (path.includes('/activate/profile')) return 'complete-profile';
+    return 'identifier'; // /activate/identify or default
+  }, [location.pathname]);
+
+  const step = getStepFromPath();
+
+  // Additional verify is a sub-state of the verify route
+  const [isAdditionalVerify, setIsAdditionalVerify] = useState(false);
+  const effectiveStep: FlowStep = (step === 'verify-otp' && isAdditionalVerify) ? 'additional-verify' : step;
+
+  // Navigation helper
+  const navigateToStep = (target: FlowStep) => {
+    switch (target) {
+      case 'identifier':
+        navigate('/activate/identify', { replace: true });
+        setIsAdditionalVerify(false);
+        break;
+      case 'verify-otp':
+        navigate('/activate/verify', { replace: true });
+        setIsAdditionalVerify(false);
+        break;
+      case 'additional-verify':
+        navigate('/activate/verify', { replace: true });
+        setIsAdditionalVerify(true);
+        break;
+      case 'complete-profile':
+        navigate('/activate/profile', { replace: true });
+        setIsAdditionalVerify(false);
+        break;
+    }
+  };
+
   // ── Flow state ──
-  const [step, setStep] = useState<FlowStep>('identifier');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -150,7 +189,7 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
         title: 'OTP Sent',
         description: `Code sent via ${data.otpSentVia === 'phone' ? 'SMS' : 'email'} to ${data.maskedDestination}`,
       });
-      setStep('verify-otp');
+      navigateToStep('verify-otp');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -242,9 +281,9 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
             setAdditionalInput('');
           }
         }
-        setStep('additional-verify');
+        navigateToStep('additional-verify');
       } else {
-        setStep('complete-profile');
+        navigateToStep('complete-profile');
       }
 
       toast({ title: 'Verified!', description: data.message });
@@ -315,7 +354,7 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
         setAdditionalOtpSent(false);
         setAdditionalOtpTimer(0);
       } else {
-        setStep('complete-profile');
+        navigateToStep('complete-profile');
       }
     } catch (err: any) {
       setError(err.message);
@@ -879,19 +918,18 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
     ? steps
     : steps.filter(s => s.key !== 'additional-verify');
 
-  const stepIndex = activeSteps.findIndex(s => s.key === step);
+  const stepIndex = activeSteps.findIndex(s => s.key === effectiveStep);
 
   const handleBack = () => {
     setError('');
-    if (step === 'identifier') {
+    if (effectiveStep === 'identifier') {
       onBack();
-    } else if (step === 'verify-otp') {
-      setStep('identifier');
+    } else if (effectiveStep === 'additional-verify') {
+      navigateToStep('verify-otp');
+    } else if (effectiveStep === 'verify-otp') {
+      navigateToStep('identifier');
       setOtp('');
-    } else if (step === 'additional-verify') {
-      // Don't go back from additional verify — would lose the JWT
-      setStep('verify-otp');
-    } else if (step === 'complete-profile') {
+    } else if (effectiveStep === 'complete-profile') {
       // Don't go back — too much state
       onBack();
     }
@@ -921,17 +959,17 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
             </div>
             <h1 className="text-base md:text-2xl font-bold text-foreground">Activate Your Account</h1>
             <p className="text-xs text-muted-foreground">
-              {step === 'identifier' && 'Enter your registered phone, email, or student ID'}
-              {step === 'verify-otp' && `Verify your ${otpChannel === 'phone' ? 'phone' : 'email'}`}
-              {step === 'additional-verify' && `Verify your ${additionalType}`}
-              {step === 'complete-profile' && 'Complete your profile to get started'}
+              {effectiveStep === 'identifier' && 'Enter your registered phone, email, or student ID'}
+              {effectiveStep === 'verify-otp' && `Verify your ${otpChannel === 'phone' ? 'phone' : 'email'}`}
+              {effectiveStep === 'additional-verify' && `Verify your ${additionalType}`}
+              {effectiveStep === 'complete-profile' && 'Complete your profile to get started'}
             </p>
           </div>
 
           {/* Step Indicator */}
           <div className="flex items-center justify-center gap-0 px-2">
             {activeSteps.map((s, i) => {
-              const isActive = step === s.key;
+              const isActive = effectiveStep === s.key;
               const isDone = i < stepIndex;
               return (
                 <React.Fragment key={s.key}>
@@ -965,7 +1003,7 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
               )}
 
               {/* =============== STEP 1: IDENTIFIER INPUT =============== */}
-              {step === 'identifier' && (
+              {effectiveStep === 'identifier' && (
                 <form onSubmit={handleInitiate} className="space-y-3 md:space-y-4">
                   <div className="text-center">
                     <div className={`mx-auto w-12 h-12 rounded-xl flex items-center justify-center mb-2 bg-primary/10 text-primary`}>
@@ -1017,7 +1055,7 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
               )}
 
               {/* =============== STEP 2: VERIFY INITIAL OTP =============== */}
-              {step === 'verify-otp' && (
+              {effectiveStep === 'verify-otp' && (
                 <form onSubmit={handleVerifyOtp} className="space-y-3 md:space-y-4">
                   <div className="text-center">
                     <p className="text-xs md:text-sm text-muted-foreground">
@@ -1056,7 +1094,7 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
               )}
 
               {/* =============== STEP 3: ADDITIONAL VERIFICATION =============== */}
-              {step === 'additional-verify' && (
+              {effectiveStep === 'additional-verify' && (
                 <div className="space-y-3 md:space-y-4">
                   <div className="text-center">
                     <p className="text-xs md:text-sm text-muted-foreground">
@@ -1125,7 +1163,7 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
               )}
 
               {/* =============== STEP 4: COMPLETE PROFILE =============== */}
-              {step === 'complete-profile' && (
+              {effectiveStep === 'complete-profile' && (
                 <form onSubmit={handleCompleteProfile} className="space-y-4">
 
                   {/* Verifiable contacts */}

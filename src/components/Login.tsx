@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +11,7 @@ import { Eye, EyeOff, GraduationCap, Wifi, WifiOff, Settings, Mail, Key, UserChe
 import { useToast } from '@/hooks/use-toast';
 import { getBaseUrl, getBaseUrl2 } from '@/contexts/utils/auth.api';
 import { Capacitor } from '@capacitor/core';
-import FirstLogin from '@/components/FirstLogin';
+// FirstLogin is now rendered via /activate/* routes
 import surakshaLogo from '@/assets/suraksha-logo.png';
 import loginIllustration from '@/assets/login-illustration.png';
 
@@ -131,6 +132,7 @@ const Login = ({
   onLogin,
   loginFunction
 }: LoginProps) => {
+  const loginNavigate = useNavigate();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   // On mobile app, always enable rememberMe for persistent login
@@ -618,16 +620,7 @@ const Login = ({
     setConfirmPassword('');
     setShowFirstLogin(true);
   };
-  // Show Phone-based first login flow
-  if (showFirstLoginV2) {
-    return <FirstLogin
-      onBack={() => setShowFirstLoginV2(false)}
-      onComplete={(user) => {
-        setShowFirstLoginV2(false);
-        onLogin(user);
-      }}
-    />;
-  }
+
   return <div className="min-h-[100dvh] flex flex-col md:flex-row overflow-x-hidden bg-background md:bg-none">
       {/* Top Illustration - Mobile Only */}
       <div className="block md:hidden w-full relative h-[25vh] shrink-0 overflow-hidden">
@@ -725,7 +718,7 @@ const Login = ({
                 {/* First Time Login Link */}
                 {useApiLogin && <div className="text-center pt-2">
                     <span className="text-xs md:text-sm text-muted-foreground">Registered by your institute? </span>
-                    <Button type="button" variant="link" onClick={() => setShowFirstLoginV2(true)} className="text-xs md:text-sm text-primary hover:text-primary/80 p-0 h-auto font-medium">
+                    <Button type="button" variant="link" onClick={() => loginNavigate('/activate/identify')} className="text-xs md:text-sm text-primary hover:text-primary/80 p-0 h-auto font-medium">
                       Activate your account
                     </Button>
                   </div>}

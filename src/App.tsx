@@ -47,6 +47,7 @@ import CardManagement from "@/pages/CardManagement";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import GoogleAuthCallback from "@/pages/GoogleAuthCallback";
 import ActiveSessionsPage from "@/pages/ActiveSessions";
+import ActivateAccount from "@/pages/ActivateAccount";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -167,6 +168,11 @@ const App = () => {
 
                 {/* Google Drive OAuth - backend redirects back here with query params */}
                 <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
+
+                {/* Activate Account Routes (First Login Flow) */}
+                <Route path="/activate/identify" element={<ActivateAccount />} />
+                <Route path="/activate/verify" element={<ActivateAccount />} />
+                <Route path="/activate/profile" element={<ActivateAccount />} />
 
                 {/* Hierarchical Routes with Context */}
                 <Route path="/institute/:instituteId/*" element={<Index />} />
