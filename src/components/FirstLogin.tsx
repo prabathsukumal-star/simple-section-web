@@ -467,7 +467,7 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
     field: AnnotatedField,
     section: 'profile' | 'student' | 'parent'
   ) => {
-    if (key === 'id') return null;
+    if (key === 'id' || key === 'nic' || key === 'addressLine2') return null;
 
     const label = key
       .replace(/([A-Z])/g, ' $1')
