@@ -97,7 +97,8 @@ const VerifyImage = () => {
   const fetchUnverifiedImages = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
+      const { tokenStorageService } = await import('@/services/tokenStorageService');
+      const token = await tokenStorageService.getAccessToken();
       const response = await fetch(
         `${getBaseUrl()}/institute-users/institute/${currentInstituteId}/users/unverified-with-images?page=${page}&limit=${limit}`,
         {

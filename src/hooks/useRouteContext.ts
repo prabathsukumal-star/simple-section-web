@@ -127,6 +127,12 @@ export const useRouteContext = () => {
         '/payment-submissions',
         '/my-submissions',
         '/subject-payment-submissions',
+        '/bulk-attendance',
+        '/class-calendar',
+        '/card-user-lookup',
+        '/admin-attendance',
+        '/calendar-management',
+        '/calendar-view',
       ];
       const shouldPreserveContext = contextPreservingPaths.some(p => path.startsWith(p));
       

@@ -303,7 +303,7 @@ const InstituteSelector = ({
           >
             {institutes.map(institute => {
           const showSocial = expandedInstituteId === institute.id;
-          return <div key={institute.id} className="relative flex w-full flex-col rounded-lg bg-card bg-clip-border text-card-foreground shadow-sm hover:shadow-md transition-all duration-300">
+          return <div key={institute.id} className="relative flex w-full flex-col rounded-lg bg-card bg-clip-border text-card-foreground shadow-sm hover:shadow-md transition-all duration-300 border-2 border-primary/30 hover:border-primary/60">
                   {/* Institute Image - Gradient Header */}
                   <div className="relative mx-3 -mt-5 h-28 overflow-hidden rounded-lg bg-clip-border text-white shadow-md shadow-primary/30 bg-gradient-to-r from-primary to-primary/80">
                     {(institute.imageUrl || institute.logoUrl) ? (

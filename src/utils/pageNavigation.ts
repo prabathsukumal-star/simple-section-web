@@ -246,7 +246,7 @@ export const buildSidebarUrl = (
 
   // Pages that must ALWAYS be global (no institute/class/subject prefix)
   // These are dedicated top-level routes like "/id-cards".
-  const globalPages = new Set(['id-cards', 'card-demo']);
+  const globalPages = new Set(['id-cards', 'card-demo', 'profile']);
   if (globalPages.has(page)) {
     return `/${pagePath}`;
   }

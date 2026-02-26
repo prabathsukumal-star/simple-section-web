@@ -242,6 +242,14 @@ const App = () => {
                 <Route path="/teacher-homework" element={<Index />} />
                 <Route path="/teacher-exams" element={<Index />} />
                 <Route path="/teacher-lectures" element={<Index />} />
+                <Route path="/calendar-management" element={<Index />} />
+                <Route path="/calendar-view" element={<Index />} />
+                <Route path="/today-dashboard" element={<Index />} />
+                <Route path="/admin-attendance" element={<Index />} />
+                <Route path="/parent-attendance" element={<Index />} />
+                <Route path="/bulk-attendance" element={<Index />} />
+                <Route path="/class-calendar" element={<Index />} />
+                <Route path="/card-user-lookup" element={<Index />} />
 
                 {/* Dedicated Page Routes (must be protected) */}
                 <Route

@@ -41,7 +41,9 @@ const Lectures = ({ apiLevel = 'institute' }: LecturesProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [viewMode] = useState<'card' | 'table'>(() => {
+    return (localStorage.getItem('viewMode') as 'card' | 'table') || 'card';
+  });
   const [expandedLecture, setExpandedLecture] = useState<string | null>(null);
 
   const userRole = useInstituteRole();
@@ -398,11 +400,6 @@ const Lectures = ({ apiLevel = 'institute' }: LecturesProps) => {
                 <RefreshCw className={`h-3.5 w-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
                 {isLoading ? 'Loading...' : 'Refresh'}
               </Button>
-              <div className="flex items-center gap-1.5 ml-auto">
-                <LayoutGrid className={`h-3.5 w-3.5 ${viewMode === 'card' ? 'text-primary' : 'text-muted-foreground'}`} />
-                <CustomToggle checked={viewMode === 'table'} onChange={(checked) => setViewMode(checked ? 'table' : 'card')} />
-                <LayoutList className={`h-3.5 w-3.5 ${viewMode === 'table' ? 'text-primary' : 'text-muted-foreground'}`} />
-              </div>
             </div>
           </div>
 

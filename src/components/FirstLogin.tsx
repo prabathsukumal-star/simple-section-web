@@ -940,14 +940,14 @@ const FirstLogin: React.FC<FirstLoginProps> = ({ onBack, onComplete }) => {
   return (
     <div className="min-h-[100dvh] flex flex-col md:flex-row overflow-x-hidden">
       {/* Top Illustration - Mobile Only */}
-      <div className="block md:hidden w-full relative h-28 shrink-0">
+      <div className="block md:hidden w-full relative h-48 shrink-0">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5" />
         <img src={loginIllustration} alt="Education illustration" className="absolute inset-0 w-full h-full object-cover mix-blend-multiply" loading="lazy" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
       </div>
 
       {/* Left Side - Form */}
-      <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col items-center justify-start md:justify-center px-4 py-3 sm:p-6 md:p-8 bg-background -mt-6 md:mt-0 rounded-t-[2rem] md:rounded-none relative z-10 flex-1 md:min-h-screen overflow-y-auto">
-        <div className="w-full max-w-md space-y-2 md:space-y-4">
+      <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col items-center justify-start md:justify-center px-4 py-3 sm:p-6 md:p-8 bg-background -mt-10 md:mt-0 rounded-t-[3rem] md:rounded-none relative z-10 flex-1 md:min-h-screen overflow-y-auto">
+        <div className="w-full max-w-md space-y-2 md:space-y-4 pt-4 md:pt-0">
 
           {/* Logo and Header */}
           <div className="space-y-0.5 text-center">

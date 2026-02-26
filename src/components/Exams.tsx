@@ -50,7 +50,9 @@ const Exams = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [viewMode] = useState<'card' | 'table'>(() => {
+    return (localStorage.getItem('viewMode') as 'card' | 'table') || 'card';
+  });
   const [expandedExam, setExpandedExam] = useState<string | null>(null);
   const userRole = useInstituteRole();
 
@@ -397,11 +399,6 @@ const Exams = ({
                 <RefreshCw className={`h-3.5 w-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
                 {isLoading ? 'Loading...' : 'Refresh'}
               </Button>
-              <div className="flex items-center gap-1.5 ml-auto">
-                <LayoutGrid className={`h-3.5 w-3.5 ${viewMode === 'card' ? 'text-primary' : 'text-muted-foreground'}`} />
-                <CustomToggle checked={viewMode === 'table'} onChange={(checked) => setViewMode(checked ? 'table' : 'card')} />
-                <LayoutList className={`h-3.5 w-3.5 ${viewMode === 'table' ? 'text-primary' : 'text-muted-foreground'}`} />
-              </div>
             </div>
           </div>
 
@@ -525,6 +522,9 @@ const Exams = ({
                             {canEdit && (
                               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleEditExam(item)}>Edit</Button>
                             )}
+                            {canDelete && (
+                              <Button size="sm" variant="outline" className="h-7 text-xs text-destructive border-destructive/30" onClick={() => handleDeleteExam(item)}>Delete</Button>
+                            )}
                           </div>
                         </div>
                       </CollapsibleContent>
@@ -539,7 +539,7 @@ const Exams = ({
         label: col.header,
         minWidth: 170,
         format: col.render
-      }))} onAdd={canAdd ? () => setIsCreateDialogOpen(true) : undefined} onEdit={userRole === 'InstituteAdmin' || userRole === 'Teacher' ? handleEditExam : undefined} onView={undefined} page={pagination.page} rowsPerPage={pagination.limit} totalCount={pagination.totalCount} onPageChange={setPage} onRowsPerPageChange={setLimit} rowsPerPageOptions={[25, 50, 100]} sectionType="exams" allowEdit={userRole === 'InstituteAdmin' || userRole === 'Teacher'} allowDelete={canDelete} />
+      }))} onAdd={canAdd ? () => setIsCreateDialogOpen(true) : undefined} onEdit={userRole === 'InstituteAdmin' || userRole === 'Teacher' ? handleEditExam : undefined} onDelete={canDelete ? handleDeleteExam : undefined} onView={undefined} page={pagination.page} rowsPerPage={pagination.limit} totalCount={pagination.totalCount} onPageChange={setPage} onRowsPerPageChange={setLimit} rowsPerPageOptions={[25, 50, 100]} sectionType="exams" allowEdit={userRole === 'InstituteAdmin' || userRole === 'Teacher'} allowDelete={canDelete} />
           )}
         </>}
 

@@ -64,7 +64,9 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
 
   // Filter states
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [viewMode] = useState<'card' | 'table'>(() => {
+    return (localStorage.getItem('viewMode') as 'card' | 'table') || 'card';
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -318,9 +320,12 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
       Object.values(homework).some(value => 
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
       );
+    const isActive = homework.isActive !== undefined ? homework.isActive : true;
+    // Students should only see active homework
+    if (isStudent && !isActive) return false;
     const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'active' && homework.isActive) ||
-      (statusFilter === 'inactive' && !homework.isActive);
+      (statusFilter === 'active' && isActive) ||
+      (statusFilter === 'inactive' && !isActive);
     return matchesSearch && matchesStatus;
   });
 
@@ -366,12 +371,6 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
               )}
             </div>
             <div className="flex items-center gap-2">
-              {/* View Mode Toggle */}
-              <div className="flex items-center gap-1.5">
-                <LayoutGrid className={cn("h-4 w-4 transition-colors", viewMode === 'card' ? 'text-primary' : 'text-muted-foreground/40')} />
-                <CustomToggle checked={viewMode === 'table'} onChange={(checked) => setViewMode(checked ? 'table' : 'card')} />
-                <Table2 className={cn("h-4 w-4 transition-colors", viewMode === 'table' ? 'text-primary' : 'text-muted-foreground/40')} />
-              </div>
               <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
                 <Filter className="h-4 w-4 mr-1" /> Filters
               </Button>
@@ -400,6 +399,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
                 <label className="text-sm font-medium mb-1 block">Search Homework</label>
                 <Input placeholder="Search homework..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
+              {!isStudent && (
               <div>
                 <label className="text-sm font-medium mb-1 block">Status</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -411,6 +411,7 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
                   </SelectContent>
                 </Select>
               </div>
+              )}
               <div className="flex items-end col-span-1 sm:col-span-2">
                 <Button variant="outline" onClick={() => { setSearchTerm(''); setStatusFilter('all'); }} className="w-full">
                   Clear Filters
@@ -611,12 +612,12 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
                               <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">My Submission</h4>
                               <div className="flex flex-wrap gap-2">
                                 {(latest.fileUrl || latest.driveViewUrl) && (
-                                  <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => window.open(latest.fileUrl || latest.driveViewUrl, '_blank')}>
-                                    <Eye className="h-3 w-3 mr-1" /> View My File
+                                  <Button size="sm" variant="outline" className="text-xs h-7 border-green-500 text-green-700 hover:bg-green-50 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-950" onClick={() => window.open(latest.fileUrl || latest.driveViewUrl, '_blank')}>
+                                    <Eye className="h-3 w-3 mr-1" /> My File
                                   </Button>
                                 )}
                                 {latest.teacherCorrectionFileUrl && (
-                                  <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => window.open(latest.teacherCorrectionFileUrl, '_blank')}>
+                                  <Button size="sm" variant="outline" className="text-xs h-7 border-red-500 text-red-700 hover:bg-red-50 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-950" onClick={() => window.open(latest.teacherCorrectionFileUrl, '_blank')}>
                                     <Download className="h-3 w-3 mr-1" /> Correction
                                   </Button>
                                 )}
@@ -631,8 +632,8 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
                         })()}
 
                         {hw.referenceLink && (
-                          <Button size="sm" variant="outline" onClick={() => window.open(hw.referenceLink, '_blank')}>
-                            <FileText className="h-3 w-3 mr-1" /> View Reference
+                          <Button size="sm" variant="outline" className="border-blue-500 text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-700 dark:hover:bg-blue-950" onClick={() => window.open(hw.referenceLink, '_blank')}>
+                            <FileText className="h-3 w-3 mr-1" /> References
                           </Button>
                         )}
 
@@ -657,11 +658,23 @@ const Homework = ({ apiLevel = 'institute' }: HomeworkProps) => {
                               )}
                             </>
                           )}
-                          {isStudent && !isViewingAsParent && (
-                            <Button size="sm" onClick={() => handleSubmitHomework(hw)}>
-                              <Upload className="h-3 w-3 mr-1" /> Submit
-                            </Button>
-                          )}
+                          {isStudent && !isViewingAsParent && (() => {
+                            const hasSubmission = (hw.mySubmissions || []).length > 0;
+                            if (hasSubmission) {
+                              const latest = hw.mySubmissions[0];
+                              const status = latest.status || (latest.teacherCorrectionFileUrl ? 'Corrected' : 'Submitted');
+                              return (
+                                <Badge variant="secondary" className="text-xs h-7 px-3 flex items-center gap-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                  <CheckCircle className="h-3 w-3" /> {status}
+                                </Badge>
+                              );
+                            }
+                            return (
+                              <Button size="sm" onClick={() => handleSubmitHomework(hw)}>
+                                <Upload className="h-3 w-3 mr-1" /> Submit
+                              </Button>
+                            );
+                          })()}
                         </div>
                       </CardContent>
                     )}

@@ -38,7 +38,9 @@ import {
   MessageSquare,
   Wifi,
   Lock,
-  Bell
+  Bell,
+  Calendar,
+  CalendarDays
 } from 'lucide-react';
 import surakshaLogoSidebar from '@/assets/suraksha-logo-sidebar.png';
 
@@ -745,6 +747,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       if (selectedChild) {
         return [
           {
+            id: 'parent-attendance',
+            label: 'Attendance Dashboard',
+            icon: BarChart3,
+            permission: 'view-dashboard',
+            alwaysShow: true
+          },
+          {
             id: 'child-attendance',
             label: 'Transport Attendance',
             icon: Truck,
@@ -971,9 +980,39 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   };
 
   const getAttendanceItems = () => {
-    // For Student - no additional attendance items needed as they are in main menu
+    // For Student - show today dashboard and calendar view
     if (userRole === 'Student') {
-      return [];
+      if (!selectedInstitute) return [];
+      return [
+        {
+          id: 'today-dashboard',
+          label: 'Today',
+          icon: CalendarDays,
+          permission: 'view-dashboard',
+          alwaysShow: false
+        },
+        {
+          id: 'calendar-view',
+          label: 'Calendar View',
+          icon: Calendar,
+          permission: 'view-dashboard',
+          alwaysShow: false
+        }
+      ];
+    }
+
+    // For Parent - show parent attendance dashboard
+    if (userRole === 'Parent') {
+      if (!selectedChild) return [];
+      return [
+        {
+          id: 'parent-attendance',
+          label: 'Attendance Dashboard',
+          icon: CalendarDays,
+          permission: 'view-dashboard',
+          alwaysShow: true
+        }
+      ];
     }
 
     // For Teacher - show specific attendance items based on selection state
@@ -981,6 +1020,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       // 3. Teacher with institute and class selected (but no subject)
       if (selectedInstitute && selectedClass && !selectedSubject) {
         return [
+          {
+            id: 'today-dashboard',
+            label: 'Today',
+            icon: CalendarDays,
+            permission: 'view-attendance',
+            alwaysShow: false
+          },
           {
             id: 'daily-attendance',
             label: 'Daily Attendance',
@@ -993,6 +1039,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             label: 'Mark Attendance',
             icon: QrCode,
             permission: 'mark-attendance',
+            alwaysShow: false
+          },
+          {
+            id: 'calendar-view',
+            label: 'Calendar View',
+            icon: Calendar,
+            permission: 'view-attendance',
             alwaysShow: false
           }
         ];
@@ -1002,6 +1055,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       if (selectedInstitute && selectedClass && selectedSubject) {
         return [
           {
+            id: 'today-dashboard',
+            label: 'Today',
+            icon: CalendarDays,
+            permission: 'view-attendance',
+            alwaysShow: false
+          },
+          {
             id: 'daily-attendance',
             label: 'Daily Attendance',
             icon: UserCheck,
@@ -1013,6 +1073,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             label: 'Mark Attendance',
             icon: QrCode,
             permission: 'mark-attendance',
+            alwaysShow: false
+          },
+          {
+            id: 'calendar-view',
+            label: 'Calendar View',
+            icon: Calendar,
+            permission: 'view-attendance',
             alwaysShow: false
           }
         ];
@@ -1044,6 +1111,41 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             icon: QrCode,
             permission: 'mark-attendance',
             alwaysShow: false
+          },
+          {
+            id: 'calendar-view',
+            label: 'Calendar View',
+            icon: Calendar,
+            permission: 'view-attendance',
+            alwaysShow: false
+          },
+          {
+            id: 'calendar-management',
+            label: 'Calendar',
+            icon: ClipboardList,
+            permission: 'view-dashboard',
+            alwaysShow: false
+          },
+          {
+            id: 'admin-attendance',
+            label: 'Attendance Monitor',
+            icon: BarChart3,
+            permission: 'view-attendance',
+            alwaysShow: false
+          },
+          {
+            id: 'bulk-attendance',
+            label: 'Bulk Attendance',
+            icon: Users,
+            permission: 'mark-attendance',
+            alwaysShow: false
+          },
+          {
+            id: 'card-user-lookup',
+            label: 'Card Lookup',
+            icon: CreditCard,
+            permission: 'view-attendance',
+            alwaysShow: false
           }
         ];
       }
@@ -1064,6 +1166,48 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             icon: QrCode,
             permission: 'mark-attendance',
             alwaysShow: false
+          },
+          {
+            id: 'calendar-view',
+            label: 'Calendar View',
+            icon: Calendar,
+            permission: 'view-attendance',
+            alwaysShow: false
+          },
+          {
+            id: 'calendar-management',
+            label: 'Calendar',
+            icon: ClipboardList,
+            permission: 'view-dashboard',
+            alwaysShow: false
+          },
+          {
+            id: 'admin-attendance',
+            label: 'Attendance Monitor',
+            icon: BarChart3,
+            permission: 'view-attendance',
+            alwaysShow: false
+          },
+          {
+            id: 'bulk-attendance',
+            label: 'Bulk Attendance',
+            icon: Users,
+            permission: 'mark-attendance',
+            alwaysShow: false
+          },
+          {
+            id: 'class-calendar',
+            label: 'Class Calendar',
+            icon: CalendarDays,
+            permission: 'view-attendance',
+            alwaysShow: false
+          },
+          {
+            id: 'card-user-lookup',
+            label: 'Card Lookup',
+            icon: CreditCard,
+            permission: 'view-attendance',
+            alwaysShow: false
           }
         ];
       }
@@ -1071,6 +1215,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
     // Default attendance items for other roles
     const attendanceItems = [
+      {
+        id: 'today-dashboard',
+        label: 'Today',
+        icon: CalendarDays,
+        permission: 'view-attendance',
+        alwaysShow: false
+      },
       {
         id: 'daily-attendance',
         label: 'Daily Attendance',
@@ -1091,6 +1242,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         icon: QrCode,
         permission: 'mark-attendance',
         alwaysShow: userRole === 'AttendanceMarker' // Always show for AttendanceMarker
+      },
+      {
+        id: 'calendar-view',
+        label: 'Calendar View',
+        icon: Calendar,
+        permission: 'view-attendance',
+        alwaysShow: false
       }
     ];
 
@@ -1444,6 +1602,14 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         });
       }
 
+      baseItems.push({
+        id: 'settings',
+        label: 'Settings',
+        icon: Settings,
+        permission: 'view-profile',
+        alwaysShow: true
+      });
+
       return baseItems;
     }
 
@@ -1480,6 +1646,14 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           alwaysShow: false
         });
       }
+
+      baseItems.push({
+        id: 'settings',
+        label: 'Settings',
+        icon: Settings,
+        permission: 'view-profile',
+        alwaysShow: true
+      });
 
       return baseItems;
     }
@@ -1518,6 +1692,14 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         });
       }
 
+      baseItems.push({
+        id: 'settings',
+        label: 'Settings',
+        icon: Settings,
+        permission: 'view-profile',
+        alwaysShow: true
+      });
+
       return baseItems;
     }
 
@@ -1552,6 +1734,14 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           alwaysShow: false
         });
       }
+
+      baseItems.push({
+        id: 'settings',
+        label: 'Settings',
+        icon: Settings,
+        permission: 'view-profile',
+        alwaysShow: true
+      });
 
       return baseItems;
     }

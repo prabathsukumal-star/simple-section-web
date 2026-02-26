@@ -3,10 +3,17 @@ import React from 'react';
 interface CustomToggleProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-const CustomToggle: React.FC<CustomToggleProps> = ({ checked, onChange }) => (
-  <label className="relative inline-block w-[3.5em] h-[2em] text-[14px]">
+const sizeMap = {
+  sm: 'text-[12px]',
+  md: 'text-[14px]',
+  lg: 'text-[18px]',
+};
+
+const CustomToggle: React.FC<CustomToggleProps> = ({ checked, onChange, size = 'md' }) => (
+  <label className={`relative inline-block w-[3.5em] h-[2em] ${sizeMap[size]}`}>
     <input
       type="checkbox"
       checked={checked}
@@ -32,3 +39,4 @@ const CustomToggle: React.FC<CustomToggleProps> = ({ checked, onChange }) => (
 );
 
 export { CustomToggle };
+export type { CustomToggleProps };

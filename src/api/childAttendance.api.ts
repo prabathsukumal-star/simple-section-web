@@ -233,7 +233,7 @@ class ChildAttendanceApi {
     subjectName?: string;
     address: string;
     markingMethod: string;
-    status: 'present' | 'absent' | 'late';
+    status: AttendanceStatus;
     date: string;
     location?: string;
   }): Promise<any> {
