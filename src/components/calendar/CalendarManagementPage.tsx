@@ -90,21 +90,28 @@ const CalendarManagementPage: React.FC = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex items-center rounded-2xl border border-border bg-muted/40 p-1 gap-0.5 w-full">
+      <div className="flex items-center rounded-2xl border border-border bg-muted/40 p-1 gap-0.5 w-full overflow-x-auto scrollbar-none">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
+          const Icon = tab.icon;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
+              title={tab.label}
               className={cn(
-                "flex-1 min-w-0 flex items-center justify-center py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200",
+                "flex-shrink-0 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-background text-foreground shadow-sm px-3 sm:px-4"
+                  : "text-muted-foreground hover:text-foreground px-2 sm:px-3",
+                "sm:flex-1 sm:min-w-0"
               )}
             >
-              {tab.label}
+              <Icon className="h-3.5 w-3.5 flex-shrink-0 sm:hidden" />
+              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sm:hidden">
+                {isActive ? tab.label : tab.label.slice(0, 2)}
+              </span>
             </button>
           );
         })}

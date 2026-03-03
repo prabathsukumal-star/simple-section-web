@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Calendar } from 'lucide-react';
+import ResponsiveDatePicker from './ResponsiveDatePicker';
 
 import { ALL_CALENDAR_EVENT_TYPES, ALL_EVENT_STATUSES, ALL_ATTENDANCE_OPEN_TO, ALL_TARGET_SCOPES } from '@/types/calendar.types';
 
@@ -64,10 +65,7 @@ const emptyFormFactory = (): CreateEventPayload => ({
 
 const csvToList = (value?: string[]) => value?.join(', ') || '';
 const listFromCsv = (value: string) =>
-  value
-    .split(',')
-    .map(v => v.trim())
-    .filter(Boolean);
+  value.split(',').map(v => v.trim()).filter(Boolean);
 
 const EventManagement: React.FC = () => {
   const { currentInstituteId } = useAuth();
@@ -83,12 +81,8 @@ const EventManagement: React.FC = () => {
   const [targetSubjectCsv, setTargetSubjectCsv] = useState('');
 
   useEffect(() => {
-    if (currentInstituteId) {
-      loadEvents();
-      return;
-    }
-    setEvents([]);
-    setLoading(false);
+    if (currentInstituteId) { loadEvents(); return; }
+    setEvents([]); setLoading(false);
   }, [currentInstituteId, filterDate]);
 
   const loadEvents = async () => {
@@ -99,60 +93,23 @@ const EventManagement: React.FC = () => {
       if (filterDate) params.eventDate = filterDate;
       const res = await calendarApi.getEvents(currentInstituteId, params);
       setEvents(Array.isArray(res?.data) ? res.data : []);
-    } catch {
-      setEvents([]);
-    } finally {
-      setLoading(false);
-    }
+    } catch { setEvents([]); } finally { setLoading(false); }
   };
 
   const validateEventForm = (isEdit: boolean) => {
-    if (!form.title?.trim()) {
-      toast.error('Title is required');
-      return false;
-    }
-
-    if (!isEdit && !form.eventDate) {
-      toast.error('Event date is required');
-      return false;
-    }
-
-    if (!form.isAllDay && form.startTime && form.endTime && form.startTime >= form.endTime) {
-      toast.error('End time must be after start time');
-      return false;
-    }
-
-    if (!isEdit && form.calendarDayId && form.calendarDate) {
-      toast.error('Use calendar day OR calendar date, not both');
-      return false;
-    }
-
-    if (!isEdit && !form.calendarDayId && !form.calendarDate && !form.eventDate) {
-      toast.error('Calendar day or date is required');
-      return false;
-    }
-
-    if (form.targetScope === 'CLASS' && (form.targetClassIds?.length || 0) === 0) {
-      toast.error('Target class IDs are required when scope is CLASS');
-      return false;
-    }
-
-    if (form.targetScope === 'SUBJECT' && (form.targetSubjectIds?.length || 0) === 0) {
-      toast.error('Target subject IDs are required when scope is SUBJECT');
-      return false;
-    }
-
-    if (form.maxParticipants !== undefined && form.maxParticipants !== null && Number(form.maxParticipants) <= 0) {
-      toast.error('Max participants must be a positive number');
-      return false;
-    }
-
+    if (!form.title?.trim()) { toast.error('Title is required'); return false; }
+    if (!isEdit && !form.eventDate) { toast.error('Event date is required'); return false; }
+    if (!form.isAllDay && form.startTime && form.endTime && form.startTime >= form.endTime) { toast.error('End time must be after start time'); return false; }
+    if (!isEdit && form.calendarDayId && form.calendarDate) { toast.error('Use calendar day OR calendar date, not both'); return false; }
+    if (!isEdit && !form.calendarDayId && !form.calendarDate && !form.eventDate) { toast.error('Calendar day or date is required'); return false; }
+    if (form.targetScope === 'CLASS' && (form.targetClassIds?.length || 0) === 0) { toast.error('Target class IDs are required when scope is CLASS'); return false; }
+    if (form.targetScope === 'SUBJECT' && (form.targetSubjectIds?.length || 0) === 0) { toast.error('Target subject IDs are required when scope is SUBJECT'); return false; }
+    if (form.maxParticipants !== undefined && form.maxParticipants !== null && Number(form.maxParticipants) <= 0) { toast.error('Max participants must be a positive number'); return false; }
     return true;
   };
 
   const handleCreate = async () => {
     if (!currentInstituteId || !validateEventForm(false)) return;
-
     setSaving(true);
     try {
       const payload: CreateEventPayload = {
@@ -164,40 +121,25 @@ const EventManagement: React.FC = () => {
         targetClassIds: form.targetScope === 'CLASS' ? form.targetClassIds : undefined,
         targetSubjectIds: form.targetScope === 'SUBJECT' ? form.targetSubjectIds : undefined,
       };
-
       await calendarApi.createEvent(currentInstituteId, payload);
       toast.success('Event created successfully');
       setShowCreate(false);
       setForm(emptyFormFactory());
-      setTargetClassCsv('');
-      setTargetSubjectCsv('');
+      setTargetClassCsv(''); setTargetSubjectCsv('');
       await loadEvents();
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to create event');
-    } finally {
-      setSaving(false);
-    }
+    } catch (error: any) { toast.error(error?.message || 'Failed to create event'); } finally { setSaving(false); }
   };
 
   const handleUpdate = async () => {
     if (!currentInstituteId || !editEvent || !validateEventForm(true)) return;
-
     setSaving(true);
     try {
       await calendarApi.updateEvent(currentInstituteId, editEvent.id, {
-        eventType: form.eventType,
-        title: form.title.trim(),
-        description: form.description,
-        startTime: form.isAllDay ? undefined : form.startTime,
-        endTime: form.isAllDay ? undefined : form.endTime,
-        status: form.status,
-        notes: form.notes,
-        venue: form.venue,
-        meetingLink: form.meetingLink,
-        isMandatory: form.isMandatory,
-        isAttendanceTracked: form.isAttendanceTracked,
-        targetUserTypes: form.targetUserTypes,
-        attendanceOpenTo: form.attendanceOpenTo,
+        eventType: form.eventType, title: form.title.trim(), description: form.description,
+        startTime: form.isAllDay ? undefined : form.startTime, endTime: form.isAllDay ? undefined : form.endTime,
+        status: form.status, notes: form.notes, venue: form.venue, meetingLink: form.meetingLink,
+        isMandatory: form.isMandatory, isAttendanceTracked: form.isAttendanceTracked,
+        targetUserTypes: form.targetUserTypes, attendanceOpenTo: form.attendanceOpenTo,
         targetScope: form.targetScope,
         targetClassIds: form.targetScope === 'CLASS' ? form.targetClassIds : undefined,
         targetSubjectIds: form.targetScope === 'SUBJECT' ? form.targetSubjectIds : undefined,
@@ -206,11 +148,7 @@ const EventManagement: React.FC = () => {
       toast.success('Event updated successfully');
       setEditEvent(null);
       await loadEvents();
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to update event');
-    } finally {
-      setSaving(false);
-    }
+    } catch (error: any) { toast.error(error?.message || 'Failed to update event'); } finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
@@ -220,16 +158,12 @@ const EventManagement: React.FC = () => {
       toast.success('Event deleted');
       setDeleteId(null);
       await loadEvents();
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to delete event');
-    }
+    } catch (error: any) { toast.error(error?.message || 'Failed to delete event'); }
   };
 
   const openCreate = () => {
-    const fresh = emptyFormFactory();
-    setForm(fresh);
-    setTargetClassCsv('');
-    setTargetSubjectCsv('');
+    setForm(emptyFormFactory());
+    setTargetClassCsv(''); setTargetSubjectCsv('');
     setShowCreate(true);
   };
 
@@ -237,25 +171,14 @@ const EventManagement: React.FC = () => {
     setEditEvent(event);
     setForm({
       ...emptyFormFactory(),
-      eventType: event.eventType,
-      title: event.title,
-      eventDate: event.eventDate,
-      description: event.description,
-      startTime: event.startTime,
-      endTime: event.endTime,
-      isAllDay: event.isAllDay,
-      isAttendanceTracked: event.isAttendanceTracked,
-      targetUserTypes: event.targetUserTypes || [],
-      attendanceOpenTo: event.attendanceOpenTo,
-      targetScope: event.targetScope,
-      targetClassIds: event.targetClassIds || [],
-      targetSubjectIds: event.targetSubjectIds || [],
-      venue: event.venue,
-      meetingLink: event.meetingLink,
-      status: event.status,
-      notes: event.notes,
-      isMandatory: event.isMandatory,
-      maxParticipants: event.maxParticipants,
+      eventType: event.eventType, title: event.title, eventDate: event.eventDate,
+      description: event.description, startTime: event.startTime, endTime: event.endTime,
+      isAllDay: event.isAllDay, isAttendanceTracked: event.isAttendanceTracked,
+      targetUserTypes: event.targetUserTypes || [], attendanceOpenTo: event.attendanceOpenTo,
+      targetScope: event.targetScope, targetClassIds: event.targetClassIds || [],
+      targetSubjectIds: event.targetSubjectIds || [], venue: event.venue,
+      meetingLink: event.meetingLink, status: event.status, notes: event.notes,
+      isMandatory: event.isMandatory, maxParticipants: event.maxParticipants,
     });
     setTargetClassCsv(csvToList(event.targetClassIds));
     setTargetSubjectCsv(csvToList(event.targetSubjectIds));
@@ -271,7 +194,7 @@ const EventManagement: React.FC = () => {
 
   const renderForm = (isEdit: boolean) => (
     <div className="space-y-4 max-h-[64vh] overflow-y-auto pr-1">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <Label className="text-xs">Event Type</Label>
           <Select value={form.eventType} onValueChange={(v) => setForm({ ...form, eventType: v as CalendarEventType })}>
@@ -306,22 +229,29 @@ const EventManagement: React.FC = () => {
         <Textarea value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} className="mt-1 text-xs" rows={2} />
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <Label className="text-xs">Date</Label>
-          <Input type="date" value={form.eventDate} onChange={e => setForm({ ...form, eventDate: e.target.value, calendarDate: e.target.value })} className="mt-1 text-xs" disabled={isEdit} />
+          <div className="mt-1">
+            <ResponsiveDatePicker
+              value={form.eventDate}
+              onChange={(v) => setForm({ ...form, eventDate: v, calendarDate: v })}
+              disabled={isEdit}
+              placeholder="Event date"
+            />
+          </div>
         </div>
         <div>
           <Label className="text-xs">Start</Label>
-          <Input type="time" value={form.startTime?.slice(0, 5) || ''} onChange={e => setForm({ ...form, startTime: `${e.target.value}:00` })} className="mt-1 text-xs" disabled={!!form.isAllDay} />
+          <Input type="time" value={form.startTime?.slice(0, 5) || ''} onChange={e => setForm({ ...form, startTime: `${e.target.value}:00` })} className="mt-1 text-xs h-9" disabled={!!form.isAllDay} />
         </div>
         <div>
           <Label className="text-xs">End</Label>
-          <Input type="time" value={form.endTime?.slice(0, 5) || ''} onChange={e => setForm({ ...form, endTime: `${e.target.value}:00` })} className="mt-1 text-xs" disabled={!!form.isAllDay} />
+          <Input type="time" value={form.endTime?.slice(0, 5) || ''} onChange={e => setForm({ ...form, endTime: `${e.target.value}:00` })} className="mt-1 text-xs h-9" disabled={!!form.isAllDay} />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <Label className="text-xs">Venue</Label>
           <Input value={form.venue || ''} onChange={e => setForm({ ...form, venue: e.target.value })} className="mt-1 text-xs" />
@@ -335,15 +265,14 @@ const EventManagement: React.FC = () => {
       <div>
         <Label className="text-xs">Max Participants</Label>
         <Input
-          type="number"
-          min={1}
+          type="number" min={1}
           value={form.maxParticipants ?? ''}
           onChange={e => setForm({ ...form, maxParticipants: e.target.value ? Number(e.target.value) : undefined })}
           className="mt-1 text-xs"
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div className="flex items-center gap-2">
           <Switch checked={!!form.isAllDay} onCheckedChange={v => setForm({ ...form, isAllDay: v })} />
           <Label className="text-xs">All Day</Label>
@@ -352,11 +281,10 @@ const EventManagement: React.FC = () => {
           <Switch checked={!!form.isAttendanceTracked} onCheckedChange={v => setForm({ ...form, isAttendanceTracked: v })} />
           <Label className="text-xs">Track Attendance</Label>
         </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Switch checked={!!form.isMandatory} onCheckedChange={v => setForm({ ...form, isMandatory: v })} />
-        <Label className="text-xs">Mandatory</Label>
+        <div className="flex items-center gap-2">
+          <Switch checked={!!form.isMandatory} onCheckedChange={v => setForm({ ...form, isMandatory: v })} />
+          <Label className="text-xs">Mandatory</Label>
+        </div>
       </div>
 
       <div>
@@ -388,12 +316,8 @@ const EventManagement: React.FC = () => {
           <Label className="text-xs">Target Class IDs (comma-separated)</Label>
           <Input
             value={targetClassCsv}
-            onChange={e => {
-              setTargetClassCsv(e.target.value);
-              setForm({ ...form, targetClassIds: listFromCsv(e.target.value) });
-            }}
-            className="mt-1 text-xs"
-            placeholder="201, 202"
+            onChange={e => { setTargetClassCsv(e.target.value); setForm({ ...form, targetClassIds: listFromCsv(e.target.value) }); }}
+            className="mt-1 text-xs" placeholder="201, 202"
           />
         </div>
       )}
@@ -403,12 +327,8 @@ const EventManagement: React.FC = () => {
           <Label className="text-xs">Target Subject IDs (comma-separated)</Label>
           <Input
             value={targetSubjectCsv}
-            onChange={e => {
-              setTargetSubjectCsv(e.target.value);
-              setForm({ ...form, targetSubjectIds: listFromCsv(e.target.value) });
-            }}
-            className="mt-1 text-xs"
-            placeholder="math-10, science-10"
+            onChange={e => { setTargetSubjectCsv(e.target.value); setForm({ ...form, targetSubjectIds: listFromCsv(e.target.value) }); }}
+            className="mt-1 text-xs" placeholder="math-10, science-10"
           />
         </div>
       )}
@@ -435,10 +355,12 @@ const EventManagement: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <Input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="w-40 text-xs h-8" />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex-1 sm:flex-none sm:w-48">
+            <ResponsiveDatePicker value={filterDate} onChange={setFilterDate} placeholder="Filter by date" />
+          </div>
           {filterDate && (
-            <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => setFilterDate('')}>
+            <Button variant="ghost" size="sm" className="text-xs h-9" onClick={() => setFilterDate('')}>
               Clear
             </Button>
           )}
@@ -500,10 +422,10 @@ const EventManagement: React.FC = () => {
       )}
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-hidden">
           <DialogHeader><DialogTitle className="text-base">Create New Event</DialogTitle></DialogHeader>
           {renderForm(false)}
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowCreate(false)}>Cancel</Button>
             <Button size="sm" onClick={handleCreate} disabled={saving}>{saving ? 'Creating...' : 'Create Event'}</Button>
           </DialogFooter>
@@ -511,10 +433,10 @@ const EventManagement: React.FC = () => {
       </Dialog>
 
       <Dialog open={!!editEvent} onOpenChange={(open) => !open && setEditEvent(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-hidden">
           <DialogHeader><DialogTitle className="text-base">✏️ Edit Event</DialogTitle></DialogHeader>
           {renderForm(true)}
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" size="sm" onClick={() => setEditEvent(null)}>Cancel</Button>
             <Button size="sm" onClick={handleUpdate} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
           </DialogFooter>
