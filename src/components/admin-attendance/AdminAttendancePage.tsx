@@ -10,14 +10,12 @@ import CalendarAttendanceOverlay from './CalendarAttendanceOverlay';
 import EventAttendanceView from './EventAttendanceView';
 import CalendarDayAttendanceView from './CalendarDayAttendanceView';
 import StudentAttendanceLookup from './StudentAttendanceLookup';
-import CardManagement from './CardManagement';
 import ExportReporting from './ExportReporting';
 import AttendanceAlerts from './AttendanceAlerts';
 import { cn } from '@/lib/utils';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   BarChart3, TrendingUp, Sparkles, CalendarDays, PartyPopper,
-  Eye, Users, GitBranch, GraduationCap, CreditCard, Download,
+  Eye, Users, GitBranch, GraduationCap, Download,
   Bell, ChevronRight, AlertTriangle, Activity
 } from 'lucide-react';
 
@@ -49,7 +47,6 @@ const tabGroups = [
   {
     label: 'Tools',
     tabs: [
-      { id: 'cards', label: 'Cards', icon: CreditCard, description: 'Card management' },
       { id: 'export', label: 'Export', icon: Download, description: 'Reports & export' },
       { id: 'alerts', label: 'Alerts', icon: Bell, description: 'Alert configuration' },
     ],
@@ -98,72 +95,61 @@ const AdminAttendancePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Grouped Tab Navigation */}
+      {/* Group Tab Navigation */}
       <div className="space-y-2">
-        {/* Group selector - horizontal pills */}
-        <ScrollArea className="w-full">
-          <div className="flex gap-1.5 pb-1">
-            {tabGroups.map((group) => {
-              const isGroupActive = group.tabs.some(t => t.id === activeTab);
+        <div className="flex items-center rounded-2xl border border-border bg-muted/40 p-1 gap-0.5 overflow-x-auto scrollbar-hide">
+          {tabGroups.map((group) => {
+            const isGroupActive = group.tabs.some(t => t.id === activeTab);
+            const GroupIcon = group.tabs[0].icon;
+            return (
+              <button
+                key={group.label}
+                onClick={() => setActiveTab(group.tabs[0].id)}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 shrink-0",
+                  isGroupActive
+                    ? "bg-background text-foreground shadow-sm px-3 sm:px-4"
+                    : "text-muted-foreground hover:text-foreground px-2 sm:px-3"
+                )}
+              >
+                <GroupIcon className="h-4 w-4 shrink-0" />
+                <span className={cn(
+                  "transition-all duration-200",
+                  isGroupActive ? "inline" : "hidden sm:inline"
+                )}>{group.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Sub-tabs for active group */}
+        {activeGroup && (
+          <div className="flex items-center rounded-2xl border border-border bg-muted/40 p-1 gap-0.5 overflow-x-auto scrollbar-hide">
+            {activeGroup.tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
               return (
                 <button
-                  key={group.label}
-                  onClick={() => setActiveTab(group.tabs[0].id)}
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "px-3.5 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 border",
-                    isGroupActive
-                      ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
-                      : "bg-card hover:bg-muted/80 text-muted-foreground hover:text-foreground border-border/50 hover:border-border"
+                    "flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 shrink-0",
+                    isActive
+                      ? "bg-background text-foreground shadow-sm px-3"
+                      : "text-muted-foreground hover:text-foreground px-2"
                   )}
                 >
-                  <span>{group.label}</span>
+                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                  <span className={cn(
+                    "transition-all duration-200",
+                    isActive ? "inline" : "hidden sm:inline"
+                  )}>{tab.label}</span>
                 </button>
               );
             })}
           </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-
-        {/* Sub-tabs for active group */}
-        {activeGroup && (
-          <ScrollArea className="w-full">
-            <div className="flex gap-1 pb-1">
-              {activeGroup.tabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-200",
-                      isActive
-                        ? "bg-secondary text-secondary-foreground shadow-sm"
-                        : "hover:bg-muted/60 text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
         )}
       </div>
-
-      {/* Breadcrumb */}
-      {activeTabData && activeGroup && (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Activity className="h-3 w-3" />
-          <span>Attendance</span>
-          <ChevronRight className="h-3 w-3" />
-          <span>{activeGroup.label}</span>
-          <ChevronRight className="h-3 w-3" />
-          <span className="text-foreground font-medium">{activeTabData.label}</span>
-          <span className="text-muted-foreground/60 ml-1">— {activeTabData.description}</span>
-        </div>
-      )}
 
       {/* Tab Content */}
       <div className="animate-slide-up" key={activeTab}>
@@ -176,7 +162,6 @@ const AdminAttendancePage: React.FC = () => {
         {activeTab === 'user-types' && <AttendanceByUserType />}
         {activeTab === 'drill-down' && <ClassSubjectDrillDown />}
         {activeTab === 'student' && <StudentAttendanceLookup />}
-        {activeTab === 'cards' && <CardManagement />}
         {activeTab === 'export' && <ExportReporting />}
         {activeTab === 'alerts' && <AttendanceAlerts />}
       </div>

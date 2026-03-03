@@ -22,7 +22,6 @@ import {
   CalendarDays, PartyPopper, Layers, Database, ChevronRight 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const tabs = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, description: 'Overview & stats' },
@@ -90,41 +89,26 @@ const CalendarManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Tab Navigation - Scrollable pill-style */}
-      <ScrollArea className="w-full">
-        <div className="flex gap-1.5 pb-1">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 border",
-                  isActive
-                    ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
-                    : "bg-card hover:bg-muted/80 text-muted-foreground hover:text-foreground border-border/50 hover:border-border"
-                )}
-              >
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
-
-      {/* Breadcrumb indicator */}
-      {activeTabData && (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <CalendarDays className="h-3 w-3" />
-          <span>Calendar</span>
-          <ChevronRight className="h-3 w-3" />
-          <span className="text-foreground font-medium">{activeTabData.label}</span>
-          <span className="text-muted-foreground/60 ml-1">— {activeTabData.description}</span>
-        </div>
-      )}
+      {/* Tab Navigation */}
+      <div className="flex items-center rounded-2xl border border-border bg-muted/40 p-1 gap-0.5 w-full">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "flex-1 min-w-0 flex items-center justify-center py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200",
+                isActive
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
 
       {/* Tab Content */}
       <div className="animate-slide-up">

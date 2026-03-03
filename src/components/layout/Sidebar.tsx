@@ -1028,13 +1028,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             alwaysShow: false
           },
           {
-            id: 'daily-attendance',
-            label: 'Daily Attendance',
-            icon: UserCheck,
-            permission: 'view-attendance',
-            alwaysShow: false
-          },
-          {
             id: 'qr-attendance',
             label: 'Mark Attendance',
             icon: QrCode,
@@ -1058,13 +1051,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             id: 'today-dashboard',
             label: 'Today',
             icon: CalendarDays,
-            permission: 'view-attendance',
-            alwaysShow: false
-          },
-          {
-            id: 'daily-attendance',
-            label: 'Daily Attendance',
-            icon: UserCheck,
             permission: 'view-attendance',
             alwaysShow: false
           },
@@ -1099,13 +1085,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       if (selectedInstitute && !selectedClass && !selectedSubject) {
         return [
           {
-            id: 'daily-attendance',
-            label: 'Daily Attendance',
-            icon: UserCheck,
-            permission: 'view-attendance',
-            alwaysShow: false
-          },
-          {
             id: 'qr-attendance',
             label: 'Mark Attendance',
             icon: QrCode,
@@ -1133,20 +1112,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             permission: 'view-attendance',
             alwaysShow: false
           },
-          {
-            id: 'bulk-attendance',
-            label: 'Bulk Attendance',
-            icon: Users,
-            permission: 'mark-attendance',
-            alwaysShow: false
-          },
-          {
-            id: 'card-user-lookup',
-            label: 'Card Lookup',
-            icon: CreditCard,
-            permission: 'view-attendance',
-            alwaysShow: false
-          }
         ];
       }
 
@@ -1154,13 +1119,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       if (selectedInstitute && selectedClass) {
         return [
           {
-            id: 'daily-attendance',
-            label: 'Daily Attendance',
-            icon: UserCheck,
-            permission: 'view-attendance',
-            alwaysShow: false
-          },
-          {
             id: 'qr-attendance',
             label: 'Mark Attendance',
             icon: QrCode,
@@ -1186,13 +1144,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             label: 'Attendance Monitor',
             icon: BarChart3,
             permission: 'view-attendance',
-            alwaysShow: false
-          },
-          {
-            id: 'bulk-attendance',
-            label: 'Bulk Attendance',
-            icon: Users,
-            permission: 'mark-attendance',
             alwaysShow: false
           },
           {
@@ -1202,13 +1153,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             permission: 'view-attendance',
             alwaysShow: false
           },
-          {
-            id: 'card-user-lookup',
-            label: 'Card Lookup',
-            icon: CreditCard,
-            permission: 'view-attendance',
-            alwaysShow: false
-          }
         ];
       }
     }
@@ -1219,13 +1163,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         id: 'today-dashboard',
         label: 'Today',
         icon: CalendarDays,
-        permission: 'view-attendance',
-        alwaysShow: false
-      },
-      {
-        id: 'daily-attendance',
-        label: 'Daily Attendance',
-        icon: UserCheck,
         permission: 'view-attendance',
         alwaysShow: false
       },
@@ -1844,7 +1781,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       let allowPush = true;
 
       // Institute-specific pages that require institute selection
-      const instituteSpecificPages = /^(classes|subjects|students|teachers|users|parents|institutes|daily-attendance|qr-attendance|live-lectures|grading|exams|homework|results|lectures|free-lectures|institute-details|institute-users|verify-image|select-class|select-subject|unverified-students)$/i;
+      const instituteSpecificPages = /^(classes|subjects|students|teachers|users|parents|institutes|qr-attendance|live-lectures|grading|exams|homework|results|lectures|free-lectures|institute-details|institute-users|verify-image|select-class|select-subject|unverified-students)$/i;
       
       // Don't show institute-specific pages in sidebar when no institute is selected
       if (!selectedInstitute && instituteSpecificPages.test(currentPage)) {

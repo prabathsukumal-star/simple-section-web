@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import adminAttendanceApi from '@/api/adminAttendance.api';
-import calendarApi from '@/api/calendar.api';
+import { normalizeAttendanceSummary } from '@/types/attendance.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
+  BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
-import { RefreshCw, TrendingUp, BarChart3, Clock, Activity } from 'lucide-react';
+import { RefreshCw, Clock, Activity } from 'lucide-react';
 import { toast } from 'sonner';
 
 const CHART_COLORS = {
@@ -29,43 +29,76 @@ const AdminDashboardCharts: React.FC = () => {
     if (!currentInstituteId) return;
     setLoading(true);
     try {
-      // Load today's data
+      // Load today's data - use summary from response
       const today = new Date().toISOString().split('T')[0];
       const todayRes = await adminAttendanceApi.getInstituteAttendance(
         currentInstituteId,
-        { startDate: today, endDate: today, limit: 10 },
+        { startDate: today, endDate: today, limit: 100 },
         { ttl: 60 }
       );
+      
       const todayRecords = todayRes?.data || [];
-      setTodayStats({
-        present: todayRecords.filter(r => r.status === 'present').length,
-        absent: todayRecords.filter(r => r.status === 'absent').length,
-        late: todayRecords.filter(r => r.status === 'late').length,
-        left: todayRecords.filter(r => ['left', 'left_early', 'left_lately'].includes(r.status)).length,
-        total: todayRecords.length,
-      });
+      const todaySummary = normalizeAttendanceSummary(todayRes?.summary);
+      
+      if (todayRecords.length > 0) {
+        // Use individual records if available
+        setTodayStats({
+          present: todayRecords.filter(r => r.status === 'present').length,
+          absent: todayRecords.filter(r => r.status === 'absent').length,
+          late: todayRecords.filter(r => r.status === 'late').length,
+          left: todayRecords.filter(r => ['left', 'left_early', 'left_lately'].includes(r.status)).length,
+          total: todayRecords.length,
+        });
+      } else if (todaySummary.totalPresent > 0 || todaySummary.totalAbsent > 0 || todaySummary.totalLate > 0) {
+        // Fall back to summary data
+        const left = todaySummary.totalLeft + todaySummary.totalLeftEarly + todaySummary.totalLeftLately;
+        const total = todaySummary.totalPresent + todaySummary.totalAbsent + todaySummary.totalLate + left;
+        setTodayStats({
+          present: todaySummary.totalPresent,
+          absent: todaySummary.totalAbsent,
+          late: todaySummary.totalLate,
+          left,
+          total,
+        });
+      } else {
+        setTodayStats({ present: 0, absent: 0, late: 0, left: 0, total: 0 });
+      }
 
-      // Load last 4 weeks for day-of-week analysis
+      // Load last 4 weeks for day-of-week analysis using daily summaries
       const end = new Date();
       const start = new Date();
       start.setDate(start.getDate() - 28);
-      const records = await adminAttendanceApi.getInstituteAttendanceRange(
+      
+      const dailySummaries = await adminAttendanceApi.getInstituteDailySummaries(
         currentInstituteId,
         start.toISOString().split('T')[0],
         end.toISOString().split('T')[0],
         { ttl: 300 }
       );
 
-      // Day of week analysis
-      const dayMap = new Map<number, { present: number; total: number }>();
-      for (const r of records) {
-        const d = new Date(r.date || r.markedAt?.split('T')[0] || '');
+      // Day of week analysis using summaries
+      const dayMap = new Map<number, { present: number; total: number; rateSum: number; dayCount: number }>();
+      for (const ds of dailySummaries) {
+        const d = new Date(ds.date);
         const day = d.getDay();
-        if (!dayMap.has(day)) dayMap.set(day, { present: 0, total: 0 });
+        if (!dayMap.has(day)) dayMap.set(day, { present: 0, total: 0, rateSum: 0, dayCount: 0 });
         const s = dayMap.get(day)!;
-        s.total++;
-        if (r.status === 'present') s.present++;
+        
+        if (ds.records.length > 0) {
+          // Use individual records
+          for (const r of ds.records) {
+            s.total++;
+            if (r.status === 'present') s.present++;
+          }
+        } else if (ds.summary.totalPresent > 0 || ds.summary.totalAbsent > 0) {
+          // Use summary
+          s.present += ds.summary.totalPresent;
+          const dayTotal = ds.summary.totalPresent + ds.summary.totalAbsent + ds.summary.totalLate + 
+            ds.summary.totalLeft + ds.summary.totalLeftEarly + ds.summary.totalLeftLately;
+          s.total += dayTotal;
+        }
       }
+      
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       const dowData = [1, 2, 3, 4, 5].map(d => ({
         day: dayNames[d],
@@ -123,7 +156,7 @@ const AdminDashboardCharts: React.FC = () => {
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
             </div>
-          ) : todayStats ? (
+          ) : todayStats && todayStats.total > 0 ? (
             <div className="flex flex-col sm:flex-row items-center gap-6">
               {/* Pie Chart */}
               <div className="w-48 h-48">

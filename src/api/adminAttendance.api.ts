@@ -6,15 +6,17 @@ import type {
   AttendanceQueryResponse,
   CardUserResponse,
   BulkAttendancePayload,
-  BulkAttendanceResponse,
   BulkCardAttendancePayload,
+  BulkAttendanceResponse,
   MarkAttendancePayload,
   MarkAttendanceResponse,
   MarkByCardPayload,
   MarkByCardResponse as MarkCardResp,
   MarkByInstituteCardPayload,
   MarkByInstituteCardResponse,
+  AttendanceSummary,
 } from '@/types/attendance.types';
+import { normalizeAttendanceSummary } from '@/types/attendance.types';
 
 // Re-export for backward compatibility
 export type AdminAttendanceRecord = import('@/types/attendance.types').AttendanceRecord;
@@ -22,6 +24,19 @@ export type AdminAttendanceResponse = AttendanceQueryResponse;
 export type AdminUserType = AttUserType;
 
 export { type CardUserResponse } from '@/types/attendance.types';
+
+// ── Result types ──────────────────────────────────────────────
+
+export interface DailySummaryResult {
+  date: string;
+  summary: AttendanceSummary;
+  records: AdminAttendanceRecord[];
+}
+
+export interface MultiWindowResult {
+  records: AdminAttendanceRecord[];
+  summary: AttendanceSummary;
+}
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -33,9 +48,27 @@ export async function fetchMultiWindow(
   extraParams: Record<string, any> = {},
   options?: CachedRequestOptions
 ): Promise<AdminAttendanceRecord[]> {
+  const result = await fetchMultiWindowWithSummary(endpoint, startDate, endDate, extraParams, options);
+  return result.records;
+}
+
+/** Like fetchMultiWindow but also returns accumulated summary data */
+export async function fetchMultiWindowWithSummary(
+  endpoint: string,
+  startDate: string,
+  endDate: string,
+  extraParams: Record<string, any> = {},
+  options?: CachedRequestOptions
+): Promise<MultiWindowResult> {
   const start = new Date(startDate);
   const end = new Date(endDate);
   const allRecords: AdminAttendanceRecord[] = [];
+  const accSummary: AttendanceSummary = {
+    totalPresent: 0, totalAbsent: 0, totalLate: 0,
+    totalLeft: 0, totalLeftEarly: 0, totalLeftLately: 0,
+    attendanceRate: 0,
+  };
+  let windowCount = 0;
   let windowStart = new Date(start);
 
   while (windowStart <= end) {
@@ -53,13 +86,68 @@ export async function fetchMultiWindow(
         ...extraParams,
       }, options);
       if (res?.data) allRecords.push(...res.data);
+      if (res?.summary) {
+        const s = normalizeAttendanceSummary(res.summary);
+        accSummary.totalPresent += s.totalPresent;
+        accSummary.totalAbsent += s.totalAbsent;
+        accSummary.totalLate += s.totalLate;
+        accSummary.totalLeft += s.totalLeft;
+        accSummary.totalLeftEarly += s.totalLeftEarly;
+        accSummary.totalLeftLately += s.totalLeftLately;
+        accSummary.attendanceRate += s.attendanceRate;
+        windowCount++;
+      }
     } catch (e) {
       console.warn('Window fetch failed:', fmt(windowStart), '-', fmt(windowEnd), e);
     }
 
     windowStart.setDate(windowStart.getDate() + 5);
   }
-  return allRecords;
+
+  // Average the rate across windows
+  if (windowCount > 0) {
+    accSummary.attendanceRate = Math.round((accSummary.attendanceRate / windowCount) * 10) / 10;
+  }
+
+  return { records: allRecords, summary: accSummary };
+}
+
+/** Fetch per-day summaries for a date range (parallel per-day API calls) */
+export async function fetchDailySummaries(
+  endpoint: string,
+  startDate: string,
+  endDate: string,
+  extraParams: Record<string, any> = {},
+  options?: CachedRequestOptions
+): Promise<DailySummaryResult[]> {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const dates: string[] = [];
+  
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    dates.push(d.toISOString().split('T')[0]);
+  }
+
+  const results = await Promise.allSettled(
+    dates.map(dateStr =>
+      attendanceApiClient.get<AdminAttendanceResponse>(endpoint, {
+        startDate: dateStr,
+        endDate: dateStr,
+        limit: 100,
+        page: 1,
+        ...extraParams,
+      }, options)
+    )
+  );
+
+  return dates.map((date, i) => {
+    const res = results[i].status === 'fulfilled' ? results[i].value : null;
+    return {
+      date,
+      summary: normalizeAttendanceSummary(res?.summary),
+      records: res?.data || [],
+    };
+  });
 }
 
 // ── API ────────────────────────────────────────────────────────
@@ -161,6 +249,26 @@ const adminAttendanceApi = {
     options?: CachedRequestOptions
   ) {
     return fetchMultiWindow(`/api/attendance/institute/${instituteId}`, startDate, endDate, {}, options);
+  },
+
+  /** Multi-window institute attendance with accumulated summary */
+  getInstituteAttendanceRangeWithSummary(
+    instituteId: string,
+    startDate: string,
+    endDate: string,
+    options?: CachedRequestOptions
+  ) {
+    return fetchMultiWindowWithSummary(`/api/attendance/institute/${instituteId}`, startDate, endDate, {}, options);
+  },
+
+  /** Get per-day summaries for a date range */
+  getInstituteDailySummaries(
+    instituteId: string,
+    startDate: string,
+    endDate: string,
+    options?: CachedRequestOptions
+  ): Promise<DailySummaryResult[]> {
+    return fetchDailySummaries(`/api/attendance/institute/${instituteId}`, startDate, endDate, {}, options);
   },
 
   /** 3.4 — Get class attendance */

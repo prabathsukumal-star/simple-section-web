@@ -3,11 +3,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import adminAttendanceApi, { AdminAttendanceRecord, AdminUserType } from '@/api/adminAttendance.api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RefreshCw, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { renderAttendanceStatusBadge } from '@/components/calendar/calendarTheme';
 
 const USER_TYPES: { value: AdminUserType; label: string; icon: string }[] = [
   { value: 'STUDENT', label: 'Students', icon: '' },
@@ -45,16 +45,6 @@ const AttendanceByUserType: React.FC = () => {
   useEffect(() => { setPage(1); }, [activeType]);
   useEffect(() => { loadData(); }, [loadData]);
 
-  const statusIcon = (status: string) => {
-    switch (status) {
-      case 'present': return 'P';
-      case 'absent': return 'A';
-      case 'late': return 'L';
-      case 'left': case 'left_early': case 'left_lately': return '→';
-      default: return '—';
-    }
-  };
-
   const summary = {
     total: records.length,
     present: records.filter(r => r.status === 'present').length,
@@ -87,7 +77,6 @@ const AttendanceByUserType: React.FC = () => {
           </TabsList>
         </Tabs>
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-4 gap-2">
           <div className="text-center p-2 bg-muted rounded-lg">
             <div className="text-lg font-bold">{summary.total}</div>
@@ -107,7 +96,6 @@ const AttendanceByUserType: React.FC = () => {
           </div>
         </div>
 
-        {/* Records */}
         {loading ? (
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -136,14 +124,14 @@ const AttendanceByUserType: React.FC = () => {
                         {(r.date || r.markedAt?.split('T')[0]) &&
                           new Date(r.date || r.markedAt!.split('T')[0]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </TableCell>
-                      <TableCell className="text-xs text-center">{statusIcon(r.status)}</TableCell>
+                      <TableCell className="text-xs text-center">{renderAttendanceStatusBadge(r.status)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{r.eventTitle || '—'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
-            {/* Pagination */}
+
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">Page {page} of {totalPages}</span>
               <div className="flex gap-1">

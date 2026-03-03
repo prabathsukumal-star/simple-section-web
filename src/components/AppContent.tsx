@@ -97,9 +97,8 @@ import AdminAttendancePage from '@/components/admin-attendance/AdminAttendancePa
 import CalendarMonthView from '@/components/CalendarMonthView';
 import TodayDashboard from '@/components/TodayDashboard';
 import ParentAttendanceDashboard from '@/components/parent-attendance/ParentAttendanceDashboard';
-import BulkAttendancePage from '@/pages/BulkAttendancePage';
 import ClassCalendarPage from '@/pages/ClassCalendarPage';
-import CardUserLookupPage from '@/pages/CardUserLookupPage';
+import DeviceManagement from '@/pages/DeviceManagement';
 
 interface AppContentProps {
   initialPage?: string;
@@ -846,8 +845,6 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <Grading />;
         case 'attendance':
           return <Attendance />;
-        case 'daily-attendance':
-          return <NewAttendance />;
         case 'qr-attendance':
           return <QRAttendance />;
         case 'institute-mark-attendance':
@@ -920,8 +917,6 @@ const AppContent = ({ initialPage }: AppContentProps) => {
           return <Dashboard />;
         case 'attendance':
           return <Attendance />;
-        case 'daily-attendance':
-          return <NewAttendance />;
         case 'my-attendance':
           return <MyAttendance />;
         case 'today-dashboard':
@@ -981,9 +976,8 @@ const AppContent = ({ initialPage }: AppContentProps) => {
       'today-dashboard',
       'admin-attendance',
       'parent-attendance',
-      'bulk-attendance',
       'class-calendar',
-      'card-user-lookup'
+      'device-management'
     ];
     
     console.log('🔍 Student Role - Debug:', { 
@@ -1077,8 +1071,6 @@ const AppContent = ({ initialPage }: AppContentProps) => {
         return <Grading />;
       case 'attendance':
         return <Attendance />;
-      case 'daily-attendance':
-        return <NewAttendance />;
       case 'attendance-markers':
         return <AttendanceMarkers />;
       case 'qr-attendance':
@@ -1145,21 +1137,15 @@ const AppContent = ({ initialPage }: AppContentProps) => {
       case 'calendar-view':
         return <CalendarMonthView />;
       case 'today-dashboard':
-        // InstituteAdmin doesn't use Today Dashboard - redirect to daily-attendance
-        if (userRole === 'InstituteAdmin') {
-          return <NewAttendance />;
-        }
         return <TodayDashboard />;
       case 'admin-attendance':
         return <AdminAttendancePage />;
       case 'parent-attendance':
         return <ParentAttendanceDashboard />;
-      case 'bulk-attendance':
-        return <BulkAttendancePage />;
       case 'class-calendar':
         return <ClassCalendarPage />;
-      case 'card-user-lookup':
-        return <CardUserLookupPage />;
+      case 'device-management':
+        return <DeviceManagement />;
       case 'my-children':
         return <MyChildren />;
       case 'child/:childId/dashboard':

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import adminAttendanceApi, { AdminAttendanceRecord } from '@/api/adminAttendance.api';
+import { normalizeAttendanceSummary, AttendanceSummary } from '@/types/attendance.types';
 import { apiClient } from '@/api/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ const ClassSubjectDrillDown: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSubject, setSelectedSubject] = useState(ALL_SUBJECTS_VALUE);
   const [records, setRecords] = useState<AdminAttendanceRecord[]>([]);
+  const [apiSummary, setApiSummary] = useState<AttendanceSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const d = new Date(); d.setDate(d.getDate() - 4);
@@ -51,7 +53,7 @@ const ClassSubjectDrillDown: React.FC = () => {
     if (!currentInstituteId || !selectedClass) return;
     setLoading(true);
     try {
-      const params = { startDate, endDate, limit: 10, page: 1 };
+      const params = { startDate, endDate, limit: 100, page: 1 };
       const normalizedSubjectId = selectedSubject && selectedSubject !== ALL_SUBJECTS_VALUE
         ? selectedSubject
         : '';
@@ -63,6 +65,7 @@ const ClassSubjectDrillDown: React.FC = () => {
         res = await adminAttendanceApi.getClassAttendance(currentInstituteId, selectedClass, params);
       }
       setRecords(res?.data || []);
+      setApiSummary(normalizeAttendanceSummary(res?.summary));
     } catch (e: any) {
       toast.error(e.message || 'Failed to load drill-down data');
     } finally {
@@ -234,7 +237,28 @@ const ClassSubjectDrillDown: React.FC = () => {
         )}
 
         {!loading && records.length === 0 && selectedClass && (
-          <p className="text-sm text-muted-foreground text-center py-4">No records found for selected filters</p>
+          apiSummary && (apiSummary.totalPresent > 0 || apiSummary.totalAbsent > 0) ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+              <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                <div className="text-lg font-bold text-emerald-600">{apiSummary.totalPresent}</div>
+                <div className="text-xs text-muted-foreground">Present</div>
+              </div>
+              <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                <div className="text-lg font-bold text-red-500">{apiSummary.totalAbsent}</div>
+                <div className="text-xs text-muted-foreground">Absent</div>
+              </div>
+              <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                <div className="text-lg font-bold text-amber-600">{apiSummary.totalLate}</div>
+                <div className="text-xs text-muted-foreground">Late</div>
+              </div>
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <div className="text-lg font-bold text-primary">{apiSummary.attendanceRate}%</div>
+                <div className="text-xs text-muted-foreground">Rate</div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">No records found for selected filters</p>
+          )
         )}
       </CardContent>
     </Card>

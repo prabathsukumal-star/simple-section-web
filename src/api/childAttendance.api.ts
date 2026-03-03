@@ -346,7 +346,7 @@ class ChildAttendanceApi {
       address: request.address,
       markingMethod: request.markingMethod,
       status: request.status,
-      date: new Date().toISOString()
+      date: new Date().toISOString().split('T')[0] // YYYY-MM-DD format per API docs
     };
 
     // Only include class data if provided

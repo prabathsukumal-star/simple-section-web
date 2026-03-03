@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import adminAttendanceApi, { AdminAttendanceRecord } from '@/api/adminAttendance.api';
+import { normalizeAttendanceSummary, AttendanceSummary } from '@/types/attendance.types';
 import calendarApi from '@/api/calendar.api';
 import type { CalendarDay, CalendarEvent } from '@/types/calendar.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { RefreshCw, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { getDayTypeMeta, renderAttendanceStatusBadge } from '@/components/calendar/calendarTheme';
 
 function toSriLankaTime(utcStr: string): string {
   try {
@@ -21,20 +23,6 @@ function toSriLankaTime(utcStr: string): string {
     });
   } catch { return utcStr; }
 }
-
-const statusIcon = (s: string) => {
-  switch (s) {
-    case 'present': return 'P'; case 'absent': return 'A'; case 'late': return 'L';
-    case 'left': return '→'; case 'left_early': return 'L→'; case 'left_lately': return 'L→';
-    default: return '—';
-  }
-};
-
-const DAY_TYPE_ICONS: Record<string, string> = {
-  REGULAR: '●', HALF_DAY: '◐', EXAM_DAY: '■', WEEKEND: '○',
-  PUBLIC_HOLIDAY: '✕', INSTITUTE_HOLIDAY: '✕', CANCELLED: '—',
-  STAFF_ONLY: '◆', SPECIAL_EVENT: '★',
-};
 
 interface EventGroup {
   eventId: string;
@@ -53,6 +41,7 @@ const CalendarDayAttendanceView: React.FC = () => {
   const [calendarDay, setCalendarDay] = useState<CalendarDay | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [records, setRecords] = useState<AdminAttendanceRecord[]>([]);
+  const [apiSummary, setApiSummary] = useState<AttendanceSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
 
@@ -75,24 +64,27 @@ const CalendarDayAttendanceView: React.FC = () => {
 
         // Get calendar day attendance
         const attRes = await adminAttendanceApi.getCalendarDayAttendance(
-          currentInstituteId, String(day.id), { limit: 10 }
+          currentInstituteId, String(day.id), { limit: 100 }
         );
         const data = attRes?.data;
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setRecords(data);
         } else if (data && typeof data === 'object' && 'records' in data) {
           setRecords((data as any).records || []);
         } else {
           setRecords([]);
         }
+        // Always capture summary
+        setApiSummary(normalizeAttendanceSummary(attRes?.summary));
       } else {
         setEvents([]);
         // Fallback: use institute attendance for the date
         const attRes = await adminAttendanceApi.getInstituteAttendance(
           currentInstituteId,
-          { startDate: selectedDate, endDate: selectedDate, limit: 10 }
+          { startDate: selectedDate, endDate: selectedDate, limit: 100 }
         );
         setRecords(attRes?.data || []);
+        setApiSummary(normalizeAttendanceSummary(attRes?.summary));
       }
     } catch (e: any) {
       toast.error(e.message || 'Failed to load day attendance');
@@ -127,14 +119,22 @@ const CalendarDayAttendanceView: React.FC = () => {
     });
   }, [records, events]);
 
-  // Day totals
+  // Day totals - use records if available, fall back to summary
   const dayTotals = React.useMemo(() => {
-    const present = records.filter(r => r.status === 'present').length;
-    const absent = records.filter(r => r.status === 'absent').length;
-    const late = records.filter(r => r.status === 'late').length;
-    const total = records.length;
-    return { present, absent, late, total, rate: total > 0 ? Math.round((present / total) * 1000) / 10 : 0 };
-  }, [records]);
+    if (records.length > 0) {
+      const present = records.filter(r => r.status === 'present').length;
+      const absent = records.filter(r => r.status === 'absent').length;
+      const late = records.filter(r => r.status === 'late').length;
+      const total = records.length;
+      return { present, absent, late, total, rate: total > 0 ? Math.round((present / total) * 1000) / 10 : 0 };
+    }
+    if (apiSummary && (apiSummary.totalPresent > 0 || apiSummary.totalAbsent > 0)) {
+      const left = apiSummary.totalLeft + apiSummary.totalLeftEarly + apiSummary.totalLeftLately;
+      const total = apiSummary.totalPresent + apiSummary.totalAbsent + apiSummary.totalLate + left;
+      return { present: apiSummary.totalPresent, absent: apiSummary.totalAbsent, late: apiSummary.totalLate, total, rate: apiSummary.attendanceRate };
+    }
+    return { present: 0, absent: 0, late: 0, total: 0, rate: 0 };
+  }, [records, apiSummary]);
 
   const toggleEvent = (eventId: string) => {
     setExpandedEvents(prev => {
@@ -179,7 +179,7 @@ const CalendarDayAttendanceView: React.FC = () => {
         </div>
       )}
 
-      {!loading && records.length > 0 && (
+      {!loading && dayTotals.total > 0 && (
         <>
           {/* Day Header */}
           <Card>
@@ -187,7 +187,10 @@ const CalendarDayAttendanceView: React.FC = () => {
               <CardTitle className="text-sm">{dateLabel}</CardTitle>
               {calendarDay && (
                 <div className="flex gap-2 text-xs text-muted-foreground">
-                  <span>{DAY_TYPE_ICONS[calendarDay.dayType] || '○'} {calendarDay.dayType.replace(/_/g, ' ')}</span>
+                  <span className="flex items-center gap-1.5">
+                    <span className={`w-2.5 h-2.5 rounded-full ${getDayTypeMeta(calendarDay.dayType).dot}`} />
+                    {getDayTypeMeta(calendarDay.dayType).label}
+                  </span>
                   {calendarDay.startTime && <span>{calendarDay.startTime} — {calendarDay.endTime || ''}</span>}
                 </div>
               )}
@@ -256,7 +259,7 @@ const CalendarDayAttendanceView: React.FC = () => {
                             <TableRow key={i}>
                               <TableCell className="text-xs">{i + 1}</TableCell>
                               <TableCell className="text-xs font-medium">{r.studentName || r.userName || r.studentId}</TableCell>
-                              <TableCell className="text-xs text-center">{statusIcon(r.status)} {r.status}</TableCell>
+                              <TableCell className="text-xs text-center">{renderAttendanceStatusBadge(r.status)}</TableCell>
                               <TableCell className="text-xs">{r.markedAt ? toSriLankaTime(r.markedAt) : '—'}</TableCell>
                             </TableRow>
                           ))}
@@ -271,7 +274,7 @@ const CalendarDayAttendanceView: React.FC = () => {
         </>
       )}
 
-      {!loading && records.length === 0 && calendarDay && (
+      {!loading && dayTotals.total === 0 && calendarDay && (
         <Card>
           <CardContent className="py-6 text-center">
             <p className="text-sm text-muted-foreground">No attendance records for this day</p>

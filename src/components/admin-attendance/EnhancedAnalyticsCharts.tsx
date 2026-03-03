@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import adminAttendanceApi, { AdminAttendanceRecord } from '@/api/adminAttendance.api';
+import type { DailySummaryResult } from '@/api/adminAttendance.api';
 import { apiClient } from '@/api/client';
+import { normalizeAttendanceSummary } from '@/types/attendance.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +14,7 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceLine,
 } from 'recharts';
-import { RefreshCw, TrendingUp, BarChart3, Target, Radar as RadarIcon } from 'lucide-react';
+import { RefreshCw, TrendingUp, BarChart3, Target } from 'lucide-react';
 import { toast } from 'sonner';
 
 const CHART_COLORS = {
@@ -27,24 +29,50 @@ interface ClassOption { id: string; name: string }
 
 const EnhancedAnalyticsCharts: React.FC = () => {
   const { currentInstituteId } = useAuth();
+  const [dailySummaries, setDailySummaries] = useState<DailySummaryResult[]>([]);
   const [records, setRecords] = useState<AdminAttendanceRecord[]>([]);
+  const [overallSummary, setOverallSummary] = useState({ totalPresent: 0, totalAbsent: 0, totalLate: 0, totalLeft: 0, total: 0 });
   const [loading, setLoading] = useState(false);
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [startDate, setStartDate] = useState(() => {
-    const d = new Date(); d.setMonth(d.getMonth() - 3);
+    const d = new Date(); d.setDate(d.getDate() - 1);
     return d.toISOString().split('T')[0];
   });
-  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  });
 
   const loadData = useCallback(async () => {
     if (!currentInstituteId) return;
     setLoading(true);
     try {
-      const [recs, classRes] = await Promise.allSettled([
-        adminAttendanceApi.getInstituteAttendanceRange(currentInstituteId, startDate, endDate, { ttl: 300 }),
+      const [rangeResult, classRes] = await Promise.allSettled([
+        adminAttendanceApi.getInstituteAttendanceRangeWithSummary(currentInstituteId, startDate, endDate, { ttl: 300 }),
         apiClient.get(`/institutes/${currentInstituteId}/classes`),
       ]);
-      setRecords(recs.status === 'fulfilled' ? recs.value || [] : []);
+      
+      const result = rangeResult.status === 'fulfilled' ? rangeResult.value : { records: [], summary: normalizeAttendanceSummary(undefined) };
+      setRecords(result.records);
+      
+      // Also fetch daily summaries for per-day charts
+      const dailyRes = await adminAttendanceApi.getInstituteDailySummaries(
+        currentInstituteId, startDate, endDate, { ttl: 300 }
+      );
+      setDailySummaries(dailyRes);
+      
+      // Calculate overall summary
+      const s = result.summary;
+      const left = s.totalLeft + s.totalLeftEarly + s.totalLeftLately;
+      const total = s.totalPresent + s.totalAbsent + s.totalLate + left;
+      setOverallSummary({
+        totalPresent: s.totalPresent,
+        totalAbsent: s.totalAbsent,
+        totalLate: s.totalLate,
+        totalLeft: left,
+        total,
+      });
+      
       setClasses(classRes.status === 'fulfilled' ? (classRes.value?.data || classRes.value || []) : []);
     } catch (e: any) {
       toast.error(e.message || 'Failed to load analytics data');
@@ -55,36 +83,52 @@ const EnhancedAnalyticsCharts: React.FC = () => {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Chart 1: Daily stacked bar
+  // Chart 1: Daily stacked bar - use daily summaries
   const dailyData = useMemo(() => {
-    const grouped = new Map<string, { present: number; absent: number; late: number; left: number }>();
-    for (const r of records) {
-      const date = r.date || r.markedAt?.split('T')[0] || '';
-      if (!grouped.has(date)) grouped.set(date, { present: 0, absent: 0, late: 0, left: 0 });
-      const g = grouped.get(date)!;
-      if (r.status === 'present') g.present++;
-      else if (r.status === 'absent') g.absent++;
-      else if (r.status === 'late') g.late++;
-      else g.left++;
-    }
-    return Array.from(grouped.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, g]) => ({
-        date: new Date(date).toLocaleDateString('en-LK', { day: 'numeric', month: 'short' }),
-        ...g,
-      }));
-  }, [records]);
+    return dailySummaries
+      .filter(ds => ds.summary.totalPresent > 0 || ds.summary.totalAbsent > 0 || ds.records.length > 0)
+      .map(ds => {
+        if (ds.records.length > 0) {
+          const grouped = { present: 0, absent: 0, late: 0, left: 0 };
+          for (const r of ds.records) {
+            if (r.status === 'present') grouped.present++;
+            else if (r.status === 'absent') grouped.absent++;
+            else if (r.status === 'late') grouped.late++;
+            else grouped.left++;
+          }
+          return {
+            date: new Date(ds.date).toLocaleDateString('en-LK', { day: 'numeric', month: 'short' }),
+            ...grouped,
+          };
+        }
+        const s = ds.summary;
+        return {
+          date: new Date(ds.date).toLocaleDateString('en-LK', { day: 'numeric', month: 'short' }),
+          present: s.totalPresent,
+          absent: s.totalAbsent,
+          late: s.totalLate,
+          left: s.totalLeft + s.totalLeftEarly + s.totalLeftLately,
+        };
+      });
+  }, [dailySummaries]);
 
-  // Chart 2: Monthly trend line
+  // Chart 2: Monthly trend line - use daily summaries
   const monthlyTrend = useMemo(() => {
     const grouped = new Map<string, { present: number; total: number }>();
-    for (const r of records) {
-      const date = r.date || r.markedAt?.split('T')[0] || '';
-      const monthKey = date.substring(0, 7);
+    for (const ds of dailySummaries) {
+      const monthKey = ds.date.substring(0, 7);
       if (!grouped.has(monthKey)) grouped.set(monthKey, { present: 0, total: 0 });
       const g = grouped.get(monthKey)!;
-      g.total++;
-      if (r.status === 'present') g.present++;
+      
+      if (ds.records.length > 0) {
+        g.total += ds.records.length;
+        g.present += ds.records.filter(r => r.status === 'present').length;
+      } else {
+        const s = ds.summary;
+        const dayTotal = s.totalPresent + s.totalAbsent + s.totalLate + s.totalLeft + s.totalLeftEarly + s.totalLeftLately;
+        g.total += dayTotal;
+        g.present += s.totalPresent;
+      }
     }
     return Array.from(grouped.entries())
       .sort(([a], [b]) => a.localeCompare(b))
@@ -92,29 +136,38 @@ const EnhancedAnalyticsCharts: React.FC = () => {
         month: new Date(key + '-01').toLocaleString('en-US', { month: 'short' }),
         rate: g.total > 0 ? Math.round((g.present / g.total) * 1000) / 10 : 0,
       }));
-  }, [records]);
+  }, [dailySummaries]);
 
-  // Chart 3: Status donut
+  // Chart 3: Status donut - use overall summary
   const statusBreakdown = useMemo(() => {
-    const counts = { present: 0, absent: 0, late: 0, left: 0, leftEarly: 0, leftLately: 0 };
-    for (const r of records) {
-      if (r.status === 'present') counts.present++;
-      else if (r.status === 'absent') counts.absent++;
-      else if (r.status === 'late') counts.late++;
-      else if (r.status === 'left') counts.left++;
-      else if (r.status === 'left_early') counts.leftEarly++;
-      else if (r.status === 'left_lately') counts.leftLately++;
+    if (records.length > 0) {
+      // Use records if available
+      const counts = { present: 0, absent: 0, late: 0, left: 0 };
+      for (const r of records) {
+        if (r.status === 'present') counts.present++;
+        else if (r.status === 'absent') counts.absent++;
+        else if (r.status === 'late') counts.late++;
+        else counts.left++;
+      }
+      return [
+        { name: 'Present', value: counts.present, color: CHART_COLORS.present },
+        { name: 'Absent', value: counts.absent, color: CHART_COLORS.absent },
+        { name: 'Late', value: counts.late, color: CHART_COLORS.late },
+        { name: 'Left', value: counts.left, color: CHART_COLORS.left },
+      ].filter(d => d.value > 0);
     }
+    // Use overall summary
     return [
-      { name: 'Present', value: counts.present, color: CHART_COLORS.present },
-      { name: 'Absent', value: counts.absent, color: CHART_COLORS.absent },
-      { name: 'Late', value: counts.late, color: CHART_COLORS.late },
-      { name: 'Left', value: counts.left + counts.leftEarly + counts.leftLately, color: CHART_COLORS.left },
+      { name: 'Present', value: overallSummary.totalPresent, color: CHART_COLORS.present },
+      { name: 'Absent', value: overallSummary.totalAbsent, color: CHART_COLORS.absent },
+      { name: 'Late', value: overallSummary.totalLate, color: CHART_COLORS.late },
+      { name: 'Left', value: overallSummary.totalLeft, color: CHART_COLORS.left },
     ].filter(d => d.value > 0);
-  }, [records]);
+  }, [records, overallSummary]);
 
-  // Chart 4: Class-wise comparison (radar)
+  // Chart 4: Class-wise comparison (radar) - only works with records
   const classRadarData = useMemo(() => {
+    if (records.length === 0) return [];
     const classMap = new Map<string, { name: string; present: number; total: number }>();
     for (const r of records) {
       const key = r.classId || 'unknown';
@@ -127,7 +180,7 @@ const EnhancedAnalyticsCharts: React.FC = () => {
       if (r.status === 'present') g.present++;
     }
     return Array.from(classMap.values())
-      .filter(c => c.total > 5) // Only classes with enough data
+      .filter(c => c.total > 5)
       .slice(0, 8)
       .map(c => ({
         class: c.name.length > 12 ? c.name.substring(0, 12) + '…' : c.name,
@@ -135,8 +188,9 @@ const EnhancedAnalyticsCharts: React.FC = () => {
       }));
   }, [records, classes]);
 
-  // Chart 5: Class-wise breakdown table
+  // Chart 5: Class-wise breakdown - only works with records
   const classBreakdown = useMemo(() => {
+    if (records.length === 0) return [];
     const classMap = new Map<string, { name: string; present: number; absent: number; late: number; total: number }>();
     for (const r of records) {
       const key = r.classId || 'unknown';
@@ -152,16 +206,14 @@ const EnhancedAnalyticsCharts: React.FC = () => {
     }
     return Array.from(classMap.values())
       .filter(c => c.total > 0)
-      .sort((a, b) => {
-        const rA = a.present / a.total;
-        const rB = b.present / b.total;
-        return rB - rA;
-      });
+      .sort((a, b) => (b.present / b.total) - (a.present / a.total));
   }, [records, classes]);
 
-  const overallRate = records.length > 0
-    ? Math.round((records.filter(r => r.status === 'present').length / records.length) * 1000) / 10
+  const overallRate = overallSummary.total > 0
+    ? Math.round((overallSummary.totalPresent / overallSummary.total) * 1000) / 10
     : 0;
+
+  const hasData = overallSummary.total > 0 || records.length > 0;
 
   return (
     <div className="space-y-4">
@@ -189,7 +241,7 @@ const EnhancedAnalyticsCharts: React.FC = () => {
             </Button>
             <div className="ml-auto text-right">
               <div className="text-2xl font-bold text-primary">{overallRate}%</div>
-              <div className="text-xs text-muted-foreground">{records.length} records</div>
+              <div className="text-xs text-muted-foreground">{overallSummary.total} records</div>
             </div>
           </div>
         </CardContent>
@@ -201,55 +253,60 @@ const EnhancedAnalyticsCharts: React.FC = () => {
         </div>
       )}
 
-      {!loading && records.length > 0 && (
+      {!loading && hasData && (
         <>
           {/* Row 1: Daily Bar + Donut */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Daily Stacked Bar */}
             <Card className="lg:col-span-2">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm">Daily Attendance Breakdown</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={dailyData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="date" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
-                    <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="present" stackId="a" fill={CHART_COLORS.present} name="Present" />
-                    <Bar dataKey="late" stackId="a" fill={CHART_COLORS.late} name="Late" />
-                    <Bar dataKey="absent" stackId="a" fill={CHART_COLORS.absent} name="Absent" />
-                    <Bar dataKey="left" stackId="a" fill={CHART_COLORS.left} name="Left" />
-                  </BarChart>
-                </ResponsiveContainer>
+                {dailyData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={dailyData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis dataKey="date" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      <Bar dataKey="present" stackId="a" fill={CHART_COLORS.present} name="Present" />
+                      <Bar dataKey="late" stackId="a" fill={CHART_COLORS.late} name="Late" />
+                      <Bar dataKey="absent" stackId="a" fill={CHART_COLORS.absent} name="Absent" />
+                      <Bar dataKey="left" stackId="a" fill={CHART_COLORS.left} name="Left" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">No daily data available</p>
+                )}
               </CardContent>
             </Card>
 
-            {/* Status Donut */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm">Status Breakdown</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie data={statusBreakdown} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                      {statusBreakdown.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                {statusBreakdown.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie data={statusBreakdown} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                        {statusBreakdown.map((entry, i) => (
+                          <Cell key={i} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">No data</p>
+                )}
               </CardContent>
             </Card>
           </div>
 
           {/* Row 2: Monthly Trend + Radar */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Monthly Trend */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -258,20 +315,23 @@ const EnhancedAnalyticsCharts: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={monthlyTrend}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} tickFormatter={v => `${v}%`} />
-                    <Tooltip formatter={(v: number) => `${v}%`} />
-                    <ReferenceLine y={85} stroke="hsl(var(--chart-3))" strokeDasharray="5 5" label={{ value: 'Target: 85%', fontSize: 10 }} />
-                    <Line type="monotone" dataKey="rate" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                  </LineChart>
-                </ResponsiveContainer>
+                {monthlyTrend.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={monthlyTrend}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} tickFormatter={v => `${v}%`} />
+                      <Tooltip formatter={(v: number) => `${v}%`} />
+                      <ReferenceLine y={85} stroke="hsl(var(--chart-3))" strokeDasharray="5 5" label={{ value: 'Target: 85%', fontSize: 10 }} />
+                      <Line type="monotone" dataKey="rate" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">No trend data</p>
+                )}
               </CardContent>
             </Card>
 
-            {/* Radar - Class comparison */}
             {classRadarData.length >= 3 && (
               <Card>
                 <CardHeader className="pb-3">

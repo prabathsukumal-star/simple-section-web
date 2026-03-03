@@ -190,6 +190,7 @@ export interface MarkAttendancePayload {
   address?: string;
   markingMethod?: MarkingMethod;
   eventId?: string;
+  deviceUid?: string; // Registered device UID — triggers device validation
   // userType is auto-detected by backend — do NOT send
 }
 

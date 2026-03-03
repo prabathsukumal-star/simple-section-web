@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import adminAttendanceApi, { AdminAttendanceRecord } from '@/api/adminAttendance.api';
+import { normalizeAttendanceSummary, AttendanceSummary } from '@/types/attendance.types';
 import calendarApi from '@/api/calendar.api';
 import type { CalendarEvent } from '@/types/calendar.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Progress } from '@/components/ui/progress';
 import { RefreshCw, Search, Download, Filter, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
+import { renderAttendanceStatusBadge } from '@/components/calendar/calendarTheme';
 
 function toSriLankaTime(utcStr: string): string {
   try {
@@ -25,23 +27,12 @@ function toSriLankaTime(utcStr: string): string {
   } catch { return utcStr; }
 }
 
-const statusIcon = (s: string) => {
-  switch (s) {
-    case 'present': return 'P';
-    case 'absent': return 'A';
-    case 'late': return 'L';
-    case 'left': return '→';
-    case 'left_early': return 'L→';
-    case 'left_lately': return 'L→';
-    default: return '—';
-  }
-};
-
 const EventAttendanceView: React.FC = () => {
   const { currentInstituteId } = useAuth();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [records, setRecords] = useState<AdminAttendanceRecord[]>([]);
+  const [apiSummary, setApiSummary] = useState<AttendanceSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
@@ -83,6 +74,7 @@ const EventAttendanceView: React.FC = () => {
       } else {
         setRecords([]);
       }
+      setApiSummary(normalizeAttendanceSummary(res?.summary));
     } catch (e: any) {
       toast.error(e.message || 'Failed to load event attendance');
     } finally {
@@ -94,16 +86,31 @@ const EventAttendanceView: React.FC = () => {
     if (selectedEventId) loadEventAttendance();
   }, [selectedEventId, loadEventAttendance]);
 
-  // Summary
+  // Summary - use records if available, fall back to API summary
   const summary = React.useMemo(() => {
-    const present = records.filter(r => r.status === 'present').length;
-    const absent = records.filter(r => r.status === 'absent').length;
-    const late = records.filter(r => r.status === 'late').length;
-    const left = records.filter(r => ['left', 'left_early', 'left_lately'].includes(r.status)).length;
-    const total = records.length;
-    const rate = total > 0 ? Math.round((present / total) * 1000) / 10 : 0;
-    return { present, absent, late, left, total, rate };
-  }, [records]);
+    if (records.length > 0) {
+      const present = records.filter(r => r.status === 'present').length;
+      const absent = records.filter(r => r.status === 'absent').length;
+      const late = records.filter(r => r.status === 'late').length;
+      const left = records.filter(r => ['left', 'left_early', 'left_lately'].includes(r.status)).length;
+      const total = records.length;
+      const rate = total > 0 ? Math.round((present / total) * 1000) / 10 : 0;
+      return { present, absent, late, left, total, rate };
+    }
+    if (apiSummary && (apiSummary.totalPresent > 0 || apiSummary.totalAbsent > 0)) {
+      const left = apiSummary.totalLeft + apiSummary.totalLeftEarly + apiSummary.totalLeftLately;
+      const total = apiSummary.totalPresent + apiSummary.totalAbsent + apiSummary.totalLate + left;
+      return {
+        present: apiSummary.totalPresent,
+        absent: apiSummary.totalAbsent,
+        late: apiSummary.totalLate,
+        left,
+        total,
+        rate: apiSummary.attendanceRate,
+      };
+    }
+    return { present: 0, absent: 0, late: 0, left: 0, total: 0, rate: 0 };
+  }, [records, apiSummary]);
 
   // Filter + search
   const filteredRecords = React.useMemo(() => {
@@ -160,7 +167,7 @@ const EventAttendanceView: React.FC = () => {
       </Card>
 
       {/* Event Details + Summary */}
-      {selectedEvent && records.length > 0 && (
+      {selectedEvent && summary.total > 0 && (
         <>
           <Card>
             <CardHeader className="pb-3">
@@ -250,7 +257,7 @@ const EventAttendanceView: React.FC = () => {
                         <TableCell className="text-xs">{i + 1}</TableCell>
                         <TableCell className="text-xs font-medium">{r.studentName || r.userName || r.studentId}</TableCell>
                         <TableCell className="text-xs text-center">
-                          {statusIcon(r.status)} {r.status}
+                          {renderAttendanceStatusBadge(r.status)}
                         </TableCell>
                         <TableCell className="text-xs">{r.markedAt ? toSriLankaTime(r.markedAt) : '—'}</TableCell>
                         <TableCell className="text-xs">{r.markingMethod || '—'}</TableCell>
