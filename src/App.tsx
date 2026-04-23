@@ -7,6 +7,12 @@ import { InstituteProvider, useInstitute } from './context/InstituteContext';
 // Pages
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
+import ActivateLayout from './pages/activate/ActivateLayout';
+import IdentifyStep from './pages/activate/IdentifyStep';
+import VerifyStep from './pages/activate/VerifyStep';
+import ProfileStep from './pages/activate/ProfileStep';
+import { ActivateProvider } from './pages/activate/ActivateContext';
+import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import ClassesPage from './pages/ClassesPage';
 import ClassDetailPage from './pages/ClassDetailPage';
@@ -145,7 +151,20 @@ function AppRoutes() {
       <Route path="/" element={<LandingPageView />} />
       
       <Route path="/login" element={<LoginRoute />} />
-      <Route path="/register" element={<Navigate to="/login" replace />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route
+        path="/activate"
+        element={
+          <ActivateProvider>
+            <ActivateLayout />
+          </ActivateProvider>
+        }
+      >
+        <Route index element={<Navigate to="/activate/identify" replace />} />
+        <Route path="identify" element={<IdentifyStep />} />
+        <Route path="verify" element={<VerifyStep />} />
+        <Route path="profile" element={<ProfileStep />} />
+      </Route>
       <Route path="/landing" element={<Navigate to="/" replace />} />
       <Route path="/landing-site" element={<Navigate to="/" replace />} />
       <Route path="/landing-site/*" element={<Navigate to="/" replace />} />
