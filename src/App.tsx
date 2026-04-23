@@ -1,347 +1,235 @@
-import React, { useEffect } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { ErrorToaster, Toaster as Sonner } from "@/components/ui/sonner";
-import { NotificationToast } from "@/components/notifications/NotificationToast";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import { App as CapacitorApp } from '@capacitor/app';
-import { Capacitor } from '@capacitor/core';
-// StatusBar imported dynamically to avoid browser module resolution errors
-import { useCapacitorConnection } from "@/hooks/useCapacitorConnection";
-import CapacitorConnectionError from "@/components/CapacitorConnectionError";
-import AppLoadingScreen from "@/components/AppLoadingScreen";
-import Index from "./pages/Index";
-import QRAttendance from "@/components/QRAttendance";
-import RfidAttendance from "@/pages/RFIDAttendance";
-import InstituteMarkAttendance from "@/pages/InstituteMarkAttendance";
+import { BrowserRouter, Routes, Route, Navigate, useParams, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { InstituteProvider, useInstitute } from './context/InstituteContext';
 
-import NotFound from "./pages/NotFound";
-import Payments from "./pages/Payments";
-import CreatePayment from "./pages/CreatePayment";
-import PaymentSubmissions from "./pages/PaymentSubmissions";
-import MySubmissions from "./pages/MySubmissions";
-import InstitutePayments from "./pages/InstitutePayments";
-import SubjectPayments from "./pages/SubjectPayments";
-import SubjectSubmissions from "./pages/SubjectSubmissions";
-import SubjectPaymentSubmissions from "./pages/SubjectPaymentSubmissions";
-import PaymentSubmissionsPage from "./pages/PaymentSubmissionsPage";
-import HomeworkSubmissions from "./pages/HomeworkSubmissions";
-import HomeworkSubmissionDetails from "./pages/HomeworkSubmissionDetails";
-import { AuthProvider } from "@/contexts/AuthContext";
-import UpdateHomework from "@/pages/UpdateHomework";
-import UpdateLecture from "@/pages/UpdateLecture";
-import CardDemo from "@/pages/CardDemo";
-import ExamResults from "@/pages/ExamResults";
-import CreateExamResults from "@/pages/CreateExamResults";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import Transport from "@/pages/Transport";
-import TransportAttendance from "@/pages/TransportAttendance";
-import MyChildren from "@/pages/MyChildren";
-import ChildDashboard from "@/pages/ChildDashboard";
-import ChildResultsPage from "@/pages/ChildResultsPage";
-import ChildAttendancePage from "@/pages/ChildAttendancePage";
-import ChildTransportPage from "@/pages/ChildTransportPage";
-import CardManagement from "@/pages/CardManagement";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import GoogleAuthCallback from "@/pages/GoogleAuthCallback";
-import ActiveSessionsPage from "@/pages/ActiveSessions";
-import ActivateAccount from "@/pages/ActivateAccount";
+// Pages
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import ClassesPage from './pages/ClassesPage';
+import ClassDetailPage from './pages/ClassDetailPage';
+import RecordingPlayerPage from './pages/RecordingPlayerPage';
+import PaymentSubmitPage from './pages/PaymentSubmitPage';
+import MyPaymentsPage from './pages/MyPaymentsPage';
+import WatchHistoryPage from './pages/WatchHistoryPage';
+import LiveJoinPage from './pages/LiveJoinPage';
+import LectureLiveJoinPage from './pages/LectureLiveJoinPage';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 10, // 10 minutes
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+// Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminStudents from './pages/admin/AdminStudents';
+import AdminClasses from './pages/admin/AdminClasses';
+import AdminClassDetail from './pages/admin/AdminClassDetail';
+import AdminSlips from './pages/admin/AdminSlips';
+import AdminAttendance from './pages/admin/AdminAttendance';
+import AdminRecordingHistory from './pages/admin/AdminRecordingHistory';
+import AdminStudentWatchDetail from './pages/admin/AdminStudentWatchDetail';
+import AdminMarkAttendance from './pages/admin/AdminMarkAttendance';
+import AdminMarkAttendanceExternalDevice from './pages/admin/AdminMarkAttendanceExternalDevice';
+import AdminPhysicalAttendanceView from './pages/admin/AdminPhysicalAttendanceView';
+import AdminMonthRecAttendance from './pages/admin/AdminMonthRecAttendance';
+import AdminMonthManage from './pages/admin/AdminMonthManage';
+import AdminIdCards from './pages/admin/AdminIdCards';
+import AdminInstitute from './pages/admin/AdminInstitute';
+import AdminInstituteSelect from './pages/admin/AdminInstituteSelect';
+import ClassMonthRecordingsPage from './pages/ClassMonthRecordingsPage';
+import ClassMonthLiveLessonsPage from './pages/ClassMonthLiveLessonsPage';
+import ClassMonthMediaPage from './pages/ClassMonthMediaPage';
+import StudentMonthRecAttendance from './pages/StudentMonthRecAttendance';
+import MyClassAttendancePage from './pages/MyClassAttendancePage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
+import StudentProfilePage from './pages/StudentProfilePage';
+import MainLandingPage from './pages/MainLandingPage';
 
-// MUI Theme with Inter font
-const muiTheme = createTheme({
-  typography: {
-    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-    fontSize: 14
-  },
-  components: {
-    MuiTableCell: {
-      styleOverrides: {
-        root: {
-          fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
-        }
+import Layout from './components/Layout';
+import LandingStyleLoading from './components/LandingStyleLoading';
+import { getInstituteAdminPath } from './lib/instituteRoutes';
+
+function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: string }) {
+  const { user, loading } = useAuth();
+  if (loading) return <LandingStyleLoading />;
+  if (!user) return <Navigate to="/login" />;
+  if (role && user.role !== role) return <Navigate to="/dashboard" />;
+  return <>{children}</>;
+}
+
+function LoginRoute() {
+  const { user } = useAuth();
+  const { selected, loading: instituteLoading } = useInstitute();
+  const [searchParams] = useSearchParams();
+  if (user?.role === 'ADMIN' && instituteLoading) {
+    return <LandingStyleLoading />;
+  }
+  if (user) {
+    const redirect = searchParams.get('redirect');
+    if (user.role === 'ADMIN') {
+      if (selected) {
+        return <Navigate to={redirect && redirect.startsWith('/') ? redirect : getInstituteAdminPath(selected.id)} />;
       }
-    },
-    MuiTablePagination: {
-      styleOverrides: {
-        root: {
-          fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
-        }
-      }
+      const target = redirect && redirect.startsWith('/')
+        ? `/admin/select-institute?redirect=${encodeURIComponent(redirect)}`
+        : '/admin/select-institute';
+      return <Navigate to={target} />;
+    }
+    return <Navigate to={redirect && redirect.startsWith('/') ? redirect : '/dashboard'} />;
+  }
+  return <LoginPage />;
+}
+
+function AdminLegacyRedirect() {
+  const { selected, loading } = useInstitute();
+  const params = useParams();
+  const suffix = params['*'] ? `/${params['*']}` : '';
+
+  if (loading) {
+    return <LandingStyleLoading />;
+  }
+
+  if (!selected) {
+    const redirect = `/admin${suffix}`;
+    return <Navigate to={`/admin/select-institute?redirect=${encodeURIComponent(redirect)}`} replace />;
+  }
+
+  return <Navigate to={getInstituteAdminPath(selected.id, suffix)} replace />;
+}
+
+function MarkAttendanceExternalOnlyRedirect() {
+  const { selected, loading } = useInstitute();
+  const params = useParams<{ instituteId?: string; classId?: string }>();
+
+  if (loading) {
+    return <LandingStyleLoading />;
+  }
+
+  const instituteId = params.instituteId || selected?.id;
+  const classId = params.classId;
+  const baseTarget = getInstituteAdminPath(instituteId, '/mark-attendance/external-device');
+  const target = classId ? `${baseTarget}?classId=${encodeURIComponent(classId)}` : baseTarget;
+
+  return <Navigate to={target} replace />;
+}
+
+function LandingPageView() {
+  const { user, loading } = useAuth();
+  const { selected } = useInstitute();
+
+  if (loading) {
+    return <LandingStyleLoading />;
+  }
+
+  // If user is authenticated, redirect to appropriate dashboard
+  if (user) {
+    if (user.role === 'ADMIN' && selected) {
+      return <Navigate to={getInstituteAdminPath(selected.id)} replace />;
+    }
+    if (user.role === 'STUDENT') {
+      return <Navigate to="/dashboard" replace />;
     }
   }
-});
 
-const App = () => {
-  const { isOnline, isLoading, retry } = useCapacitorConnection();
+  // For unauthenticated users, render the landing content directly in the same app.
+  return <MainLandingPage />;
+}
 
-  useEffect(() => {
-    // Force light mode
-    const root = document.documentElement;
-    root.classList.remove('dark');
-    root.classList.add('light');
-    localStorage.setItem('theme', 'light');
-    
-    // Configure native platform features
-    if (Capacitor.isNativePlatform()) {
-      // Configure Status Bar (dynamic import to avoid browser errors)
-      import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
-        StatusBar.setStyle({ style: Style.Dark }).catch((err: any) => {
-          console.warn('StatusBar.setStyle not available:', err);
-        });
-        StatusBar.setBackgroundColor({ color: '#1976D2' }).catch((err: any) => {
-          console.warn('StatusBar.setBackgroundColor not available:', err);
-        });
-      }).catch((err) => {
-        console.warn('StatusBar module not available:', err);
-      });
-      
-      // Hide splash screen after app is ready
-      import('@capacitor/splash-screen').then(({ SplashScreen }) => {
-        setTimeout(() => {
-          SplashScreen.hide();
-        }, 500);
-      }).catch((err) => {
-        console.warn('SplashScreen module not available:', err);
-      });
-    }
-  }, []);
+function AppRoutes() {
+  const { loading } = useAuth();
 
-  // Handle Android back button - MUST be before any conditional return (Rules of Hooks)
-  useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      let listenerHandle: any = null;
-      
-      const setupListener = async () => {
-        listenerHandle = await CapacitorApp.addListener('backButton', ({ canGoBack }) => {
-          if (canGoBack) {
-            window.history.back();
-          } else {
-            // If at root, exit the app
-            CapacitorApp.exitApp();
-          }
-        });
-      };
-      
-      setupListener();
-
-      return () => {
-        if (listenerHandle) {
-          listenerHandle.remove();
-        }
-      };
-    }
-  }, []);
-
-  // Show connection error page only when definitively offline (not during loading)
-  // IMPORTANT: This must be AFTER all hooks to comply with Rules of Hooks
-  if (Capacitor.isNativePlatform() && !isLoading && !isOnline) {
-    return <CapacitorConnectionError onRetry={retry} />;
-  }
+  if (loading) return <LandingStyleLoading />;
 
   return (
-    <ErrorBoundary>
-      <ThemeProvider theme={muiTheme}>
-        <CssBaseline />
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <AuthProvider>
-              <Toaster />
-              <Sonner />
-              <ErrorToaster />
-              <NotificationToast />
-              <Routes>
-                {/* Main Routes - All handled by Index/AppContent */}
-                <Route path="/" element={<Index />} />
+    <Routes>
+      {/* Serve static landing page HTML - outside Layout to avoid routing conflicts */}
+      <Route path="/landing-page.html" element={<div />} />
+      <Route path="/" element={<LandingPageView />} />
+      
+      <Route path="/login" element={<LoginRoute />} />
+      <Route path="/register" element={<Navigate to="/login" replace />} />
+      <Route path="/landing" element={<Navigate to="/" replace />} />
+      <Route path="/landing-site" element={<Navigate to="/" replace />} />
+      <Route path="/landing-site/*" element={<Navigate to="/" replace />} />
 
-                {/* Google Drive OAuth - backend redirects back here with query params */}
-                <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
+      {/* Fullscreen recording player — outside Layout (ANYONE recordings work without login) */}
+      <Route path="recording/:id" element={<RecordingPlayerPage />} />
 
-                {/* Activate Account Routes (First Login Flow) */}
-                <Route path="/activate/identify" element={<ActivateAccount />} />
-                <Route path="/activate/verify" element={<ActivateAccount />} />
-                <Route path="/activate/profile" element={<ActivateAccount />} />
+      {/* Live lecture join — outside Layout */}
+      <Route path="live/:token" element={<LiveJoinPage />} />
+      <Route path="lecture-live/:token" element={<LectureLiveJoinPage />} />
 
-                {/* Hierarchical Routes with Context */}
-                <Route path="/institute/:instituteId/*" element={<Index />} />
-                <Route path="/organization/:organizationId/*" element={<Index />} />
-                <Route path="/child/:childId/*" element={<Index />} />
-                <Route path="/transport/:transportId/*" element={<Index />} />
+      <Route path="/" element={<Layout />}>
+        <Route index element={<LandingPage />} />
+        <Route path="institute/:instituteId" element={<ClassesPage />} />
+        <Route path="classes" element={<ClassesPage />} />
+        <Route path="institute/:instituteId/classes" element={<ClassesPage />} />
+        <Route path="classes/:id" element={<ClassDetailPage />} />
+        <Route path="institute/:instituteId/classes/:id" element={<ClassDetailPage />} />
+        <Route path="classes/:id/class-recordings" element={<ClassDetailPage />} />
+        <Route path="institute/:instituteId/classes/:id/class-recordings" element={<ClassDetailPage />} />
+        <Route path="classes/:classId/months/:monthId" element={<ClassMonthRecordingsPage />} />
+        <Route path="institute/:instituteId/classes/:classId/months/:monthId" element={<ClassMonthRecordingsPage />} />
+        <Route path="classes/:classId/months/:monthId/rec-attendance" element={<ProtectedRoute role="ADMIN"><AdminMonthRecAttendance /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/classes/:classId/months/:monthId/rec-attendance" element={<ProtectedRoute role="ADMIN"><AdminMonthRecAttendance /></ProtectedRoute>} />
+        <Route path="classes/:classId/months/:monthId/my-attendance" element={<ProtectedRoute><StudentMonthRecAttendance /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/classes/:classId/months/:monthId/my-attendance" element={<ProtectedRoute><StudentMonthRecAttendance /></ProtectedRoute>} />
+        <Route path="classes/:classId/months/:monthId/live-lessons" element={<ProtectedRoute><ClassMonthLiveLessonsPage /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/classes/:classId/months/:monthId/live-lessons" element={<ProtectedRoute><ClassMonthLiveLessonsPage /></ProtectedRoute>} />
+        <Route path="classes/:classId/months/:monthId/media" element={<ClassMonthMediaPage />} />
+        <Route path="institute/:instituteId/classes/:classId/months/:monthId/media" element={<ClassMonthMediaPage />} />
+        <Route path="classes/:classId/physical-attendance" element={<ProtectedRoute role="ADMIN"><MarkAttendanceExternalOnlyRedirect /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/classes/:classId/physical-attendance" element={<ProtectedRoute role="ADMIN"><MarkAttendanceExternalOnlyRedirect /></ProtectedRoute>} />
+        <Route path="classes/:classId/physical-attendance/qr" element={<ProtectedRoute role="ADMIN"><MarkAttendanceExternalOnlyRedirect /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/classes/:classId/physical-attendance/qr" element={<ProtectedRoute role="ADMIN"><MarkAttendanceExternalOnlyRedirect /></ProtectedRoute>} />
+        <Route path="dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+        <Route path="payments/submit" element={<ProtectedRoute><PaymentSubmitPage /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/payments/submit" element={<ProtectedRoute><PaymentSubmitPage /></ProtectedRoute>} />
+        <Route path="payments/my" element={<ProtectedRoute><MyPaymentsPage /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/payments/my" element={<ProtectedRoute><MyPaymentsPage /></ProtectedRoute>} />
+        <Route path="watch-history" element={<ProtectedRoute><WatchHistoryPage /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/watch-history" element={<ProtectedRoute><WatchHistoryPage /></ProtectedRoute>} />
+        <Route path="my-class-attendance" element={<ProtectedRoute role="STUDENT"><MyClassAttendancePage /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/my-class-attendance" element={<ProtectedRoute role="STUDENT"><MyClassAttendancePage /></ProtectedRoute>} />
+        <Route path="profile" element={<ProtectedRoute role="STUDENT"><StudentProfilePage /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/profile" element={<ProtectedRoute role="STUDENT"><StudentProfilePage /></ProtectedRoute>} />
+        <Route path="change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
 
-                {/* Common Routes handled by Index/AppContent */}
-                <Route path="/dashboard" element={<Index />} />
-                <Route path="/profile" element={<Index />} />
-                <Route path="/settings" element={<Index />} />
-                <Route path="/appearance" element={<Index />} />
-                <Route path="/institutes" element={<Index />} />
-                <Route path="/organizations" element={<Index />} />
-                <Route path="/qr-attendance" element={<Index />} />
-                <Route path="/rfid-attendance" element={<Index />} />
-                <Route path="/sms-history" element={<Index />} />
-                <Route path="/enrollment-management" element={<Index />} />
-                <Route path="/students" element={<Index />} />
-                <Route path="/teachers" element={<Index />} />
-                <Route path="/parents" element={<Index />} />
-                <Route path="/users" element={<Index />} />
+        <Route path="admin/select-institute" element={<ProtectedRoute role="ADMIN"><AdminInstituteSelect /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin" element={<ProtectedRoute role="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/students" element={<ProtectedRoute role="ADMIN"><AdminStudents /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/classes" element={<ProtectedRoute role="ADMIN"><AdminClasses /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/classes/:id" element={<ProtectedRoute role="ADMIN"><AdminClassDetail /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/classes/:classId/months/:monthId/manage" element={<ProtectedRoute role="ADMIN"><AdminMonthManage /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/classes/:classId/months/:monthId/rec-attendance" element={<ProtectedRoute role="ADMIN"><AdminMonthRecAttendance /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/slips" element={<ProtectedRoute role="ADMIN"><AdminSlips /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/attendance" element={<ProtectedRoute role="ADMIN"><AdminAttendance /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/mark-attendance" element={<ProtectedRoute role="ADMIN"><AdminMarkAttendance /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/mark-attendance/external-device" element={<ProtectedRoute role="ADMIN"><AdminMarkAttendanceExternalDevice /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/class-attendance" element={<ProtectedRoute role="ADMIN"><AdminPhysicalAttendanceView /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/recordings" element={<ProtectedRoute role="ADMIN"><AdminRecordingHistory /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/id-cards" element={<ProtectedRoute role="ADMIN"><AdminIdCards /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/institute" element={<ProtectedRoute role="ADMIN"><AdminInstitute /></ProtectedRoute>} />
+        <Route path="institute/:instituteId/admin/recordings/:recordingId/student/:userId" element={<ProtectedRoute role="ADMIN"><AdminStudentWatchDetail /></ProtectedRoute>} />
+        <Route path="admin/*" element={<ProtectedRoute role="ADMIN"><AdminLegacyRedirect /></ProtectedRoute>} />
+      </Route>
 
-                {/* Selection Routes */}
-                <Route path="/select-institute" element={<Index />} />
-                <Route path="/select-class" element={<Index />} />
-                <Route path="/select-subject" element={<Index />} />
-
-                {/* Additional pages handled by AppContent */}
-                <Route path="/classes" element={<Index />} />
-                <Route path="/subjects" element={<Index />} />
-                <Route path="/attendance" element={<Index />} />
-                
-                <Route path="/lectures" element={<Index />} />
-                <Route path="/free-lectures" element={<Index />} />
-                <Route path="/live-lectures" element={<Index />} />
-                <Route path="/institute-lectures" element={<Index />} />
-                <Route path="/homework" element={<Index />} />
-                <Route path="/homework-submissions" element={<Index />} />
-                <Route path="/exams" element={<Index />} />
-                <Route path="/results" element={<Index />} />
-                <Route path="/grades" element={<Index />} />
-                <Route path="/grading" element={<Index />} />
-                <Route path="/institute-details" element={<Index />} />
-                <Route path="/institute-profile" element={<Index />} />
-                <Route path="/institute-users" element={<Index />} />
-                <Route path="/institute-payments" element={<Index />} />
-                <Route path="/institute-subjects" element={<Index />} />
-                <Route path="/institute-organizations" element={<Index />} />
-                <Route path="/institute-mark-attendance" element={<Index />} />
-                <Route path="/subject-payments" element={<Index />} />
-                <Route path="/subject-submissions" element={<Index />} />
-                <Route path="/subject-pay-submission" element={<Index />} />
-                <Route path="/my-submissions" element={<Index />} />
-                <Route path="/sms" element={<Index />} />
-                <Route path="/notifications" element={<Index />} />
-                <Route path="/institute-notifications" element={<Index />} />
-                <Route path="/setup-guide" element={<Index />} />
-                <Route path="/verify-image" element={<Index />} />
-                <Route path="/enroll-class" element={<Index />} />
-                <Route path="/enroll-subject" element={<Index />} />
-                <Route path="/my-attendance" element={<Index />} />
-                <Route path="/attendance-markers" element={<Index />} />
-                <Route path="/unverified-students" element={<Index />} />
-                <Route path="/class-subjects" element={<Index />} />
-                <Route path="/teacher-students" element={<Index />} />
-                <Route path="/teacher-homework" element={<Index />} />
-                <Route path="/teacher-exams" element={<Index />} />
-                <Route path="/teacher-lectures" element={<Index />} />
-                <Route path="/calendar-management" element={<Index />} />
-                <Route path="/calendar-view" element={<Index />} />
-                <Route path="/today-dashboard" element={<Index />} />
-                <Route path="/admin-attendance" element={<Index />} />
-                <Route path="/parent-attendance" element={<Index />} />
-                <Route path="/class-calendar" element={<Index />} />
-                <Route path="/device-management" element={<Index />} />
-
-                {/* Dedicated Page Routes (must be protected) */}
-                <Route
-                  path="/my-children"
-                  element={
-                    <ProtectedRoute>
-                      <MyChildren />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/transport"
-                  element={
-                    <ProtectedRoute>
-                      <Transport />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/system-payment"
-                  element={
-                    <ProtectedRoute>
-                      <Payments />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/system-payments/create"
-                  element={
-                    <ProtectedRoute>
-                      <CreatePayment />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/payment-submissions/:paymentId"
-                  element={
-                    <ProtectedRoute>
-                      <PaymentSubmissions />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/payment-submissions"
-                  element={
-                    <ProtectedRoute>
-                      <PaymentSubmissionsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/my-submissions"
-                  element={
-                    <ProtectedRoute>
-                      <MySubmissions />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/card-demo"
-                  element={
-                    <ProtectedRoute>
-                      <CardDemo />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/id-cards"
-                  element={
-                    <ProtectedRoute>
-                      <CardManagement />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/sessions"
-                  element={
-                    <ProtectedRoute>
-                      <ActiveSessionsPage />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Catch-all - Show 404 for unknown paths */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AuthProvider>
-          </BrowserRouter>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+      {/* Catch-all for unmatched routes */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
-};
+}
 
-export default App;
-
+export default function App() {
+  return (
+    <BrowserRouter>
+      <ThemeProvider>
+        <AuthProvider>
+          <InstituteProvider>
+            <AppRoutes />
+          </InstituteProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  );
+}
