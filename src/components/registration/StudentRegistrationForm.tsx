@@ -557,6 +557,8 @@ export function StudentRegistrationForm() {
       guardian: g ?? guardian ?? undefined,
       instituteCode: HIDDEN_INSTITUTE_CODE,
     });
+    const ref = "SRK-" + Math.random().toString(36).slice(2, 9).toUpperCase();
+    void postToSheet({ ...payload, ref }, ref);
     setSubmitted(payload);
     setStage("done");
   };
