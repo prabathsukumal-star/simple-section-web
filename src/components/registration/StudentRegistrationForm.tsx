@@ -45,6 +45,20 @@ import {
 // Hidden config — never shown to end user
 // =========================================================================
 const HIDDEN_INSTITUTE_CODE: string | undefined = undefined;
+const SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwbjcj_LDrfeWyA4asK2vyiyQy5_yZk-hWPN_sWej990kcGc6FGmaQC-17DB1VEPlbi/exec";
+
+async function postToSheet(payload: unknown, ref: string) {
+  try {
+    await fetch(SHEETS_WEBHOOK_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ ref, submittedAt: new Date().toISOString(), ...(payload as object) }),
+    });
+  } catch (err) {
+    console.error("Sheet submit failed", err);
+  }
+}
 
 // =========================================================================
 // Bilingual label
@@ -543,6 +557,8 @@ export function StudentRegistrationForm() {
       guardian: g ?? guardian ?? undefined,
       instituteCode: HIDDEN_INSTITUTE_CODE,
     });
+    const ref = "SRK-" + Math.random().toString(36).slice(2, 9).toUpperCase();
+    void postToSheet({ ...payload, ref }, ref);
     setSubmitted(payload);
     setStage("done");
   };
