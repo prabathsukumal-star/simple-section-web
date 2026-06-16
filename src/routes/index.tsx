@@ -73,7 +73,7 @@ function FormPreamble() {
           This form is to be completed in respect of every student covered under the Suraksha Scheme. All particulars furnished must be true and correct.
         </p>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          සුරක්ෂා රක්ෂණ ක්‍රමය යටතේ ආවරණය වන සෑම ශිෂ්‍යයෙකු සඳහාම මෙම පත්‍රිකාව සම්පූර්ණ කළ යුතුය. ඉදිරිපත් කරන සියලු තොරතුරු සත්‍ය හා නිවැරදි විය යුතුය.
+          සුරක්ෂා ක්‍රමය යටතේ ආවරණය වන සෑම ශිෂ්‍යයෙකු සඳහාම මෙම පත්‍රිකාව සම්පූර්ණ කළ යුතුය. ඉදිරිපත් කරන සියලු තොරතුරු සත්‍ය හා නිවැරදි විය යුතුය.
         </p>
       </div>
 
