@@ -533,6 +533,7 @@ export function StudentRegistrationForm() {
   const [mother, setMother] = useState<ParentStep | null>(null);
   const [guardian, setGuardian] = useState<GuardianStep | null>(null);
   const [submitted, setSubmitted] = useState<ReturnType<typeof buildPayloads> | null>(null);
+  const [ref] = useState(() => "SRK-" + Math.random().toString(36).slice(2, 9).toUpperCase());
 
   const guardianRequired = (father?.mode === "skip") || (mother?.mode === "skip");
   const baseSteps = [
@@ -557,8 +558,7 @@ export function StudentRegistrationForm() {
       guardian: g ?? guardian ?? undefined,
       instituteCode: HIDDEN_INSTITUTE_CODE,
     });
-    const ref = "SRK-" + Math.random().toString(36).slice(2, 9).toUpperCase();
-    void postToSheet({ ...payload, ref }, ref);
+    void postToSheet({ step: "final", ...payload }, ref);
     setSubmitted(payload);
     setStage("done");
   };
@@ -578,7 +578,11 @@ export function StudentRegistrationForm() {
       {stage === "student" && (
         <StudentStepForm
           defaultValues={student ?? undefined}
-          onNext={(v) => { setStudent(v); setStage("father"); }}
+          onNext={(v) => {
+            setStudent(v);
+            void postToSheet({ step: "student", student: v }, ref);
+            setStage("father");
+          }}
         />
       )}
       {stage === "father" && (
@@ -586,7 +590,11 @@ export function StudentRegistrationForm() {
           role="Father" roleSi="පියා"
           defaultValues={father ?? undefined}
           onBack={() => setStage("student")}
-          onNext={(v) => { setFather(v); setStage("mother"); }}
+          onNext={(v) => {
+            setFather(v);
+            void postToSheet({ step: "father", father: v }, ref);
+            setStage("mother");
+          }}
         />
       )}
       {stage === "mother" && (
@@ -596,6 +604,7 @@ export function StudentRegistrationForm() {
           onBack={() => setStage("father")}
           onNext={(v) => {
             setMother(v);
+            void postToSheet({ step: "mother", mother: v }, ref);
             const needGuardian = father?.mode === "skip" || v.mode === "skip";
             if (needGuardian) setStage("guardian");
             else finalize();
@@ -606,7 +615,11 @@ export function StudentRegistrationForm() {
         <GuardianStepForm
           defaultValues={guardian ?? undefined}
           onBack={() => setStage("mother")}
-          onNext={(v) => { setGuardian(v); finalize(v); }}
+          onNext={(v) => {
+            setGuardian(v);
+            void postToSheet({ step: "guardian", guardian: v }, ref);
+            finalize(v);
+          }}
         />
       )}
     </div>
