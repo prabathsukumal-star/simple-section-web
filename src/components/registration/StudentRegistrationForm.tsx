@@ -45,7 +45,7 @@ import {
 // Hidden config — never shown to end user
 // =========================================================================
 const HIDDEN_INSTITUTE_CODE: string | undefined = undefined;
-const SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwbjcj_LDrfeWyA4asK2vyiyQy5_yZk-hWPN_sWej990kcGc6FGmaQC-17DB1VEPlbi/exec";
+const SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwtiqbcl0BeVWR2XLe3_pRoVBmntDG4mUPDSvRQvEDwoHdoqwDwg2nhMewKijAvRT-d/exec";
 
 async function postToSheet(payload: unknown, ref: string) {
   try {
@@ -475,7 +475,7 @@ function StepNav({ onBack, onlyNext }: { onBack?: () => void; onlyNext?: boolean
         </Button>
       ) : <span />}
       <Button type="submit" className="gap-1">
-        Continue / ඉදිරියට <ChevronRight className="size-4" />
+        Submit / යොමු කරන්න <ChevronRight className="size-4" />
       </Button>
     </div>
   );
